@@ -2,8 +2,6 @@
 # CoreEFI
 An electronic fuel injection program written in c++ to see if sequential fuel injection with 1 us resolution could be achieved on any Arduino 16 mhz avr or 84mhz due processor. This has also been run on a STM32F4 407 Cortex processor, but not fully implemented.  This has never been tested with any actual engine, so can't be considered much more than a proof of concept at this point.  This is a work in process.
 
-Initial development started on an Arduino UNO, but switched to a Mega because 2k of ram is just not enough!  Then switched to the Due because the Mega timers combined with the 16mhz clock rate was pathetic.
-
 Some distinquishing features:
 
 <ol>
@@ -20,6 +18,8 @@ Some distinquishing features:
 <li>Compiles with gcc-arm-none for the STM32F4 series of ARM processors</li>
 <li>Can compile and run on the Linux command-line for testing.</li>
 </ol>
+
+Initial development started on an Arduino UNO, but switched to a Mega because 2k of ram is just not enough!  Then switched to the Due because the Mega timers combined with the 16mhz clock rate was pathetic.  The original system I used for my model also runs at 16mhz, so looking forward to seeing how accuate it really is.  I would hope most of it is written in assembly and with much better timer resolution.  Still I would like to think that I can make the Arduino Mega perform better than this 25 year old efi computer.
 
 <h2>Architecture</h2>
 
