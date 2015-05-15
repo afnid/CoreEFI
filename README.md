@@ -133,7 +133,9 @@ Still the decoder/encoder took 9-30 us, and the scheduler took closer to 40 us. 
 +late=  39	rpm=    22300	+deg=   5.24	late%=  51.59
 </pre>
 
-Note that this is with running an encoder simulator that runs the decoder.  The encoder has some round-off error and some jitter, thats why the rpm is not a whole number.  An external interrupt should have a little less overhead and should reduce the error some.  But this is with a 12 tooth decoder, there will be more contention with a 36 or 60 tooth decoder. Removing metrics that detect past errors would help.
+Note that this is with running an encoder simulator that runs the decoder.  The encoder has some round-off error and some jitter, thats why the rpm is not a whole number.  An external interrupt should have a little less overhead and should reduce the error some.
+
+This is with a 12 tooth decoder, there will be more contention with a 36 or 60 tooth decoder, esp if crank driven. Removing metrics that detect past errors would help.
 
 2200 rpm's appears to be the cross-over where there is an occasional late every few seconds, anything below that is 100% on time.
 
@@ -152,6 +154,8 @@ At 22k rpm the durations hit 100% duty cycle so the events get queued.  5 degree
 
 Interesting that the 0 error point was not double the 8 cyl rpm?  Half the events, but still the same number of decoder events.
 
+The 8 us error is likely the decoder events, more teeth will mean this will happen sooner.
+
 <b>Here are some stats for running with 1 cylinder, 4 events, 12 tooth cam encoder</b>:
 
 <pre>
@@ -162,7 +166,7 @@ Interesting that the 0 error point was not double the 8 cyl rpm?  Half the event
 
 Somewhere above 8,400 rpm's, the events get queued.  Again this is a 12 tooth decoder and simulated encoder.
 
-<br>And for a little fun, 16 cylinders, 64 events, 60 tooth cam encoder:</b>
+<b>And for a little fun, 16 cylinders, 64 events, 60 tooth cam encoder:</b>
 
 <pre>
 +late=  12	rpm=    3914	+deg=   0.28
