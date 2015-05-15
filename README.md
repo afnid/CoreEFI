@@ -2,7 +2,7 @@
 # CoreEFI
 An electronic fuel injection program written in c++ to see if sequential fuel injection with 1 us resolution could be achieved on an Arduino 16 mhz Mega or 84mhz Arduino Due. This has also been run on a STM32F4 407 Cortex processor, but not fully implemented.  This has never been tested with any actual engine, so can't be considered much more than a proof of concept at this point.
 
-Some distinquishing features:
+Some distinguishing features:
 
 <ol>
 <li>Utilizes variable length timers to minimize event scheduling overhead.</li>
@@ -21,7 +21,7 @@ Some distinquishing features:
 
 Initial development started on an Arduino UNO, but switched to a Mega because 2k of ram is just not enough!  Then switched to the Due because the Mega timers combined with the 16mhz clock rate was pathetic.
 
-The original system I used for my model also runs at 16mhz, so looking forward to seeing how accuate it really is.  I would hope most of it is written in assembly and with much better timer resolution.  Still I would like to think that I can make the Arduino Mega perform better than this 25 year old efi computer.
+The original system I used for my model also runs at 16mhz, so looking forward to seeing how accurate it really is.  I would hope most of it is written in assembly and with much better timer resolution.  Still I would like to think that I can make the Arduino Mega perform better than this 25 year old efi computer.
 
 <h2>Architecture</h2>
 
@@ -31,13 +31,13 @@ Here are some of the most major implementation details:
 
 All of the variables that may be logged or used to calculate other values exist in a single enumeration with a table of meta data for their min/max and scale data.  All access is done through convenience routines creating a parameters database instead of spreading the fields across various data structures.  Meta-data is verified for all access to make sure the correct types are used.
 
-The strategy queries values and returns a value for computed paramaters.  This is very easy to extend by adding new parameters to the enumeration, the meta-data, and any calculations.  Any parameter can be extended to be a lookup table, function, or translation.
+The strategy queries values and returns a value for computed parameters.  This is very easy to extend by adding new parameters to the enumeration, the meta-data, and any calculations.  Any parameter can be extended to be a lookup table, function, or translation.
 
 Caching and write-through cache flushing can be easily implemented within the parameter list.  Some of this is partially enabled, but it defeats the performance testing given many of the inputs don't change during simulation.
 
-All of the parameters exist in a Java program and the enumeration and meta data are exported to an xml file.  The same program is used to generate the source code for the paramaters and all of the data storage and various indexes.  The data structures were designed for a low memory footprint since it was originally implemented on an Arduino UNO.
+All of the parameters exist in a Java program and the enumeration and meta data are exported to an xml file.  The same program is used to generate the source code for the parameters and all of the data storage and various indexes.  The data structures were designed for a low memory footprint since it was originally implemented on an Arduino UNO.
 
-The table driven aproach allowed for many features to be provided with a reduced code footprint.  Even storing much of the data in program memory.  This means anything defined in the parameter list can be read/written using the console.
+The table driven approach allowed for many features to be provided with a reduced code footprint.  Even storing much of the data in program memory.  This means anything defined in the parameter list can be read/written using the console.
 
 There is some additional overhead since the parameters are encapsulated in a simple database for the rest of the application to use.  There is additional overhead since it does range checking, type checking and storage conversions.  It is best to not access the parameters database from within an isr.
 
@@ -47,11 +47,11 @@ The decoder handling is actually the most critical piece since if there is drift
 
 Current RPM is something that will result in each pulse getting shorter/longer as the engine accelerates/decelerates.  The RPM at the beginning of a cycle will be different than the RPM at the end, so if RPM is calculated only once per revolution, the error will compound until the RPM is calculated again.  RPM exact degree calculations require division which can make these more expensive time-wise.
 
-The current aproach uses a cyclic buffer to store the pulses and for each event, subtract the last pulse time and add the current pulse time to a running total.  The new total represents the time in the last cycle covering 720 degrees.
+The current approach uses a cyclic buffer to store the pulses and for each event, subtract the last pulse time and add the current pulse time to a running total.  The new total represents the time in the last cycle covering 720 degrees.
 
 A correction factor may need to be added to project current rpm. Maybe keeping the relative difference between the preceding n pulses to calculate a percentage change to the cycle time.  Not implementing anything for projecting rpm until I can be working with real data.  This may add a division operation.
 
-The benefits of the current aproach is there is 0 division and 0 floating point calculations required in the collection of pulses or in the translation from event degrees to absolute time.  So 0 division/floating point calculations in the isr's.
+The benefits of the current approach is there is 0 division and 0 floating point calculations required in the collection of pulses or in the translation from event degrees to absolute time.  So 0 division/floating point calculations in the isr's.
 
 A downside is that the accuracy of the tdc pulse is very important since it is used as the basis to convert degrees to absolute time.  Jitter in the encoder/decoder would be difficult to compensate for.
 
@@ -67,7 +67,7 @@ This allows the strategy to be completely asynchronous with the events, which is
 
 <h2>Strategy</h2>
 
-The initial strategy is based on extracted eeprom data from a Ford EEC-IV computer and then implemented using a best guess aproach, in other words, it is incomplete and maybe not even accurate.  For example, their dwell numbers didn't make any sense at all, so used a 5-6 us dwell because that is what a ls1 coil requires.  The injector durations look a little long, and the lamda calculation is not incorporated yet, so no attempt at closed-loop operation.
+The initial strategy is based on extracted eeprom data from a Ford EEC-IV computer and then implemented using a best guess approach, in other words, it is incomplete and maybe not even accurate.  For example, their dwell numbers didn't make any sense at all, so used a 5-6 us dwell because that is what a ls1 coil requires.  The injector durations look a little long, and the lamda calculation is not incorporated yet, so no attempt at closed-loop operation.
 
 The positive side is that this will flush itself out pretty quick with some empirical knowledge, and the table driven architecture makes this very easy to change/extend.  The main concern at this point was whether the values looked somewhat believable, and there was something computed in every case where it needed to be to get an accurate performance profile.
 
@@ -164,7 +164,7 @@ Running on a dev board to measure performance, getting a solid 10x+ performance 
 
 <h2>Other Solutions</h2>
 
-There are at least 4 other systems out there that actually have run engines, but are already heavily invested in their own aproaches.  This is a quick synopsis of what I have seen so far:
+There are at least 4 other systems out there that actually have run engines, but are already heavily invested in their own approaches.  This is a quick synopsis of what I have seen so far:
 
 <ul>
 <li>diyefi/freeems - I think the oldest project and the most vehicle installs.  Uses the freescale processor, but not using xgate, so the implementation is using all of the output compare interrupts to drive the timing.  Only 6 total and one needs to be used for the decoder, so it limits the number of cylinders that can be run independently.  The code appears very convoluted and difficult to read.  Being the oldest, it is already tied to it's own legacy and not pushing the state of the art.  A positive is that they have a board design with units available to purchase.  The community is still active.</li>
@@ -173,7 +173,7 @@ There are at least 4 other systems out there that actually have run engines, but
 
 <li>libreems - this is just a branch from diyefi which fractured the efforts there.  There is some advancement with using the xgate co-processor, but the community is also pretty quiet.  They are also on the same cpu as diyefi.</li>
 
-<li>rusefi.org - the newest of the projects, appears to have a lot of momentum and using the same stm32f4 407 processor.  Hardware is available for sale and already on a second revision.  They are using chibios for a rtos and still not sure if that is a positive or a negative.  I see they also wrote their own display software and have a simulation mode so we were on parallel paths.  They compare themselves as the iphone to the newton, being the cortex arm solution vs the freescale processors used by all of the above and the megasquirt software.  I am still skeptical that 1us can be achieved in a uni-processor aproach.</li>
+<li>rusefi.org - the newest of the projects, appears to have a lot of momentum and using the same stm32f4 407 processor.  Hardware is available for sale and already on a second revision.  They are using chibios for a rtos and still not sure if that is a positive or a negative.  I see they also wrote their own display software and have a simulation mode so we were on parallel paths.  They compare themselves as the iphone to the newton, being the cortex arm solution vs the freescale processors used by all of the above and the megasquirt software.  I am still skeptical that 1us can be achieved in a uni-processor approach.</li>
 
 </ul>
 
