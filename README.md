@@ -161,6 +161,7 @@ Running on a dev board to measure performance, getting a solid 10x+ performance 
 
 
 
+
 <h2>Other Solutions</h2>
 
 There are at least 4 other systems out there that actually have run engines, but are already heavily invested in their own aproaches.  This is a quick synopsis of what I have seen so far:
