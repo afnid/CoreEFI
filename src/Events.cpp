@@ -177,7 +177,7 @@ static volatile struct {
 			addHist(CountEvents);
 
 			if (e->late > 0) {
-				int16_t abserr = abs(e->late) / 2;
+				int16_t abserr = abs(e->late) / 4;
 				addHist(CountLates);
 
 				if (abserr < CountLateX)
@@ -292,7 +292,7 @@ void sendEventStatus() {
 		int16_t lates = events.hist[CountLates];
 		channel.send(F("late%"), 100.0 * lates / total);
 
-		for (uint8_t i = CountLate0; i <= CountLate4; i++) {
+		for (uint8_t i = CountLate0; i <= CountLate0; i++) {
 			lates -= events.hist[i];
 			channel.send(F("latex"), 100.0 * lates / total);
 		}
