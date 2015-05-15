@@ -11,45 +11,43 @@ Some distinquishing features:
 <li>All console output is in a json style which makes it very easy to parse.</li>
 <li>Table driven architecture makes it easy to add new variables, tables, etc.</li>
 <li>External xml config file used to generate the parameter lists and table data</li>
-<li>Only limited by the number of events that can be processed at max RPM.</li>
+<li>Cylinders only limited by the number of events that can be processed at max RPM.</li>
 <li>Contains all tables/functions from a Ford EEC-IV computer using a MAF system.</li>
 <li>Most viable platform implemented right now is the Arduino Due at 84mhz</li>
 <li>Will compile and run on a 16mhz Arduino Mega using about 4k of ram and 40k of code.</li>
 <li>Compiles with gcc-arm-none for the STM32F4 series of ARM processors</li>
-<li>Can compile and run on the Linux command-line for testing.</li>
+<li>Can compile and run on the Linux command-line for testing/simulation.</li>
 </ol>
 
-Initial development started on an Arduino UNO, but switched to a Mega because 2k of ram is just not enough!  Then switched to the Due because the Mega timers combined with the 16mhz clock rate was pathetic.  The original system I used for my model also runs at 16mhz, so looking forward to seeing how accuate it really is.  I would hope most of it is written in assembly and with much better timer resolution.  Still I would like to think that I can make the Arduino Mega perform better than this 25 year old efi computer.
+Initial development started on an Arduino UNO, but switched to a Mega because 2k of ram is just not enough!  Then switched to the Due because the Mega timers combined with the 16mhz clock rate was pathetic.
+
+The original system I used for my model also runs at 16mhz, so looking forward to seeing how accuate it really is.  I would hope most of it is written in assembly and with much better timer resolution.  Still I would like to think that I can make the Arduino Mega perform better than this 25 year old efi computer.
 
 <h2>Architecture</h2>
 
-There are a few unique features in how this was designed:
+Here are some of the most major implementation details:
 
 <h3>Table Driven</h3>
 
 All of the variables that may be logged or used to calculate other values exist in a single enumeration with a table of meta data for their min/max and scale data.  All access is done through convenience routines creating a parameters database instead of spreading the fields across various data structures.  Meta-data is verified for all access to make sure the correct types are used.
 
-The strategy queries values and returns a value for computed paramaters.  This is very easy to extend by adding new parameters to the enumeration, the meta-data, and a calculation.  Any parameter can be extended to be a lookup table, function, or translation.
+The strategy queries values and returns a value for computed paramaters.  This is very easy to extend by adding new parameters to the enumeration, the meta-data, and any calculations.  Any parameter can be extended to be a lookup table, function, or translation.
 
-Caching and write-through cache flushing can be implemented in the parameter list too.  Some of this is partially enabled, but it defeats the testing performance testing given many of the inputs don't change during simulation.
+Caching and write-through cache flushing can be easily implemented within the parameter list.  Some of this is partially enabled, but it defeats the performance testing given many of the inputs don't change during simulation.
 
 All of the parameters exist in a Java program and the enumeration and meta data are exported to an xml file.  The same program is used to generate the source code for the paramaters and all of the data storage and various indexes.  The data structures were designed for a low memory footprint since it was originally implemented on an Arduino UNO.
 
 The table driven aproach allowed for many features to be provided with a reduced code footprint.  Even storing much of the data in program memory.  This means anything defined in the parameter list can be read/written using the console.
 
-There is some additional overhead since the parameters are encapsulated in a simple database for the rest of the application to use.  There is additional overhead since it can do range checking, type checking and storage conversions.  It is best to not access the parameters database from within an isr.
+There is some additional overhead since the parameters are encapsulated in a simple database for the rest of the application to use.  There is additional overhead since it does range checking, type checking and storage conversions.  It is best to not access the parameters database from within an isr.
 
 <h3>Simplified Decoder/Event Math</h3>
 
-The decoder handling is actually the most critical piece since if there is drift/error in the decoder, the accuracy in scheduling not longer matters.  In the couple of cases I have looked at other implementations it appears they convert from a time basis to degrees, and have and appear to try to calculate the absolute degreees for each event.  A large amount of effort goes into trying to calculate the current RPM.  The events are always calculated in degrees and then converted to time at the last.
-
-This implementation uses a very simple aproach that requires 0 floating point or division operations in the decoder or the final event time calculations and still delivers a very high degree of accuracy.
-
-Other implemntations do a fair amount of floating point math to try to estimate the exact rotation angle of the encoder to estimate the time an event is supposed to start.  The angle is often calculated from TDC and tries to compensate for the change in rotation that happens through the cycle.  The events are calculated in angles and the last step is to compute their times.
+The decoder handling is actually the most critical piece since if there is drift/error in the decoder, the accuracy in scheduling no longer matters.  In some other implementations it appears they convert from a time basis to degrees, and appear to calculate the absolute degreees for each pulse event.  A large amount of effort goes into trying to calculate the current RPM.  The events are always calculated in degrees and then converted to time at the last.
 
 Current RPM is something that will result in each pulse getting shorter/longer as the engine accelerates/decelerates.  The RPM at the beginning of a cycle will be different than the RPM at the end, so if RPM is calculated only once per revolution, the error will compound until the RPM is calculated again.  RPM exact degree calculations require division which can make these more expensive time-wise.
 
-My aproach was to subtract the last pulse time and add the current pulse time to a running total so on every event I know the time it took for the previous cycle which would be 0 to 720 degrees.  A correction factor needs to be added to approximate current rpm, probably by keeping the relative difference between the preceding n pulses to calculate a percentage change to the cycle time.  Not implementing anything until I can be working with real data.
+My aproach was to subtract the last pulse time and add the current pulse time to a running total so on every event I know the time it took for the previous cycle which would be 0 to 720 degrees.  A correction factor needs to be added to approximate current rpm, probably by keeping the relative difference between the preceding n pulses to calculate a percentage change to the cycle time.  Not implementing anything for projecting rpm until I can be working with real data.
 
 The benefits of my aproach is there is 0 division and 0 floating point calculations required in the collection of pulses or in the translation from event degrees to absolute time.  So 0 division/floating point calculations in my isr's.  The correction factor above may add a division operation.  Another downside is that the accuracy of the tdc pulse is very important since it is used as the basis to convert degrees to absolute time.
 
