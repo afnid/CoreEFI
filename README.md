@@ -107,11 +107,13 @@ This is called CoreEFI because the focus was on the main components of any efi s
 
 There are only a handful of methods required to port this between platforms, and the entire system can be simulated by running the ISR routines direct from the main scheduler.  Once it is running from the scheduler, move the encoder/event calls into timer routines and it will start showing the error rates.
 
-Simply clone this project and execute the Makefile to run on Linux, or to run on an Arduino Mega/Due, just load the src.ino file.  Should work on cygwin, but that would require me to actually run Windows.  I could at least verify on the mac.
+Simply clone this project and execute the Makefile to run on Linux or mac. To run on an Arduino Mega/Due, just load the src.ino file.  Should work on cygwin, but that would require me to actually run Windows, and that will take some persuasion.
 
-<h3>Linux</h3>
+Once running, just type ? to get some options.  u 0 5000, will set the decoder rpm, e, d, i, t are also used often.
 
-Values are initialized to support a running state, but any value can be overwritten using the prompt.  The events process and an encoder simulator are run from the main loop scheduler instead of from interrupts.  This mode is primarily for rapid prototyping, and profiling or using valgrind.  The linux process is also used to test the Java interface.
+<h3>Linux/Mac</h3>
+
+Values are initialized to support a running state, but any value can be overwritten using the prompt.  The events process and an encoder simulator are run from the main loop scheduler instead of from interrupts.  This mode is primarily for rapid prototyping, and profiling or using valgrind.  The linux process is also used to test the Java interface.  Passing any argument at all to the program switches it to run with the perfect 1 tick timer for testing.
 
 <h3>Arduino Due (84 MHZ)</h3>
 
@@ -121,14 +123,14 @@ The Due has 32bit timers so there is no requirement to ever use the pre-scalars 
 
 Still the decoder/encoder took 9-30 us, and the scheduler took closer to 40 us. Still not great numbers, but far better than the 16 MHZ Mega.  These times will improve using an external interrupt for the decoder by reducing the time a little more.
 
-Here are some stats from the program for 8 cylinders showing the min/max late and degrees of error vs RPM:
+<b>Here are some stats from the program for 8 cylinders, 32 events, 12 tooth cam encoder, showing the max late and degrees of error vs RPM:</b>
 
 <pre>
--late=  0	+late=  0	rpm=    2194	-deg=   0.00	+deg=   0.00	late%=  0.00
--late=  0	+late=  8	rpm=    3982	-deg=   0.00	+deg=   0.19	late%=  6.24
--late=  0	+late=  13	rpm=    6750	-deg=   0.00	+deg=   0.53	late%=  6.22
--late=  0	+late=  21	rpm=    9874	-deg=   0.00	+deg=   1.24	late%=  32.57
--late=  0	+late=  39	rpm=    22300	-deg=   0.00	+deg=   5.24	late%=  51.59
++late=  0	rpm=    2194	+deg=   0.00	late%=  0.00
++late=  8	rpm=    3982	+deg=   0.19	late%=  6.24
++late=  13	rpm=    6750	+deg=   0.53	late%=  6.22
++late=  21	rpm=    9874	+deg=   1.24	late%=  32.57
++late=  39	rpm=    22300	+deg=   5.24	late%=  51.59
 </pre>
 
 Note that this is with running an encoder simulator that runs the decoder.  The encoder has some round-off error and some jitter, thats why the rpm is not a whole number.  An external interrupt should have a little less overhead and should reduce the error some.  But this is with a 12 tooth decoder, there will be more contention with a 36 or 60 tooth decoder. Removing metrics that detect past errors would help.
@@ -139,20 +141,31 @@ A 1/2 degree of maximum error for 6% of the time is acceptable for an 8 cylinder
 
 At 22k rpm the durations hit 100% duty cycle so the events get queued.  5 degrees sounds unusable at this rpm. Queued ISR's is what causes the late time to increase.
 
-Here are some stats for running with 1 cylinder:
+<b>Here is a 4 cylinder, 16 events, 12 tooth cam encoder:</b>
 
 <pre>
--late=  0	+late=  17	rpm=    22484	-deg=   0.00	+deg=   2.29	late%=  50.04
--late=  0	+late=  15	rpm=    9898	-deg=   0.00	+deg=   0.89	late%=  25.05
--late=  0	+late=  0	rpm=    8326	-deg=   0.00	+deg=   0.00	late%=  0.00
++late=  0	rpm=    2790	+deg=   0.00	late%=  0.00
++late=  8	rpm=    7942	+deg=   0.38	late%=  6.24
++late=  15	rpm=    15740	+deg=   1.42	late%=  25.00
++late=  16	rpm=    21358	+deg=   2.05	late%=  50.00
+</pre>
+
+Interesting that the 0 error point was not double the 8 cyl rpm?  Half the events, but still the same number of decoder events.
+
+<b>Here are some stats for running with 1 cylinder, 4 events, 12 tooth cam encoder</b>:
+
+<pre>
++late=  17	rpm=    22484	+deg=   2.29	late%=  50.04
++late=  15	rpm=    9898	+deg=   0.89	late%=  25.05
++late=  0	rpm=    8326	+deg=   0.00	late%=  0.00
 </pre>
 
 Somewhere above 8,400 rpm's, the events get queued.  Again this is a 12 tooth decoder and simulated encoder.
 
-And for a little fun, 16 cylinders, 60 tooth decoder:
+<br>And for a little fun, 16 cylinders, 64 events, 60 tooth cam encoder:</b>
 
 <pre>
--late=  0	+late=  12	rpm=    3914	-deg=   0.00	+deg=   0.28
++late=  12	rpm=    3914	+deg=   0.28
 </pre>
 
 Couldn't get reliable results above this rpm, a good stress test!

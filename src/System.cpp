@@ -312,7 +312,7 @@ int main(int argc, char **argv) {
 			logFine("final %10d %10d %10g %10g %10g %10g", i, getParamUnsigned(SensorRPM), getParamDouble(CalcFinalPulseAdvance), getParamDouble(CalcFinalSparkAdvance), getParamDouble(CalcFinalPulseWidth), getParamDouble(CalcFinalSparkWidth));
 		}
 
-	if (false) {
+	if (argc > 1) {
 		printf("Running perfect time!\n");
 		extern void runPerfectTasks();
 		runPerfectTasks();
