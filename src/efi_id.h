@@ -108,7 +108,7 @@ enum {
 	MaxParam
 };
 
-static const uint16_t MaxEncoderTeeth = 60;
+static const uint16_t MaxEncoderTeeth = 62;
 static const uint16_t MaxCylinders = 16;
-static const uint16_t MaxCoils = 8;
+static const uint16_t MaxCoils = 16;
 

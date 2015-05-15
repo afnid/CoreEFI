@@ -58,8 +58,6 @@ void initSystem()
 	channel.p2();
 	channel.nl();
 
-	setParamUnsigned(ConstCylinders, 1);
-
 	channel.p1(F("max"));
 	channel.send(F("cyls"), MaxCylinders);
 	channel.send(F("coils"), MaxCoils);
