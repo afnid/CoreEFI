@@ -1,3 +1,5 @@
+// copyright to me, released under GPL V3
+
 #include <string.h>
 
 #include "System.h"

@@ -1,3 +1,5 @@
+// copyright to me, released under GPL V3
+
 #include "efi_id.h"
 
 void setParamShort(uint8_t i, int16_t v);

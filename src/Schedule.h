@@ -1,3 +1,5 @@
+// copyright to me, released under GPL V3
+
 class BitSchedule {
 	static const uint8_t MAX_EVENTS = MaxCylinders * 4;
 

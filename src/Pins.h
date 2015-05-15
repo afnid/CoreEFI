@@ -1,3 +1,5 @@
+// copyright to me, released under GPL V3
+
 class PinInfo {
 	volatile uint8_t *port;
 	uint8_t mask;

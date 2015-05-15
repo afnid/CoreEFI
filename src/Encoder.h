@@ -1,3 +1,5 @@
+// copyright to me, released under GPL V3
+
 class Encoder {
 	uint32_t ratio;
 	pulse_t pulse;

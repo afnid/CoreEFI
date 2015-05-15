@@ -192,7 +192,7 @@ Of the platforms above, I don't think the 16 MHZ AVR is viable except for maybe 
 
 The 25 year old target engine is not close to running yet in the 50 year old car, so it will be awhile before I can test it with real sensors.
 
-This started as a simple fan controller and the desire to be able to tap into all the instrumentation in the efi computer instead of creating a parallel system of sensors.  There are other desired functions like running a TFT to provide cockpit feedback and controlling fans, EPAS, and other modern features without having to add lots of buttons/gauges to a very old car.
+This started as a simple fan controller and the desire to be able to tap into all the instrumentation in the EFI computer instead of creating a parallel system of sensors.  There are other desired functions like running a TFT to provide cockpit feedback and controlling fans, EPAS, and other modern features without having to add lots of buttons/gauges to a very old car.
 
 The plan is to eventually integrate this into the existing system passively and then later replace the EEC-IV entirely.
 

@@ -1,3 +1,5 @@
+// copyright to me, released under GPL V3
+
 class Task {
 	uint16_t minticks;
 	uint16_t maxticks;

@@ -1,3 +1,5 @@
+// copyright to me, released under GPL V3
+
 #include "System.h"
 #include "Channel.h"
 #include "Params.h"
