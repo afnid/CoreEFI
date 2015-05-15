@@ -109,11 +109,13 @@ The Due has 32bit timers so there is no requirement to ever use the pre-scalars 
 
 Here are some stats from the program for 8 cylinders showing the min/max late and degrees of error vs rpm:
 
+<pre>
 -late=  0	+late=  0	rpm=    2194	-deg=   0.00	+deg=   0.00	late%=  0.00
 -late=  0	+late=  8	rpm=    3982	-deg=   0.00	+deg=   0.19	late%=  6.24
 -late=  0	+late=  13	rpm=    6750	-deg=   0.00	+deg=   0.53	late%=  6.22
 -late=  0	+late=  21	rpm=    9874	-deg=   0.00	+deg=   1.24	late%=  32.57
 -late=  0	+late=  39	rpm=    22300	-deg=   0.00	+deg=   5.24	late%=  51.59
+</pre>
 
 Note that this is with running an ecoder simulator that runs the decoder.  The encoder has some round-off error and some jitter, thats why the rpm is not a whole number.  An external interrupt should have a little less overhead and should reduce the error some.  But this is with a 12 tooth decoder, there will be more contention with a 36 or 60 tooth decoder.
 
@@ -125,15 +127,19 @@ At 22k rpm the durations hit 100% duty cycle so the events get queued.  Queued i
 
 Here are some stats for running with 1 cylinder:
 
+<pre>
 -late=  0	+late=  17	rpm=    22484	-deg=   0.00	+deg=   2.29	late%=  50.04
 -late=  0	+late=  15	rpm=    9898	-deg=   0.00	+deg=   0.89	late%=  25.05
 -late=  0	+late=  0	rpm=    8326	-deg=   0.00	+deg=   0.00	late%=  0.00
+</pre>
 
 Somewhere above 8,400 rpm's, the events qet queued.  Again this is a 12 tooth decoder and simulated encoder.
 
 And for a little fun, 16 cylinders, 60 tooth decoder:
 
+<pre>
 -late=  0	+late=  12	rpm=    3914	-deg=   0.00	+deg=   0.28
+</pre>
 
 Couldn't get reliable results above this rpm, a good stress test!
 
