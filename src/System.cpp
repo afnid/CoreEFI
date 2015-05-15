@@ -145,6 +145,8 @@ char readch(int fd) {
 #define NanosToTicks(x) ((x) / (1000 / TICKTOUS))
 #define TicksToNanos(x) ((x) * (1000 / TICKTOUS))
 
+#ifdef CLOCK_MONOTONIC
+
 uint32_t clock_ticks() {
 	static uint32_t offset = (1L << 32) - 5;
 	static uint32_t sec = 0;
@@ -159,6 +161,25 @@ uint32_t clock_ticks() {
 
 	return NanosToTicks(ts.tv_sec * 1000000000ULL + ts.tv_nsec);
 }
+
+#else
+
+uint32_t clock_ticks() {
+	static uint32_t offset = (1L << 32) - 5;
+	static uint32_t sec = 0;
+	static struct timeval tv;
+	gettimeofday(&tv, 0);
+
+	if (sec == 0)
+		sec = tv.tv_sec;
+
+	tv.tv_sec -= sec;
+	tv.tv_sec += offset;
+
+	return MicrosToTicks(tv.tv_sec * 1000000ULL + tv.tv_usec);
+}
+
+#endif
 
 //uint32_t micros() {
 	//return TicksToMicros(clock_ticks());

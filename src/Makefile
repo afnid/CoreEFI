@@ -21,9 +21,8 @@ HDRS = $(SRCS:.cpp=.h)\
  efi_id.h\
  efi_types.h
 
-CFLAGS=-g -O2 -Wall -Wpedantic -Wno-variadic-macros -Wdouble-promotion -pg -I. -DDEBUG
-CFLAGS=-g -O2 -Wall -pg -I. -DDEBUG
-CFLAGS=-g -Wall -pg -I. -DDEBUG
+CFLAGS=-g -O2 -Wall -Wpedantic -Wno-variadic-macros -Wdouble-promotion -pg -DDEBUG
+CFLAGS=-g -O2 -Wall -pg -DDEBUG -v
 
 all:
 	make clean

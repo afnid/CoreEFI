@@ -11,8 +11,6 @@
 #include "Pins.h"
 
 class Schedule {
-	static const double DIV720 = 65536 / 720.0;
-
 	enum {
 		MetricSparkAdvance,
 		MetricPulseAdvance,
@@ -58,6 +56,7 @@ class Schedule {
 	}
 
 	inline void calcSparkAdvance() {
+		static const double DIV720 = 65536 / 720.0;
 		initMetric(MetricSparkAdvance);
 		uint16_t sparkAdvance = (uint16_t)(DIV720 * getParamDouble(CalcFinalSparkAdvance));
 		calcMetric(MetricSparkAdvance);
@@ -69,6 +68,7 @@ class Schedule {
 	}
 
 	inline void calcPulseAdvance() {
+		static const double DIV720 = 65536 / 720.0;
 		initMetric(MetricPulseAdvance);
 		uint16_t pulseAdvance = (uint16_t)(DIV720 * getParamDouble(CalcFinalPulseAdvance));
 		calcMetric(MetricPulseAdvance);

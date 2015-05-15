@@ -32,7 +32,7 @@ public:
 #ifdef ARDUINO
 		this->id = digitalPinToInterrupt(pin->getPin());
 #else
-		this->id = id;
+		this->id = pin->getPin();
 #endif
 		this->pin = pin;
 	}

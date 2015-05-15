@@ -25,6 +25,8 @@ The original system I used for my model also runs at 16 MHZ, so looking forward 
 
 <h2>Architecture</h2>
 
+The code is a combination of C/C++.  Having not worked with a variety of hardware platforms, there were doubts about how portable C++ would be.  Programming wise, there is zero dynamic allocations, absolutely no use of virtual methods/vtables, polymorphism, operator overloading, or even much inheritance, so there shouldn't be any surprises.  Given the sketchy startup code with the stm32 environment there isn't any reliance on static constructors, which wasn't missed anyhow.  Most all methods are declared inline if they are critical path or only called once.  Some classes are completely hidden with a C api, and the only reason some became full blown classes in a header file was for inlining methods or polyinstantiation.
+
 Here are some of the most major implementation details:
 
 <h3>Table Driven</h3>
@@ -69,6 +71,10 @@ A strategy calculates the 4 events for each cylinder.  An estimated event time i
 
 This allows the strategy to be completely asynchronous with the events, which is required because the strategy is compute intensive and may not be able to calculate each cycle and second the RPM is changing through the cycle, so computed times need to adjust accordingly.  For example, 20,000 RPM means the crankshaft makes a rotation in 3ms, and so a cycle will take 6 ms.  The compute time for a complete strategy on an Arduino Mega is about 6 ms, but because the cpu is saturated with event processing, it may take twice as long.  The strategy calculation time does not scale up/down with the number of cylinders.
 
+<h3>Scheduler</h3>
+
+The main loop uses a non-preemptive scheduler that prioritizes based on the run interval.  This is how the encoder/events execute on Linux.  There is a mode that runs the system with perfect 1 tick resolution which is used to test for a zero error environment.
+
 <h2>Strategy</h2>
 
 The initial strategy is based on extracted eeprom data from a Ford EEC-IV computer and then implemented using a best guess approach, in other words, it is incomplete and maybe not even accurate.  For example, their dwell numbers didn't make any sense at all, so used a 5-6 us dwell because that is what a ls1 coil requires.  The injector durations look a little long, and the lamda calculation is not incorporated yet, so no attempt at closed-loop operation.
@@ -105,11 +111,15 @@ Simply clone this project and execute the Makefile to run on Linux, or to run on
 
 <h3>Linux</h3>
 
-Values are initialized to support a running state, but any value can be overwritten using the prompt.  The events process and an encoder simulator are run from the main loop scheduler instead of from interrupts.  This mode is primarily for rapid development, and profiling or using valgrind.  The linux process is also used to test the Java interface.
+Values are initialized to support a running state, but any value can be overwritten using the prompt.  The events process and an encoder simulator are run from the main loop scheduler instead of from interrupts.  This mode is primarily for rapid prototyping, and profiling or using valgrind.  The linux process is also used to test the Java interface.
 
 <h3>Arduino Due (84 MHZ)</h3>
 
-The Due has 32bit timers so there is no requirement to ever use the pre-scalars in this application.  Also the interrupt overhead was optimized down to 6 us.  Still the decoder/encoder took 9-30 us, and the scheduler took closer to 40 us. Still not great numbers, but far better than the 16 MHZ Mega.  These times will improve using an external interrupt for the decoder by reducing the time a little more.
+A downside of the Due is that there is not any non-volatile memory available on the main board!
+
+The Due has 32bit timers so there is no requirement to ever use the pre-scalars in this application.  Also the timer interrupt overhead was optimized down to 6 us.
+
+Still the decoder/encoder took 9-30 us, and the scheduler took closer to 40 us. Still not great numbers, but far better than the 16 MHZ Mega.  These times will improve using an external interrupt for the decoder by reducing the time a little more.
 
 Here are some stats from the program for 8 cylinders showing the min/max late and degrees of error vs RPM:
 
@@ -128,8 +138,6 @@ Note that this is with running an encoder simulator that runs the decoder.  The 
 A 1/2 degree of maximum error for 6% of the time is acceptable for an 8 cylinder which would be topped out at under 7000 rpm. 
 
 At 22k rpm the durations hit 100% duty cycle so the events get queued.  5 degrees sounds unusable at this rpm. Queued ISR's is what causes the late time to increase.
-
-Queued ISR's can happen at different strategy points when events from different cylinders line up with each other.  The events ISR will test the next event and execute immediately, but this increases the processing time and can affect the system as a whole.
 
 Here are some stats for running with 1 cylinder:
 
@@ -205,6 +213,7 @@ The plan is to eventually integrate this into the existing system passively and 
 Next Steps:
 
 <ul>
+<li>See if the Arduino forums has any suggestion on improving the Mega timers</li>
 <li>Implement the timers on the stm32 and get performance metrics</li>
 <li>Flush out the strategy computations and incorporate my fan controller</li>
 <li>Release the Java program as open source, actually the libraries..</li>
