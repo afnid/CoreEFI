@@ -278,12 +278,12 @@ void sendEventStatus() {
 	channel.p1(F("events"));
 
 	channel.send(F("on"), events.on);
-	channel.send(F("-late"), events.minlate);
+	channel.send(F("-late"), events.minlate, false);
 	channel.send(F("+late"), events.maxlate);
 
 	channel.send(F("rpm"), getParamUnsigned(SensorRPM));
 	uint16_t us = TicksToMicros(decoder.getTicks() >> 1);
-	channel.send(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0 * events.minlate / us);
+	channel.send(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0 * events.minlate / us, false);
 	channel.send(F("+deg"), us == 0 || events.maxlate == 0 ? 0 : 360.0 * events.maxlate / us);
 
 	int16_t total = events.hist[CountEvents];
