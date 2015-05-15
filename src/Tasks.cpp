@@ -30,15 +30,7 @@ static inline uint32_t runStatus() {
 	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
 
 	if (!wait) {
-		uint32_t ticks = clock_ticks();
-		uint32_t us = TicksToMicros(ticks);
-
-		channel.p1(F("status"));
-		channel.send(F("ms"), us / 1000.0);
-		channel.p2();
-
 		sendEventStatus();
-
 		return MicrosToTicks(3000017UL);
 	}
 
@@ -196,10 +188,12 @@ static struct {
 
 void sendTasks() {
 	uint32_t now = clock_ticks();
+	uint32_t us = TicksToMicros(now);
 	Node *n = tasks.head;
 
 	channel.p1(F("tasks"));
 	channel.send(F("slept"), tasks.slept);
+	channel.send(F("ms"), us / 1000.0);
 	channel.p2();
 	channel.nl();
 
