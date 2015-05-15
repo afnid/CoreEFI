@@ -1,6 +1,6 @@
 
 # CoreEFI
-An electronic fuel injection program written in c++ to see if sequential fuel injection with 1 us resolution could be achieved on an Arduino 16 mhz Mega or 84mhz Arduino Due. This has also been run on a STM32F4 407 Cortex processor, but not fully implemented.  This has never been tested with any actual engine, so can't be considered much more than a proof of concept at this point.
+An electronic fuel injection program written in c++ to see if sequential fuel injection with 1 us resolution could be achieved on an Arduino 16 MHZ Mega or 84 MHZ Arduino Due. This has also been run on a STM32F4 407 Cortex processor, but not fully implemented.  This has never been tested with any actual engine, so can't be considered much more than a proof of concept at this point.
 
 Some distinguishing features:
 
@@ -13,15 +13,15 @@ Some distinguishing features:
 <li>External xml config file used to generate the parameter lists and table data</li>
 <li>Cylinders only limited by the number of events that can be processed at max RPM.</li>
 <li>Contains all tables/functions from a Ford EEC-IV computer using a MAF system.</li>
-<li>Most viable platform implemented right now is the Arduino Due at 84mhz</li>
-<li>Will compile and run on a 16mhz Arduino Mega using about 4k of ram and 40k of code.</li>
+<li>Most viable platform implemented right now is the Arduino Due at 84 MHZ</li>
+<li>Will compile and run on a 16 MHZ Arduino Mega using about 4k of ram and 40k of code.</li>
 <li>Compiles with gcc-arm-none for the STM32F4 series of ARM processors</li>
 <li>Can compile and run on the Linux command-line for testing/simulation.</li>
 </ol>
 
-Initial development started on an Arduino UNO, but switched to a Mega because 2k of ram is just not enough!  Then switched to the Due because the Mega timers combined with the 16mhz clock rate was pathetic.
+Initial development started on an Arduino UNO, but switched to a Mega because 2k of ram is just not enough!  Then switched to the Due because the Mega timers combined with the 16 MHZ clock rate was pathetic.
 
-The original system I used for my model also runs at 16mhz, so looking forward to seeing how accurate it really is.  I would hope most of it is written in assembly and with much better timer resolution.  Still I would like to think that I can make the Arduino Mega perform better than this 25 year old efi computer.
+The original system I used for my model also runs at 16 MHZ, so looking forward to seeing how accurate it really is.  I would hope most of it is written in assembly and with much better timer resolution.  Still I would like to think that I can make the Arduino Mega perform better than this 25 year old efi computer.
 
 <h2>Architecture</h2>
 
@@ -43,7 +43,7 @@ There is some additional overhead since the parameters are encapsulated in a sim
 
 <h3>Simplified Decoder/Event Math</h3>
 
-The decoder handling is actually the most critical piece since if there is drift/error in the decoder, the accuracy in scheduling no longer matters.  In some other implementations it appears they convert from a time basis to degrees, and appear to calculate the absolute degreees for each pulse event.  A large amount of effort goes into trying to calculate the current RPM.  The events are always calculated in degrees and then converted to time at the last.
+The decoder handling is actually the most critical piece since if there is drift/error in the decoder, the accuracy in scheduling no longer matters.  In some other implementations it appears they convert from a time basis to degrees, and appear to calculate the absolute degrees for each pulse event.  A large amount of effort goes into trying to calculate the current RPM.  The events are always calculated in degrees and then converted to time at the last.
 
 Current RPM is something that will result in each pulse getting shorter/longer as the engine accelerates/decelerates.  The RPM at the beginning of a cycle will be different than the RPM at the end, so if RPM is calculated only once per revolution, the error will compound until the RPM is calculated again.  RPM exact degree calculations require division which can make these more expensive time-wise.
 
@@ -59,7 +59,7 @@ A downside is that the accuracy of the tdc pulse is very important since it is u
 
 The event handler is designed to operate in a separate thread either from a coprocessor, or driven from an interrupt.
 
-Each event has two parts, an absolute start which specifies degrees from 0 to 720, and then a duration part in ticks.  So for a fuel/spark on each cyclinder, there are actually 4 different events.  When a schedule is computed the leading events are stored with an angle only, the followup event contains the same angle and the duration.  These values are stored in an unsigned 2 byte int, so 0 to 720 is stored as 0 to 65535.  This simplifies phase issues where events wrap around by leveraging the natural wrapping when working with unsigned values.
+Each event has two parts, an absolute start which specifies degrees from 0 to 720, and then a duration part in ticks.  So for a fuel/spark on each cylinder, there are actually 4 different events.  When a schedule is computed the leading events are stored with an angle only, the follow-up event contains the same angle and the duration.  These values are stored in an unsigned 2 byte int, so 0 to 720 is stored as 0 to 65535.  This simplifies phase issues where events wrap around by leveraging the natural wrapping when working with unsigned values.
 
 A strategy calculates the 4 events for each cylinder.  An estimated event time is calculated for sorting, but the final time is computed one or more times before it actually occurs.  For example, the strategy decides the spark should happen 20 deg btdc and the dwell should be 5 ms and the injector should open at 360btdc and stay open for 2 ms.  That information is stored in the events and can be used to calculate the absolute time relative to the latest rpm.
 
@@ -73,7 +73,7 @@ The positive side is that this will flush itself out pretty quick with some empi
 
 <h2>Accuracy</h2>
 
-So how accurate does it have to be?  Of the 4 events per cylinder, the timing of the injector open, spark and dwell can probably tolerate quite a bit.  At 8000 rpm, a 0.1 degree accuracy can be maintained with 2.08us of jitter .  For pulse width 2us is 0.05% per ms of duration, 40us for 1%.  I found a ms2 reference of 0.9 deg at 7,500 and older code revs being 3x as bad.  That was on a 40mhz processor, but the newer ms3 uses the xgate co-processor, and should be much more consistent.
+So how accurate does it have to be?  Of the 4 events per cylinder, the timing of the injector open, spark and dwell can probably tolerate quite a bit.  At 8000 rpm, a 0.1 degree accuracy can be maintained with 2.08us of jitter .  For pulse width 2us is 0.05% per ms of duration, 40us for 1%.  I found a ms2 reference of 0.9 deg at 7,500 and older code revs being 3x as bad.  That was on a 40 MHZ processor, but the newer ms3 uses the xgate co-processor, and should be much more consistent.
 
 At 8000 rpm, 0.5 degree accuracy requires the jitter to be 10.42us or less.  That would be against 7500 us/rev, or 15000 us/cycle.  The issue isn't whether any given processor can run an efi system at idle, the issue is what is the maximum rpm given the number of events per cylinder?  Full sequential requires 32 events for 8 cylinders, cut that in half for semi-sequential/wasted spark.  At high rpms, I am not sure if semi would make much difference in fuel flow, especially once the duty cycle reaches 100%.
 
@@ -85,7 +85,7 @@ There is a bmw v8 that can spin 20k rpm, and 0.1 degrees of error would equate t
 
 The issue is that with a single processor and multiple interrupts, there will always be the potential for contention.  And the maximum run-time of one isr will set the maximum error in the event scheduler isr.
 
-For example on a 84mhz due, the encoder/decoder simulated timer interrupt takes between 9-32 us with 6 us required for the isr overhead, that means the scheduler isr can be 40 us late.  A correction factor can be added to try to wake early and then sleep, but that extends the isr time, hurting the decoder isr.
+For example on a 84 MHZ due, the encoder/decoder simulated timer interrupt takes between 9-32 us with 6 us required for the isr overhead, that means the scheduler isr can be 40 us late.  A correction factor can be added to try to wake early and then sleep, but that extends the isr time, hurting the decoder isr.
 
 The sleep method works well to reduce errors at lower rpms where there is lower contention, but hurts higher rpms where it really matters and has an adverse affect on other isr routines like the decoder timing.  Corrupt the decoder timing, and all other accuracy attempts are meaningless.
 
@@ -105,7 +105,7 @@ Values are initialized to support a running state, but any value can be overwrit
 
 <h3>Arduino Due</h3>
 
-The Due has 32bit timers so there is no requirement to ever use the pre-scalars in this application.  Also the interrupt overhead was optimized down to 6 us.  Still the decoder/encoder took 9-30 us, and the scheduler took closer to 40 us.  Giving a worse case of about 40 us when running 8 cylinders sequential at 22,000 rpms, with about a 50% error rate.  The worse case was around 15us at 10,000 rpms with a 33% error rate.  Still not great numbers, but far better than the 16mhz Mega.  These times will improve using an exernal interrupt for the decoder by reducing the time a little more.
+The Due has 32bit timers so there is no requirement to ever use the pre-scalars in this application.  Also the interrupt overhead was optimized down to 6 us.  Still the decoder/encoder took 9-30 us, and the scheduler took closer to 40 us.  Giving a worse case of about 40 us when running 8 cylinders sequential at 22,000 rpms, with about a 50% error rate.  The worse case was around 15us at 10,000 rpms with a 33% error rate.  Still not great numbers, but far better than the 16 MHZ Mega.  These times will improve using an external interrupt for the decoder by reducing the time a little more.
 
 Here are some stats from the program for 8 cylinders showing the min/max late and degrees of error vs rpm:
 
@@ -117,9 +117,9 @@ Here are some stats from the program for 8 cylinders showing the min/max late an
 -late=  0	+late=  39	rpm=    22300	-deg=   0.00	+deg=   5.24	late%=  51.59
 </pre>
 
-Note that this is with running an ecoder simulator that runs the decoder.  The encoder has some round-off error and some jitter, thats why the rpm is not a whole number.  An external interrupt should have a little less overhead and should reduce the error some.  But this is with a 12 tooth decoder, there will be more contention with a 36 or 60 tooth decoder.
+Note that this is with running an encoder simulator that runs the decoder.  The encoder has some round-off error and some jitter, thats why the rpm is not a whole number.  An external interrupt should have a little less overhead and should reduce the error some.  But this is with a 12 tooth decoder, there will be more contention with a 36 or 60 tooth decoder.
 
-2200 rpm's appears to be the cross-over where there is an occaisional late every few seconds, anything below that is 100%.
+2200 rpm's appears to be the cross-over where there is an occasional late every few seconds, anything below that is 100%.
 
 A 1/2 degree of maximum error for 6% of the time is acceptable for an 8 cylinder which would be topped out at under 7000 rpm. 
 
@@ -157,7 +157,7 @@ Given the mega and due have the same form factor and not that much difference in
 
 <h3>STM32F4</h3>
 
-Running on a dev board to measure performance, getting a solid 10x+ performance over the mega which makes most performance issues go away.  Have not implemented the variable length timer yet, but just running from the main loop task scheduler it was performing on-time 99+% of the time at idle, which is more than the Mega could do with timers.  Makes sense since the strategy calc was still taking longer than the longest scheduler interval, but what took 6ms on an Arduino is happening in less than 600us on the 168mhz 407.  Using a USB serial example using the older ST libraries, trying to get the second USB to work with the CubeF4 crap.
+Running on a dev board to measure performance, getting a solid 10x+ performance over the mega which makes most performance issues go away.  Have not implemented the variable length timer yet, but just running from the main loop task scheduler it was performing on-time 99+% of the time at idle, which is more than the Mega could do with timers.  Makes sense since the strategy calc was still taking longer than the longest scheduler interval, but what took 6ms on an Arduino is happening in less than 600us on the 168 MHZ 407.  Using a USB serial example using the older ST libraries, trying to get the second USB to work with the CubeF4 crap.
 
 
 
@@ -182,11 +182,11 @@ There are at least 4 other systems out there that actually have run engines, but
 
 <h2>Summary</h2>
 
-Knowing that 1 us resolution is attainable even sometimes on a 16mhz arduino tells me that the best case timing can be attained nearly anywhere, it is really the worse case that matters.  Any time interrupts get queued waiting for another to finish, it is going to be late in processing.  Interrupt contention will always create situations where one isr is waiting for another and that drives your worse case.
+Knowing that 1 us resolution is attainable even sometimes on a 16 MHZ arduino tells me that the best case timing can be attained nearly anywhere, it is really the worse case that matters.  Any time interrupts get queued waiting for another to finish, it is going to be late in processing.  Interrupt contention will always create situations where one isr is waiting for another and that drives your worse case.
 
-The freescale processor with the xgate co-processor running at 40 mhz can probably attain a higher accuracy, more of the time, than the 168mhz arm if implemented correctly because it should have 0 interrupt contention.  Also frees up the isr for the decoder which is the most important.  I may investigate this further once the stm32 is tested.
+The freescale processor with the xgate co-processor running at 40 MHZ can probably attain a higher accuracy, more of the time, than the 168 MHZ arm if implemented correctly because it should have 0 interrupt contention.  Also frees up the isr for the decoder which is the most important.  I may investigate this further once the stm32 is tested.
 
-Of the platforms above, I don't think the 16mhz avr is viable except for maybe low cylinder counts, and limited rpms.  The 84 mhz Arduino Due looks like a viable platform for a v8.  The st arm is double the clock rate of the due, so should be able to cut all the error rates in half, so maybe running this on the rusefi hardware will be the final platform.
+Of the platforms above, I don't think the 16 MHZ avr is viable except for maybe low cylinder counts, and limited rpms.  The 84 MHZ Arduino Due looks like a viable platform for a v8.  The st arm is double the clock rate of the due, so should be able to cut all the error rates in half, so maybe running this on the rusefi hardware will be the final platform.
 
 <h2>What's Next?</h2>
 
