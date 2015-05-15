@@ -1,6 +1,6 @@
 
 # CoreEFI
-An electronic fuel injection program written in c++ to see if sequential fuel injection with 1 us resolution could be achieved on any Arduino 16 mhz avr or 84mhz due processor. This has also been run on a STM32F4 407 Cortex processor, but not fully implemented.  This has never been tested with any actual engine, so can't be considered much more than a proof of concept at this point.  This is a work in process.
+An electronic fuel injection program written in c++ to see if sequential fuel injection with 1 us resolution could be achieved on an Arduino 16 mhz Mega or 84mhz Arduino Due. This has also been run on a STM32F4 407 Cortex processor, but not fully implemented.  This has never been tested with any actual engine, so can't be considered much more than a proof of concept at this point.
 
 Some distinquishing features:
 
@@ -8,7 +8,7 @@ Some distinquishing features:
 <li>Utilizes variable length timers to minimize event scheduling overhead.</li>
 <li>Low impact metrics track performance rates and time spent in critical sections.</li>
 <li>Complete console interface allows viewing stats on all major components.</li>
-<li>All console output is in a json style which makes it very easy to parse.<li>
+<li>All console output is in a json style which makes it very easy to parse.</li>
 <li>Table driven architecture makes it easy to add new variables, tables, etc.</li>
 <li>External xml config file used to generate the parameter lists and table data</li>
 <li>Only limited by the number of events that can be processed at max RPM.</li>
@@ -41,11 +41,17 @@ There is some additional overhead since the parameters are encapsulated in a sim
 
 <h3>Simplified Decoder/Event Math</h3>
 
+The decoder handling is actually the most critical piece since if there is drift/error in the decoder, the accuracy in scheduling not longer matters.  In the couple of cases I have looked at other implementations it appears they convert from a time basis to degrees, and have and appear to try to calculate the absolute degreees for each event.  A large amount of effort goes into trying to calculate the current RPM.  The events are always calculated in degrees and then converted to time at the last.
+
 This implementation uses a very simple aproach that requires 0 floating point or division operations in the decoder or the final event time calculations and still delivers a very high degree of accuracy.
 
 Other implemntations do a fair amount of floating point math to try to estimate the exact rotation angle of the encoder to estimate the time an event is supposed to start.  The angle is often calculated from TDC and tries to compensate for the change in rotation that happens through the cycle.  The events are calculated in angles and the last step is to compute their times.
 
-This may be oversimplified, but the only thing that should matter is how long the cycle is going to take overall.  Each time a decoder event occurs, the pulse with gets stored in a cyclic buffer and the difference between the old pulse and the new pulse is added to the cycle time.  The TDC gets saved for eacy cycle, but thats it, no floating point math, no division, very fast.
+Current RPM is something that will result in each pulse getting shorter/longer as the engine accelerates/decelerates.  The RPM at the beginning of a cycle will be different than the RPM at the end, so if RPM is calculated only once per revolution, the error will compound until the RPM is calculated again.  RPM exact degree calculations require division which can make these more expensive time-wise.
+
+My aproach was to subtract the last pulse time and add the current pulse time to a running total so on every event I know the time it took for the previous cycle which would be 0 to 720 degrees.  A correction factor needs to be added to approximate current rpm, probably by keeping the relative difference between the preceding n pulses to calculate a percentage change to the cycle time.  Not implementing anything until I can be working with real data.
+
+The benefits of my aproach is there is 0 division and 0 floating point calculations required in the collection of pulses or in the translation from event degrees to absolute time.  So 0 division/floating point calculations in my isr's.  The correction factor above may add a division operation.  Another downside is that the accuracy of the tdc pulse is very important since it is used as the basis to convert degrees to absolute time.
 
 <h3>Single Event Scheduler</h3>
 
@@ -74,17 +80,6 @@ At 8000 rpm, 0.5 degree accuracy requires the jitter to be 10.42us or less.  Tha
 Half the events will cut isr contention in half.  It may be that a batch mode is required during cranking, then run full sequential up to a certain rpm, then switch to semi-sequential after that.  Wasted spark can also cut the coil events in half, so an 8 cylinder would require 16 injector events, and only 8 coil events.
 
 There is a bmw v8 that can spin 20k rpm, and 0.1 degrees of error would equate to 0.8 us, but for your standard 6k redline, you could have 2.8us of jitter and any accuracy beyond that is insignificant relative to other errors within the rest of the system.
-
-<h2>Decoder</h2>
-
-The decoder handling is actually the most critical piece since if there is drift/error in the decoder, the accuracy in scheduling not longer matters.  In the couple of cases I have looked at other implementations it appears they convert from a time basis to degrees, and have and appear to try to calculate the absolute degreees for each event.  A large amount of effort goes into trying to calculate the current RPM.  The events are always calculated in degrees and then converted to time at the last.
-
-Current RPM is something that will result in each pulse getting shorter/longer as the engine accelerates/decelerates.  The RPM at the beginning of a cycle will be different than the RPM at the end, so if RPM is calculated only once per revolution, the error will compound until the RPM is calculated again.  RPM exact degree calculations require division which can make these more expensive time-wise.
-
-
-My aproach was to subtract the last pulse time and add the current pulse time to a running total so on every event I know the time it took for the previous cycle which would be 0 to 720 degrees.  A correction factor needs to be added to approximate current rpm, probably by keeping the relative difference between the preceding n pulses to calculate a percentage change to the cycle time.  Not implementing anything until I can be working with real data.
-
-The benefits of my aproach is there is 0 division and 0 floating point calculations required in the collection of pulses or in the translation from event degrees to absolute time.  So 0 division/floating point calculations in my isr's.  The correction factor above may add a division operation.
 
 <h3>The Problem</h3>
 
