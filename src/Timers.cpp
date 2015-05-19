@@ -50,7 +50,7 @@ static const uint8_t MAXLOOPS = 4;
 
 extern "C" void ErrorHandler(void);
 
-static int prio = 0;
+static int stprio = 0;
 
 class FastTimer {
 public:
@@ -121,9 +121,9 @@ public:
 		enable();
 
 		if (irq) {
-			HAL_NVIC_SetPriority((IRQn_Type)irq, prio, prio);
+			HAL_NVIC_SetPriority((IRQn_Type)irq, stprio, stprio);
 			HAL_NVIC_EnableIRQ((IRQn_Type)irq);
-			prio++;
+			stprio++;
 		}
 	}
 
@@ -179,6 +179,7 @@ static FastTimer stm32timers[] = {
 		{ {}, TIM13, 16, 2, 1, 0, RCC_APB1ENR_TIM13EN, 0, 0, 0 },
 		{ {}, TIM14, 16, 2, 1, 0, RCC_APB1ENR_TIM14EN, 0, 0, 0 }
 		// all timers added for completeness, turned them all on!
+		// 2 is used for my clock timer, and 3 is used by usb system
 };
 
 static const int ntimers = sizeof(stm32timers) / sizeof(stm32timers[0]);
