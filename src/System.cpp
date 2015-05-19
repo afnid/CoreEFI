@@ -66,6 +66,8 @@ void initSystem()
 	channel.send(F("coils"), getParamUnsigned(ConstCoils));
 	channel.send(F("teeth"), getParamUnsigned(ConstEncoderTeeth));
 	channel.send(F("int"), (uint16_t)sizeof(int));
+	channel.send(F("long_int"), (uint16_t)sizeof(long int));
+	channel.send(F("long_long_int"), (uint16_t)sizeof(long long int));
 	channel.send(F("pulse"), (uint16_t)sizeof(pulse_t));
 	channel.send(F("ustoticks"), (uint16_t) MicrosToTicks(1u));
 	channel.p2();
@@ -113,124 +115,38 @@ void myzero(void *p, uint16_t len) {
 
 #ifdef STM32
 
-uint32_t micros() {
-	extern volatile uint32_t time_var2;
-	return time_var2;
-}
+#include "main.h"
 
-void _delay_us(uint16_t ticks) {
-}
-
-bool available(int fd) {
-	extern bool VCP_has_char();
-	return VCP_has_char();
-}
-
-char readch(int fd) {
-	extern int VCP_get_char(uint8_t *buf);
-	uint8_t ch = 0;
-	return VCP_get_char(&ch) == 1 ? ch : 0;
+void toggleled(uint8_t id) {
+#ifdef __STM32F4xx_HAL_CONF_H
+	switch (id) {
+		case 0:
+			BSP_LED_Toggle(LED3);
+			break;
+		case 1:
+			BSP_LED_Toggle(LED4);
+			break;
+		case 2:
+			BSP_LED_Toggle(LED5);
+			break;
+		case 3:
+			BSP_LED_Toggle(LED6);
+			break;
+		default:
+			BSP_LED_Toggle(LED6);
+			break;
+	}
+#endif
 }
 
 #else
+
+void toggleled(uint8_t id) {
+}
+
 #ifndef ARDUINO
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <time.h>
-#include <signal.h>
-#include <execinfo.h>
-#include <sys/time.h>
-
-#define NanosToTicks(x) ((x) / (1000 / TICKTOUS))
-#define TicksToNanos(x) ((x) * (1000 / TICKTOUS))
-
-#ifdef CLOCK_MONOTONIC
-
-uint32_t clock_ticks() {
-	static uint32_t offset = (1L << 32) - 5;
-	static uint32_t sec = 0;
-	static struct timespec ts;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-
-	if (sec == 0)
-		sec = ts.tv_sec;
-
-	ts.tv_sec -= sec;
-	ts.tv_sec += offset;
-
-	return NanosToTicks(ts.tv_sec * 1000000000ULL + ts.tv_nsec);
-}
-
-#else
-
-uint32_t clock_ticks() {
-	static uint32_t offset = (1L << 32) - 5;
-	static uint32_t sec = 0;
-	static struct timeval tv;
-	gettimeofday(&tv, 0);
-
-	if (sec == 0)
-		sec = tv.tv_sec;
-
-	tv.tv_sec -= sec;
-	tv.tv_sec += offset;
-
-	return MicrosToTicks(tv.tv_sec * 1000000ULL + tv.tv_usec);
-}
-
-#endif
-
-//uint32_t micros() {
-	//return TicksToMicros(clock_ticks());
-//}
-
-void delay_ticks(uint32_t ticks) {
-	static struct timespec req;
-	static struct timespec rem;
-
-	myzero(&req, sizeof(req));
-	myzero(&rem, sizeof(rem));
-	req.tv_nsec = TicksToNanos(ticks);
-	req.tv_sec = req.tv_nsec / 1000000000ULL;
-	req.tv_nsec -= req.tv_sec * 1000000000ULL;
-
-	do {
-		nanosleep(&req, &rem);
-	} while (rem.tv_sec > 0 || rem.tv_nsec > 0);
-}
-
-void _delay_us(uint16_t ticks) {
-	if (ticks < 100)
-		while (ticks)
-			--ticks;
-
-	if (ticks > 0)
-		delay_ticks(MicrosToTicks(ticks));
-}
-
-#include <stdio.h>
-#include <unistd.h>
-#include <sys/select.h>
-
-bool available(int fd) {
-	struct timeval tv;
-	fd_set fds;
-	tv.tv_sec = 0;
-	tv.tv_usec = 0;
-	FD_ZERO(&fds);
-	FD_SET(fd, &fds);
-	select(fd + 1, &fds, NULL, NULL, &tv);
-	return (FD_ISSET(0, &fds));
-}
-
-char readch(int fd) {
-	if (!available(fd))  // getting false input indicators
-		return 0;
-	char ch = 0;
-	int n = read(fd, &ch, sizeof(ch));
-	return n == 1 ? ch : 0;
-}
 
 static void stabilize(uint16_t ms) {
 	int start = clock_ticks();
@@ -293,9 +209,9 @@ int main(int argc, char **argv) {
 	if (false)
 		for (int i = 0; i < 0; i++) {
 			logFine("b %d %ld %d", i, time(0), clock_ticks());
-			_delay_us(1);
+			delay_ticks(1);
 			logFine("a %d %ld %d", i, time(0), clock_ticks());
-			_delay_us(50 * 1000);
+			delay_ticks(50 * 1000);
 		}
 
 	if (false)

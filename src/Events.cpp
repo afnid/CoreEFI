@@ -24,16 +24,18 @@ enum {
 	CountLates, // 6
 
 	CountEvents,
-	CountDelays,
-	CountSwaps,
+	CountCalls,
+	CountSwaps, // 9
+
+	CountPast,
+	CountJumps1,
+	CountJumps2, // 12
 
 	CountResets,
 	CountSyncs,
-	CountJumps, // 12
-	CountPast,
+	CountReturns, // 15
 
-	CountReturns,
-	CountDrift,
+	CountDelays,
 	CountPins,
 
 	HistMax,
@@ -70,9 +72,7 @@ static volatile struct {
 
 	int32_t minlate;
 	int32_t maxlate;
-	uint32_t tdc;
 	uint32_t next;
-	uint32_t last;
 	int8_t idx;
 	int8_t on;
 	bool valid;
@@ -80,14 +80,14 @@ static volatile struct {
 
 	inline void reset() volatile {
 		next = 0;
-		last = 0;
 		on = 0;
 		idx = 0;
 
-		current = &schedule1;
-
 		valid = false;
 		sync = false;
+		swap = false;
+
+		current = &schedule1;
 	}
 
 	inline void addHist(uint8_t h) volatile {
@@ -98,6 +98,7 @@ static volatile struct {
 	inline volatile BitEvent *getEvent() volatile {
 		if (idx >= current->size()) {
 			sync = false;
+			on = 0;
 			idx = 0;
 			checkSwap();
 		}
@@ -110,53 +111,63 @@ static volatile struct {
 	}
 
 	inline void calcNext(uint32_t now, volatile BitEvent *e, volatile BitPlan *p) volatile {
-		uint32_t tdc = decoder.getTDC();
 		uint32_t max = decoder.getTicks();
 		uint32_t val = p->calcTicks(max, true);
 
-		int32_t last = next;
-		next = tdc + val;
-
-		if (idx == 0 && tdiff32(next, last) < 0)
-			next += max;
-
+		e->clear();
 		e->calcs++;
 		p->setMax(max);
 
-		last = tdiff32(next, last);
+		next = decoder.getTDC() + val;
+		int32_t diff = tdiff32(next, now);
+		int32_t mid = max >> 1;
 
-		if (last < 0)
-			addHist(CountPast);
-		else if ((uint32_t)last > max / 2) {
-			//uint32_t ticks = clock_ticks();
-			//printf("%d next=%d tdc=%d last=%d max=%u\n", idx, tdiff32(ticks, next), tdiff32(ticks, tdc), last, max);
-			addHist(CountJumps);
+		if (idx == 0 && diff < -mid) { // expected phase change, computing first event before tdc
+			next += max;
+			diff = tdiff32(next, now);
 		}
+
+		if (diff > mid) { // phasing, can happen with decel only?
+			addHist(CountJumps1);
+		} else if (diff < -mid) {
+			addHist(CountJumps2);
+		}
+
+		if (diff < 1)
+			addHist(CountPast);
+	}
+
+	inline void calcNext(uint32_t now) volatile {
+		volatile BitEvent *e = getEvent();
+		volatile BitPlan *p = getPlan();
+		calcNext(now, e, p);
 	}
 
 	inline void checkSwap() volatile {
-		if (swap && idx == 0) {
+		if (swap) {
 			current = current == &schedule2 ? &schedule1 : &schedule2;
 			addHist(CountSwaps);
 			swap = false;
 		}
 	}
 
-	inline uint32_t runEvent(uint32_t now, uint8_t maxdelay) volatile {
+	inline uint32_t runEvent(uint32_t now, uint8_t maxdelay, uint8_t jitter) volatile {
 		volatile BitEvent *e = getEvent();
 		volatile BitPlan *p = getPlan();
 
 		int32_t delay = tdiff32(next, now);
 
-		if (!e->calcs || (!p->hasOff() && delay > maxdelay)) { // relative events absolute
+		if (!e->calcs || (!p->hasOff() && delay > jitter)) { // relative events absolute
 			calcNext(now, e, p);
 			delay = tdiff32(next, now);
 		}
 
+		addHist(CountCalls);
+
 		e->calls++;
 
-		if (delay <= maxdelay) {
-			if (delay > 0) {
+		if (delay <= jitter) {
+			if (delay > 0 && delay <= maxdelay) {
 				delay_ticks(delay);
 				now += delay;
 				addHist(CountDelays);
@@ -166,22 +177,20 @@ static volatile struct {
 			minlate = min(minlate, e->late);
 			maxlate = max(maxlate, e->late);
 
-			e->act = tdiff32(now, tdc);
+			e->act = tdiff32(now, decoder.getTDC());
 			e->drift = e->act - p->getPos();
 
 			if (!sync)
 				addHist(CountSyncs);
-			//if (e->drift)
-				//addHist(CountDrift);
 
 			addHist(CountEvents);
 
 			if (e->late > 0) {
-				int16_t abserr = abs(e->late) / 4;
+				int16_t idx = abs(e->late) / 4;
 				addHist(CountLates);
 
-				if (abserr < CountLateX)
-					addHist(abserr);
+				if (idx < CountLateX)
+					addHist(idx);
 				else
 					addHist(CountLateX);
 			}
@@ -201,23 +210,15 @@ static volatile struct {
 
 			idx++;
 
-			e = getEvent();
-			p = getPlan();
-			e->clear();
-
-			calcNext(now, e, p);
 			now = clock_ticks();
-			delay = tdiff32(next, now);
+			calcNext(now);
 		}
 
-		last = now;
-
-		return delay > 0 ? delay - 1 : 0;
+		return next;
 	}
 } events;
 
-volatile BitSchedule *getSchedule()
-{
+volatile BitSchedule *getSchedule() {
 	if (events.swap)
 		return 0;
 	return events.current == &events.schedule2 ? &events.schedule1 : &events.schedule2;
@@ -231,32 +232,32 @@ void swapSchedule() {
 }
 
 void setEventTDC(uint32_t tdc) {
-	events.on = 0;
+	if (events.current->size()) {
+		int32_t diff = tdiff32(events.next, tdc);
 
-	if (events.valid && events.idx != 0) {
-#ifndef ARDUINO
-		//sendEventList();
-#endif
-		events.idx = 0;
-		events.addHist(CountResets);
+		if (!events.valid || events.idx != 0 || diff < 0) {
+			events.idx = 0;
+			events.calcNext(tdc);
+			events.addHist(CountResets);
+		}
+
+		events.valid = true;
 	}
 
-	events.valid = true;
 	events.sync = true;
-	events.tdc = tdc;
 }
 
-uint32_t runEvents(uint32_t now, uint8_t jitter) {
-	if (decoder.isValid() && events.current->size())
-		return events.runEvent(now, jitter);
+uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint8_t jitter) {
+	if (events.valid)
+		return events.runEvent(now, maxdelay, jitter);
 
 	events.addHist(CountReturns);
 
-	return 65535;
+	return now + MicrosToTicks(10000);
 }
 
 void refreshEvents() {
-	if (decoder.isValid() && getParamUnsigned(SensorRPM) <= 0)
+	if (events.valid && getParamUnsigned(SensorRPM) <= 0)
 		events.reset();
 }
 
@@ -277,18 +278,20 @@ uint16_t initEvents() {
 void sendEventStatus() {
 	channel.p1(F("events"));
 
+	channel.send(F("idx"), events.idx);
 	channel.send(F("on"), events.on);
+	channel.send(F("rpm"), getParamUnsigned(SensorRPM));
+
 	channel.send(F("-late"), events.minlate, false);
 	channel.send(F("+late"), events.maxlate);
 
-	channel.send(F("rpm"), getParamUnsigned(SensorRPM));
 	uint16_t us = TicksToMicros(decoder.getTicks() >> 1);
 	channel.send(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0 * events.minlate / us, false);
 	channel.send(F("+deg"), us == 0 || events.maxlate == 0 ? 0 : 360.0 * events.maxlate / us);
 
 	int16_t total = events.hist[CountEvents];
 
-	if (total && decoder.isValid()) {
+	if (total && events.valid) {
 		int16_t lates = events.hist[CountLates];
 		channel.send(F("late%"), 100.0 * lates / total);
 

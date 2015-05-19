@@ -188,10 +188,31 @@ Given the mega and due have the same form factor and not that much difference in
 
 <h3>STM32F4 407 (168 MHZ)</h3>
 
-Running on a dev board to measure performance, getting a solid 10x+ performance over the mega which makes most performance issues go away.  Have not implemented the variable length timer yet, but just running from the main loop task scheduler it was performing on-time 99+% of the time at idle, which is more than the Mega could do with timers.  Makes sense since the strategy calculation was still taking longer than the longest scheduler interval, but what took 6ms on an Arduino is happening in less than 600us on the 168 MHZ 407.  Using a USB serial example using the older ST libraries, trying to get the second USB to work with the CubeF4 crap.
+Have to say .. the ST libraries suck, the worse I have seen in my life.  Incomplete examples, bugs, complex state machines with no docs to explain them.  My USB implementation is still crashing periodically because they don't cleanup an TxState.  I have 10x+ the number of hours as it took to get the Due working and it is still buggy.  The issues have been numerous and hard to figure out, e.g. the latest is the printf formating for %f totally fails, had to use a .ld file from their old libraries to make it work right, and this kind of bs has been at every turn.
 
+That said, the performance is solid, at 168mhz was seeing a solid 10x+ increase over the mega in intial tests which makes most performance issues go away.  The best part is that where even the due had a best case of 6 us overhead in the timer isr, the stm32f407 has 0-2 us which makes me think either I am getting incorrect results or the due should do better.
 
+I still do not believe the smt32f4 numbers, the gpio is not enabled yet, and there may be a problem with one of the timers or who knows what?  It looks promising, and would be nice if the hold.
 
+Here are some preliminary results below.
+
+<pre>
+rpm=    10046	-late=  -7	+late=  0	-deg=   -0.42	+deg=   0.00	late%=  0.00
+rpm=    22250	-late=  -5	+late=  1	-deg=   -0.67	+deg=   0.13	late%=  0.37
+rpm=    30494	-late=  -7	+late=  0	-deg=   -1.28	+deg=   0.00	late%=  0.00
+rpm=    40746	-late=  -7	+late=  1	-deg=   -1.71	+deg=   0.24	late%=  0.01
+rpm=    62046	-late=  -7	+late=  2	-deg=   -2.61	+deg=   0.74	late%=  -0.64
+</pre>
+
+All the different counters say that it is doing the work and the many cross-checks i have appear to line up, but this sounds too good to be true .. but if it is, it says something about avr timer implementations.  The above is running the same as the previous tests.
+
+Here is a test with 16 cylinders..
+
+<pre>
+rpm=    20208	-late=  -3	+late=  0	-deg=   -0.36	+deg=   0.00	late%=  0.00
+</pre>
+
+All the work may have been worth it, will update this if the numbers take a nose-dive.  Need to still release a stm32f4 based project for this.
 
 <h2>Other Solutions</h2>
 
@@ -215,7 +236,7 @@ There are at least 4 other systems out there that actually have run engines, but
 
 Knowing that 1 us resolution is attainable even sometimes on a 16 MHZ Arduino tells me that the best case timing can be attained nearly anywhere, it is really the worse case that matters.  Any time interrupts get queued waiting for another to finish, it is going to be late in processing.  Interrupt contention will always create situations where one ISR is waiting for another and that drives your worse case.
 
-The freescale processor with the xgate co-processor running at 40 MHZ can probably attain a higher accuracy, more of the time, than the 168 MHZ ARM if implemented correctly because it should have 0 interrupt contention.  Also frees up the ISR for the decoder which is the most important.  I may investigate this further once the stm32 is tested.
+The freescale processor with the xgate co-processor running at 40 MHZ can probably attain a higher accuracy, more of the time, than the 168 MHZ ARM if implemented correctly because it should have 0 interrupt contention.  Also frees up the ISR for the decoder which is the most important.  I may investigate this further once the stm32 is more fully tested.
 
 Of the platforms above, I don't think the 16 MHZ AVR is viable except for maybe low cylinder counts, and limited RPM.  The 84 MHZ Arduino Due looks like a viable platform for a v8.  The st arm is double the clock rate of the due, so should be able to cut all the error rates in half, so maybe running this on the rusefi hardware will be the final platform.
 
@@ -231,10 +252,10 @@ Next Steps:
 
 <ul>
 <li>See if the Arduino forums has any suggestion on improving the Mega timers</li>
-<li>Implement the timers on the stm32 and get performance metrics</li>
-<li>Flush out the strategy computations and incorporate my fan controller</li>
+<li>Further development with the stm32f4/due with a tft display</li>
+<li>Flush out the strategy computations and incorporate fan controller</li>
 <li>Release the Java program as open source, actually the libraries..</li>
 <li>Integrate this with an actual engine to see where I have over simplified things</li>
-<li>Try a freescale dev board with an xgate scheduler</li>
+<li>Try a freescale dev board with an xgate scheduler .. maybe</li>
 </ul>
 

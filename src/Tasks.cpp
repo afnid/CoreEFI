@@ -29,8 +29,13 @@ static inline void runClock(uint32_t seconds) {
 static inline uint32_t runStatus() {
 	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
 
+	toggleled(0);
+
 	if (!wait) {
 		sendEventStatus();
+#ifdef ARDUINO
+		//sendTimers();
+#endif
 		return MicrosToTicks(3000017UL);
 	}
 
@@ -81,7 +86,7 @@ enum {
 	TaskClock,
 	TaskRefresh,
 
-#ifdef ARDUINO
+#if defined(ARDUINO) || defined(STM32)
 	TaskMax,
 	TaskEvents,
 	TaskEncoder,
@@ -230,6 +235,8 @@ uint16_t initTasks() {
 	for (uint8_t i = 1; i < TaskMax; i++)
 		tasks.addTask(tasks.queue + i);
 
+	tasks.setEpoch();
+
 	return sizeof(tasks);
 }
 
@@ -241,18 +248,20 @@ int32_t runTask(uint32_t now) {
 
 		uint32_t t0 = clock_ticks();
 
-		switch (n->task.getId()) { // coupld use func ptrs, but then all would take args, and all would return vals, this should perform well
+		switch (n->task.getId()) { // could use func ptrs, but then all would take args, and all would return vals, this should perform well
 			case TaskEncoder: {
 				extern void simTimerEncoder(uint32_t ticks);
-				uint32_t ticks = encoder.run(now);
-				simTimerEncoder(ticks);
+				int32_t ticks = encoder.run(now);
+				//simTimerEncoder(ticks);
 				n->task.setWait(ticks);
 				tasks.reschedule(n);
 				}
 				break;
 			case TaskEvents: {
 				//extern void simTimerEvents(uint32_t ticks);
-				uint32_t ticks = runEvents(now, 0);
+				int32_t ticks = runEvents(now, 0, 5);
+				ticks = tdiff32(ticks, clock_ticks());
+				ticks = max(ticks, 1);
 				//simTimerEvents(ticks);
 				n->task.setWait(ticks); //wait <= 2 ? 0 : wait / 2); // force recalcs
 				tasks.reschedule(n);

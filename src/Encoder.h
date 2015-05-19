@@ -14,12 +14,12 @@ public:
 
 	uint16_t init() {
 		ratio = 0;
-		pulse = 0;
 		rpm = 0;
 		edges = 0;
 		teeth = 0;
 		edge = 0;
 		miss = 0;
+		pulse = MicrosToTicks(65535U);
 		return sizeof(Encoder);
 	}
 
@@ -47,7 +47,7 @@ public:
 		}
 
 		if (pulse == 0)
-			pulse = MicrosToTicks(65535);
+			pulse = MicrosToTicks(65535U);
 
 		return pulse;
 	}

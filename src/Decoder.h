@@ -172,7 +172,7 @@ public:
 
 				addHist(CountCycles);
 
-				extern void setEventTDC(uint32_t now);
+				extern void setEventTDC(uint32_t tdcts);
 				setEventTDC(tdcts);
 			}
 

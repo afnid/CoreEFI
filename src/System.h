@@ -11,13 +11,16 @@
 #define ARDUINO_DUE
 #endif
 
+#if !defined(ARDUINO) && !defined(STM32)
+#define UNIX 1
+#endif
+
+#include "Ticks.h"
+
 // Utilities
 
-#define tdiff32(a, b)		((int32_t)((uint32_t)(a) - (uint32_t)(b)))
-#define tdiff16(a, b)		((int16_t)((uint16_t)(a) - (uint16_t)(b)))
-
-#define min(a, b)	((a) < (b) ? (a) : (b))
-#define max(a, b)	((a) > (b) ? (a) : (b))
+#define min(a, b)	((a) < (b) ? a : b)
+#define max(a, b)	((a) > (b) ? a : b)
 
 #define bitsize(n) (((n) + 7) >> 3)
 #define bitmask(n) (1 << ((n) & 7))
@@ -27,27 +30,21 @@
 #define bitclr(a, n) (a[bitidx(n)] &= ~bitmask(n))
 
 void myzero(void *p, uint16_t len);
+void toggleled(uint8_t id);
 
 // Portability
+
+#ifdef STM32
+#define NDEBUG
+#endif
 
 #ifdef ARDUINO
 #define NDEBUG
 #define DEBUG
 
 typedef uint16_t pulse_t;
-#define clock_ticks() micros()
-#define delay_ticks(x) delayMicroseconds(x)
-
-#define MicrosToTicks(x) (x)
-#define TicksToMicros(x) (x)
-
-extern "C" uint32_t micros();
 
 #else
-
-#define TICKTOUS 1
-#define MicrosToTicks(x) ((x) * TICKTOUS)
-#define TicksToMicros(x) ((x) / TICKTOUS)
 
 typedef uint32_t pulse_t;
 
@@ -62,12 +59,6 @@ typedef uint32_t pulse_t;
 #define F(x)	(x)
 
 #define F_CPU (168 * 1000L * 1000L)
-
-uint32_t clock_ticks();
-void delay_ticks(uint32_t ticks);
-
-uint32_t micros();
-void _delay_us(uint16_t us);
 
 #endif
 

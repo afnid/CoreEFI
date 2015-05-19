@@ -152,8 +152,16 @@ void handleInput(char ch) {
 				case 'x':
 					encoder.skipEncoder();
 					break;
+#ifdef STM32
+				case 'y':
+					extern void printTimers();
+					printTimers();
+					break;
+#endif
 				case 'z':
+#ifdef UNIX
 					exit(0);
+#endif
 					break;
 				case '?':
 					channel.send(F("Usage: u <id> <val>, q <id>, [cdehrstplvd]\n"));

@@ -126,7 +126,7 @@ public:
 
 uint16_t initEvents();
 void refreshEvents();
-uint32_t runEvents(uint32_t now, uint8_t jitter);
+uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint8_t jitter);
 
 void checkEvents();
 void sendEventStatus();

@@ -74,7 +74,7 @@ static volatile class Pins {
 		volatile uint8_t *port = 0;
 		uint8_t mask = 0;
 
-#ifndef ARDUINO_DUE
+#if 0 //ndef ARDUINO_DUE
 		port = digitalPinToPort(pin);
 		mask = 1 << digitalPinToBitMask(pin);
 #endif

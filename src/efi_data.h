@@ -144,7 +144,7 @@ static struct _LookupHeader lookups[] = {
 	{ 0, 0, 0, 0, 838, 6, 1, 6, 13, 0, 1, 0, }, // 75 - FuncTransmissionRatio - ratio
 }; // 34
 
-static uint16_t data[] DATAMEM = {
+static const uint16_t data[] DATAMEM = {
 	// ACT
 	0, 17280, 
 	2560, 17280, 
