@@ -5,11 +5,11 @@
 #include "Metrics.h"
 
 void Metric::init() {
-	ticks = clock_ticks();
+	ticks = clockTicks();
 }
 
 void Metric::calc() {
-	ticks = TicksToMicros(clock_ticks() - ticks);
+	ticks = TicksToMicros(clockTicks() - ticks);
 }
 
 void Metric::send(const Metric *metrics, uint8_t count, uint16_t over) {

@@ -51,7 +51,7 @@ static inline void addHist(uint8_t h) {
 
 static const uint16_t multipliers[] = { 1, 4, 16, 64, 256, 1024 };
 
-static const double divisors[] = { 1, 1.0 / (1 << 2), 1.0 / (1 << 4), 1.0 / (1 << 6), 1.0 / (1 << 8), 1.0 / (1 << 10), };
+static const float divisors[] = { 1, 1.0 / (1 << 2), 1.0 / (1 << 4), 1.0 / (1 << 6), 1.0 / (1 << 8), 1.0 / (1 << 10), };
 
 #if HDRPROGMEM | DATAPROGMEM
 static void mymemcpy_PF(char *dst, char *src, int bytes)
@@ -126,7 +126,7 @@ static inline int16_t int16Decode(ParamData *pd, uint16_t v) {
 	return v;
 }
 
-static inline double _dblDecode(ParamData *pd, uint16_t v) {
+static inline float _dblDecode(ParamData *pd, uint16_t v) {
 	if (v == 0)
 		return 0;
 
@@ -136,7 +136,7 @@ static inline double _dblDecode(ParamData *pd, uint16_t v) {
 		return _uint16Decode(pd, v);
 	}
 
-	double x = pd->neg ? (int) v : v;
+	float x = pd->neg ? (int) v : v;
 	return x * divisors[pd->div];
 }
 
@@ -157,7 +157,7 @@ static inline uint16_t uint16Encode(uint8_t id, ParamData *pd, int v) {
 	return v;
 }
 
-static inline uint16_t dblEncode(uint8_t id, ParamData *pd, double v) {
+static inline uint16_t dblEncode(uint8_t id, ParamData *pd, float v) {
 	if (v) {
 		if (v < _dblDecode(pd, pd->min)) {
 			codes.set(id);
@@ -215,8 +215,8 @@ static inline void setEncoded(uint8_t id, ParamData *pd, uint16_t v) {
 
 static inline void refreshValue(uint8_t id, ParamData *pd) {
 	if (!pd->hdr || !isset(local.cached, id)) {
-		extern double getStrategyDouble(uint8_t id, ParamData *pd);
-		double v = getStrategyDouble(id, pd);
+		extern float getStrategyDouble(uint8_t id, ParamData *pd);
+		float v = getStrategyDouble(id, pd);
 		uint16_t i = dblEncode(id, pd, v);
 
 		setEncoded(id, pd, i);
@@ -225,19 +225,19 @@ static inline void refreshValue(uint8_t id, ParamData *pd) {
 	}
 }
 
-static inline double getVal(ParamData *pd, LookupHeader *h, uint8_t x, uint8_t y) {
+static inline float getVal(ParamData *pd, LookupHeader *h, uint8_t x, uint8_t y) {
 	uint16_t i = y * h->cols + x;
 	uint16_t raw = getLookupCell(h, i);
 	return _dblDecode(pd, raw);
 }
 
-static inline int floor(double v) {
+static inline int floor(float v) {
 	int x = (int) v;
 	return x < v ? x : x + 1;
 }
 
-static inline bool equivelent(double d1, double d2) {
-	static const double close = 0.001;
+static inline bool equivelent(float d1, float d2) {
+	static const float close = 0.001;
 	return abs(d1 - d2) <= close;
 }
 
@@ -251,7 +251,7 @@ void setParamUnsigned(uint8_t id, uint16_t v) {
 	setEncoded(id, pd, uint16Encode(id, pd, v));
 }
 
-void setParamDouble(uint8_t id, double v) {
+void setParamFloat(uint8_t id, float v) {
 	ParamData *pd = getParamData(id);
 	setEncoded(id, pd, dblEncode(id, pd, v));
 }
@@ -273,7 +273,7 @@ uint16_t getParamUnsigned(uint8_t id) {
 	return !pd ? 0 : _uint16Decode(pd, pd->value);
 }
 
-double getParamDouble(uint8_t id) {
+float getParamFloat(uint8_t id) {
 	ParamData *pd = getParamData(id);
 	refreshValue(id, pd);
 	return !pd ? 0 : _dblDecode(pd, pd->value);
@@ -283,7 +283,7 @@ uint16_t uint16Decode(ParamData *pd, uint16_t v) {
 	return _uint16Decode(pd, v);
 }
 
-double dblDecode(ParamData *pd, uint16_t v) {
+float dblDecode(ParamData *pd, uint16_t v) {
 	return _dblDecode(pd, v);
 }
 
@@ -358,7 +358,7 @@ void sendParamValues() {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 
-		if (getParamDouble(id))
+		if (getParamFloat(id))
 			sendParam(id, pd);
 	}
 }
@@ -434,7 +434,7 @@ void sendParamStats() {
 	channel.nl();
 }
 
-double lookupParam(uint8_t id, ParamData *pd) {
+float lookupParam(uint8_t id, ParamData *pd) {
 	LookupHeader *h = getLookupHeader(pd);
 
 	if (h->cid && h->rid) {
@@ -442,15 +442,15 @@ double lookupParam(uint8_t id, ParamData *pd) {
 		ParamData *rp = getParamData(h->rid - 1);
 		addHist(CountTables);
 
-		double x = getParamDouble(h->cid - 1);
-		double y = getParamDouble(h->rid - 1);
-		double c1 = _dblDecode(cp, h->c1);
-		double c2 = _dblDecode(cp, h->c2);
-		double r1 = _dblDecode(rp, h->r1);
-		double r2 = _dblDecode(rp, h->r2);
+		float x = getParamFloat(h->cid - 1);
+		float y = getParamFloat(h->rid - 1);
+		float c1 = _dblDecode(cp, h->c1);
+		float c2 = _dblDecode(cp, h->c2);
+		float r1 = _dblDecode(rp, h->r1);
+		float r2 = _dblDecode(rp, h->r2);
 
-		double yy = (y - r1) * (h->rows - 1) / (r2 - r1);
-		double xx = (x - c1) * (h->cols - 1) / (c2 - c1);
+		float yy = (y - r1) * (h->rows - 1) / (r2 - r1);
+		float xx = (x - c1) * (h->cols - 1) / (c2 - c1);
 
 		yy = max(0, min(yy, h->rows - 1));
 		xx = max(0, min(xx, h->cols - 1));
@@ -465,8 +465,8 @@ double lookupParam(uint8_t id, ParamData *pd) {
 
 		ix = floor(xx);
 
-		double v0 = getVal(pd, h, ix, iy);
-		double v1 = getVal(pd, h, ix + 1, iy);
+		float v0 = getVal(pd, h, ix, iy);
+		float v1 = getVal(pd, h, ix + 1, iy);
 		return v0 + (xx - ix) * (v1 - v0);
 	}
 
@@ -476,13 +476,13 @@ double lookupParam(uint8_t id, ParamData *pd) {
 		ParamData *cp = getParamData(h->cid - 1);
 		uint8_t r = h->rows - 1;
 
-		double y = getParamDouble(h->cid - 1);
-		double y1 = getVal(cp, h, h->last, 0);
+		float y = getParamFloat(h->cid - 1);
+		float y1 = getVal(cp, h, h->last, 0);
 
 		while (h->last > 0 && y < y1)
 			y1 = getVal(cp, h, --(h->last), 0);
 
-		double v = 0;
+		float v = 0;
 
 		while (h->last < h->cols - 1 && y >= (v = getVal(cp, h, h->last + 1, 1))) {
 			h->last++;
@@ -496,14 +496,14 @@ double lookupParam(uint8_t id, ParamData *pd) {
 		if (equivelent(y, y1))
 			return getVal(pd, h, h->last, r);
 
-		double y2 = getVal(cp, h, h->last + 1, 0);
+		float y2 = getVal(cp, h, h->last + 1, 0);
 
 		if (y1 == y2 || equivelent(y, y2))
 			return getVal(pd, h, h->last, r);
 
-		double pct = (y - y1) / (y2 - y1);
-		double v1 = getVal(pd, h, h->last - 1, r);
-		double v2 = getVal(pd, h, h->last, r);
+		float pct = (y - y1) / (y2 - y1);
+		float v1 = getVal(pd, h, h->last - 1, r);
+		float v2 = getVal(pd, h, h->last, r);
 		return v1 + pct * (v2 - v1);
 	}
 
@@ -512,22 +512,22 @@ double lookupParam(uint8_t id, ParamData *pd) {
 
 		addHist(CountLookups);
 
-		double y = h->cid ? getParamDouble(h->cid - 1) : _dblDecode(pd, pd->value);
+		float y = h->cid ? getParamFloat(h->cid - 1) : _dblDecode(pd, pd->value);
 
 		if (y <= h->c1 || h->c1 == h->c2)
 			return getVal(pd, h, 0, 0);
 		if (y >= h->c2)
 			return getVal(pd, h, h->cols - 1, 0);
 
-		double px = (y - h->c1) / (h->c2 - h->c1);
+		float px = (y - h->c1) / (h->c2 - h->c1);
 		h->last = floor(px);
 
 		if (!h->interp || h->last == h->cols - 1 || equivelent(h->last, px))
 			return getVal(pd, h, h->last, 0);
 
-		double pct = y - h->last; // 0-1
-		double v1 = getVal(pd, h, h->last, 0);
-		double v2 = getVal(pd, h, h->last + 1, 0);
+		float pct = y - h->last; // 0-1
+		float v1 = getVal(pd, h, h->last, 0);
+		float v2 = getVal(pd, h, h->last + 1, 0);
 		return v1 + pct * (v2 - v1);
 	}
 

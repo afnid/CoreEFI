@@ -102,14 +102,14 @@ public:
 		channel.send(F("late"), late);
 		channel.send(F("next"), next);
 
-		//double n = tdiff32(next, now) / 1000.0;
+		//float n = tdiff32(next, now) / 1000.0;
 		channel.send(F("next"), tdiff32(next, now));
 		//channel.send(F("next"), n);
 
 		uint32_t w = getWait();
 
 		if (w > 1000)
-			channel.send(F("kticks"), w / 1000.0);
+			channel.send(F("kticks"), w / 1000.0f);
 		else
 			channel.send(F("wait"), w);
 		channel.p2();

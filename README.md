@@ -115,7 +115,41 @@ Once running, just type ? to get some options.  u 0 5000, will set the decoder r
 
 Values are initialized to support a running state, but any value can be overwritten using the prompt.  The events process and an encoder simulator are run from the main loop scheduler instead of from interrupts.  This mode is primarily for rapid prototyping, and profiling or using valgrind.  The linux process is also used to test the Java interface.  Passing any argument at all to the program switches it to run with the perfect 1 tick timer for testing.
 
+<h3>STM32F4 407 (168 MHZ)</h3>
+
+Have to say .. the ST libraries suck, the worse I have ever seen.  Incomplete examples, bugs, complex state machines with no docs to explain them.  My USB implementation is still crashing periodically because they don't cleanup an TxState, and not the previously known TxState error.  I have 10x+ the number of hours as it took to get the Due working and it is still buggy.  The issues have been numerous and hard to figure out, e.g. the latest is the printf formating for %f totally fails, had to use a .ld file from their old libraries to make it work right, and this kind of bs has been at every turn.
+
+That said, the performance is solid, at 168mhz was seeing a solid 10x+ increase over the mega in intial tests which makes most performance issues go away.  The best part is that where even the due had a best case of 6 us overhead in the timer isr, the 407 has 0-2 us which makes me think either I am getting incorrect results or the due should do better.
+
+I still do not believe the smt32f4 numbers, the gpio is not enabled yet, and there may be a problem with one of the timers or who knows what?  It looks promising, and would be nice if they hold.
+
+Did some basic benchmarking, and the results were impressive.  The 407 has a fpu, but it only works for floating point, not double precision.  The double precision is about 10x faster than the due, but the floating point sqrt is 140x!  A basic 4 byte integer op is 33.5x.  The unusual part which is part of both tests is that the call to my custom clock ticks function the the 407 is 30x faster than the due.  I need to do a similar implementation on the due to see.  Also I think the 407 ticks are a little fast which is a disadvantage, I need to measure both on a scope to really know how they compare but that can't account for a double digit change.
+
+So makde sure all double precision numbers were switch to floats.  There were 4 numbers I compared before and after, the due times were reduced by about 25% for the strategy calc, but the 407 was reduced to 25% of the old number.  Unreal!  It does appear tha the 7 us jitter on the 407 is going to stay constant unless I can optimize out the 4 hal function calls, so they results were unchanged.  The due late percentages dropped by a full 5% at 22k;
+
+Here are some preliminary results below.
+
+<pre>
+rpm=    10046	-late=  -7	+late=  0	-deg=   -0.42	+deg=   0.00	late%=  0.00
+rpm=    22250	-late=  -5	+late=  1	-deg=   -0.67	+deg=   0.13	late%=  0.37
+rpm=    30494	-late=  -7	+late=  0	-deg=   -1.28	+deg=   0.00	late%=  0.00
+rpm=    40746	-late=  -7	+late=  1	-deg=   -1.71	+deg=   0.24	late%=  0.01
+rpm=    62046	-late=  -7	+late=  2	-deg=   -2.61	+deg=   0.74	late%=  -0.64
+</pre>
+
+All the different counters say that it is doing the work and the many cross-checks i have appear to line up, but this sounds too good to be true .. but if it is, it says something about avr timer implementations.  The above is running the same as the previous tests.
+
+Here is a test with 16 cylinders..
+
+<pre>
+rpm=    20208	-late=  -3	+late=  0	-deg=   -0.36	+deg=   0.00	late%=  0.00
+</pre>
+
+All the work may have been worth it, will update this if the numbers take a nose-dive.  Need to still release a 407 based project for this.
+
 <h3>Arduino Due (84 MHZ)</h3>
+
+Note that the numbers below have already been reduced by 5-6% for each of the 8 cylinder tests below because of some more optimisations, and pretty sure they will get another small drop, and then I will update them.
 
 A downside of the Due is that there is not any non-volatile memory available on the main board!
 
@@ -186,35 +220,7 @@ Using some timer test code that only would wakeup and immediately sleep, the tim
 
 Given the mega and due have the same form factor and not that much difference in price, there is no reason to continue with a mega.
 
-<h3>STM32F4 407 (168 MHZ)</h3>
-
-Have to say .. the ST libraries suck, the worse I have seen in my life.  Incomplete examples, bugs, complex state machines with no docs to explain them.  My USB implementation is still crashing periodically because they don't cleanup an TxState.  I have 10x+ the number of hours as it took to get the Due working and it is still buggy.  The issues have been numerous and hard to figure out, e.g. the latest is the printf formating for %f totally fails, had to use a .ld file from their old libraries to make it work right, and this kind of bs has been at every turn.
-
-That said, the performance is solid, at 168mhz was seeing a solid 10x+ increase over the mega in intial tests which makes most performance issues go away.  The best part is that where even the due had a best case of 6 us overhead in the timer isr, the stm32f407 has 0-2 us which makes me think either I am getting incorrect results or the due should do better.
-
-I still do not believe the smt32f4 numbers, the gpio is not enabled yet, and there may be a problem with one of the timers or who knows what?  It looks promising, and would be nice if the hold.
-
-Here are some preliminary results below.
-
-<pre>
-rpm=    10046	-late=  -7	+late=  0	-deg=   -0.42	+deg=   0.00	late%=  0.00
-rpm=    22250	-late=  -5	+late=  1	-deg=   -0.67	+deg=   0.13	late%=  0.37
-rpm=    30494	-late=  -7	+late=  0	-deg=   -1.28	+deg=   0.00	late%=  0.00
-rpm=    40746	-late=  -7	+late=  1	-deg=   -1.71	+deg=   0.24	late%=  0.01
-rpm=    62046	-late=  -7	+late=  2	-deg=   -2.61	+deg=   0.74	late%=  -0.64
-</pre>
-
-All the different counters say that it is doing the work and the many cross-checks i have appear to line up, but this sounds too good to be true .. but if it is, it says something about avr timer implementations.  The above is running the same as the previous tests.
-
-Here is a test with 16 cylinders..
-
-<pre>
-rpm=    20208	-late=  -3	+late=  0	-deg=   -0.36	+deg=   0.00	late%=  0.00
-</pre>
-
-All the work may have been worth it, will update this if the numbers take a nose-dive.  Need to still release a stm32f4 based project for this.
-
-<h2>Other Solutions</h2>
+<h2>Other Alternatives</h2>
 
 There are at least 4 other systems out there that actually have run engines, but are already heavily invested in their own approaches.  This is a quick synopsis of what I have seen so far:
 
@@ -236,7 +242,7 @@ There are at least 4 other systems out there that actually have run engines, but
 
 Knowing that 1 us resolution is attainable even sometimes on a 16 MHZ Arduino tells me that the best case timing can be attained nearly anywhere, it is really the worse case that matters.  Any time interrupts get queued waiting for another to finish, it is going to be late in processing.  Interrupt contention will always create situations where one ISR is waiting for another and that drives your worse case.
 
-The freescale processor with the xgate co-processor running at 40 MHZ can probably attain a higher accuracy, more of the time, than the 168 MHZ ARM if implemented correctly because it should have 0 interrupt contention.  Also frees up the ISR for the decoder which is the most important.  I may investigate this further once the stm32 is more fully tested.
+The freescale processor with the xgate co-processor running at 40 MHZ can probably attain a higher accuracy, more of the time, than the 168 MHZ ARM if implemented correctly because it should have 0 interrupt contention.  Also frees up the ISR for the decoder which is the most important.  I may investigate this further once the 407 is more fully tested.
 
 Of the platforms above, I don't think the 16 MHZ AVR is viable except for maybe low cylinder counts, and limited RPM.  The 84 MHZ Arduino Due looks like a viable platform for a v8.  The st arm is double the clock rate of the due, so should be able to cut all the error rates in half, so maybe running this on the rusefi hardware will be the final platform.
 
@@ -252,7 +258,7 @@ Next Steps:
 
 <ul>
 <li>See if the Arduino forums has any suggestion on improving the Mega timers</li>
-<li>Further development with the stm32f4/due with a tft display</li>
+<li>Further development with the 407/due with a tft display</li>
 <li>Flush out the strategy computations and incorporate fan controller</li>
 <li>Release the Java program as open source, actually the libraries..</li>
 <li>Integrate this with an actual engine to see where I have over simplified things</li>

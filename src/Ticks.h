@@ -5,19 +5,19 @@
 
 #define TICKTOUS 1
 
-#define clock_ticks() micros()
-#define delay_ticks(x) delayMicroseconds(x)
-#define init_ticks()
-
 extern "C" uint32_t micros();
+
+#define clockTicks() micros()
+#define delayTicks(x) delayMicroseconds(x)
+#define initTicks()
 
 #else
 
 #define TICKTOUS 1
 
 uint16_t initTicks();
-uint32_t clock_ticks();
-void delay_ticks(uint32_t ticks);
+uint32_t clockTicks();
+void delayTicks(uint32_t ticks);
 
 #endif
 

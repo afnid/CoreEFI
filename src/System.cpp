@@ -86,19 +86,15 @@ void initSystem()
 	setParamUnsigned(SensorDEC, 3000);
 	setParamUnsigned(SensorDEC, getParamUnsigned(ConstIdleRPM) / 2);
 
-	setParamDouble(SensorHEGO1, 1);
-	setParamDouble(SensorHEGO2, 1);
-	setParamDouble(SensorECT, 190);
-	setParamDouble(SensorACT, 150);
-	setParamDouble(SensorMAF, 5);
-	setParamDouble(SensorTPS, 20);
-	setParamDouble(SensorVCC, 14);
+	setParamFloat(SensorHEGO1, 1);
+	setParamFloat(SensorHEGO2, 1);
+	setParamFloat(SensorECT, 190);
+	setParamFloat(SensorACT, 150);
+	setParamFloat(SensorMAF, 5);
+	setParamFloat(SensorTPS, 20);
+	setParamFloat(SensorVCC, 14);
 	setParamUnsigned(SensorGEAR, 5);
 	setParamUnsigned(SensorIsKeyOn, 1);
-
-#ifdef NDEBUG
-	assert(0);
-#endif
 }
 
 void runInput()
@@ -118,24 +114,15 @@ void myzero(void *p, uint16_t len) {
 #include "main.h"
 
 void toggleled(uint8_t id) {
-#ifdef __STM32F4xx_HAL_CONF_H
-	switch (id) {
-		case 0:
-			BSP_LED_Toggle(LED3);
-			break;
-		case 1:
-			BSP_LED_Toggle(LED4);
-			break;
-		case 2:
-			BSP_LED_Toggle(LED5);
-			break;
-		case 3:
-			BSP_LED_Toggle(LED6);
-			break;
-		default:
-			BSP_LED_Toggle(LED6);
-			break;
-	}
+#ifdef __STM32F4_DISCOVERY_H
+	static Led_TypeDef leds[] = {
+			LED3,
+			LED4,
+			LED5,
+			LED6,
+	};
+
+	BSP_LED_Toggle(leds[id & 0x3]);
 #endif
 }
 
@@ -149,9 +136,9 @@ void toggleled(uint8_t id) {
 #include <time.h>
 
 static void stabilize(uint16_t ms) {
-	int start = clock_ticks();
+	int start = clockTicks();
 
-	while (clock_ticks() - start < ms * 1000)
+	while (clockTicks() - start < ms * 1000)
 		runSchedule();
 }
 
@@ -189,8 +176,8 @@ int main(int argc, char **argv) {
 	assert(tdiff16(2, 10) == -8);
 
 	while (true) {
-		printf("%10u %10u\n", TicksToMicros(clock_ticks()), clock_ticks());
-		delay_ticks(MicrosToTicks(500 * 1000));
+		printf("%10u %10u\n", TicksToMicros(clockTicks()), clockTicks());
+		delayTicks(MicrosToTicks(500 * 1000));
 		break;
 	}
 
@@ -208,24 +195,24 @@ int main(int argc, char **argv) {
 
 	if (false)
 		for (int i = 0; i < 0; i++) {
-			logFine("b %d %ld %d", i, time(0), clock_ticks());
-			delay_ticks(1);
-			logFine("a %d %ld %d", i, time(0), clock_ticks());
-			delay_ticks(50 * 1000);
+			logFine("b %d %ld %d", i, time(0), clockTicks());
+			delayTicks(1);
+			logFine("a %d %ld %d", i, time(0), clockTicks());
+			delayTicks(50 * 1000);
 		}
 
 	if (false)
-		for (double i = 0; i <= 5; i += 0.125) {
-			setParamDouble(SensorMAF, i);
+		for (float i = 0; i <= 5; i += 0.125) {
+			setParamFloat(SensorMAF, i);
 			stabilize(10);
-			logFine("maf %10g %10g %10g %10g", i, getParamDouble(FuncMafTransfer), getParamDouble(CalcVolumetricRate), getParamDouble(TableInjectorTiming));
+			logFine("maf %10g %10g %10g %10g", i, getParamFloat(FuncMafTransfer), getParamFloat(CalcVolumetricRate), getParamFloat(TableInjectorTiming));
 		}
 
 	if (false)
 		for (int i = getParamUnsigned(ConstIdleRPM) / 2; i <= 6000; i += 1500) {
-			setParamDouble(SensorDEC, i);
+			setParamFloat(SensorDEC, i);
 			stabilize(10 + 60000 / i);
-			logFine("final %10d %10d %10g %10g %10g %10g", i, getParamUnsigned(SensorRPM), getParamDouble(CalcFinalPulseAdvance), getParamDouble(CalcFinalSparkAdvance), getParamDouble(CalcFinalPulseWidth), getParamDouble(CalcFinalSparkWidth));
+			logFine("final %10d %10d %10g %10g %10g %10g", i, getParamUnsigned(SensorRPM), getParamFloat(CalcFinalPulseAdvance), getParamFloat(CalcFinalSparkAdvance), getParamFloat(CalcFinalPulseWidth), getParamFloat(CalcFinalSparkWidth));
 		}
 
 	if (argc > 1) {

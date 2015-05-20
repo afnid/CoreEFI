@@ -161,6 +161,25 @@ public:
 				return 0;
 		}
 	}
+
+	void send(uint8_t i) {
+		channel.p1(F("tim"));
+		channel.send("i", i);
+		channel.send("id", ++i);
+		channel.send("state", state);
+		channel.send("bits", bits);
+		channel.send("clk", clock);
+		channel.send("apb", apb);
+		channel.send("en", (uint8_t)isEnabled());
+		channel.send("rq", irq);
+		channel.send("ticks", ticks);
+		channel.send("per", handle.Init.Period);
+		channel.send("arr", tim->ARR);
+		channel.send("psc", tim->PSC);
+		channel.send("cnt", tim->CNT);
+		channel.p2();
+		channel.nl();
+	}
 };
 
 static FastTimer stm32timers[] = {
@@ -214,9 +233,9 @@ myHandler(1, 2, 0)
 //myHandler(2, 3, 0)
 myHandler(3, 4, 0)
 myHandler(4, 5, 0)
-myHandler(5, 6, 0)
-myHandler(6, 7, 0)
-myHandler(7, 8, 0)
+//myHandler(5, 6, 0)
+//myHandler(6, 7, 0)
+//myHandler(7, 8, 0)
 //myHandler(8, 9, 0)
 //myHandler(9, 10, 0)
 //myHandler(10, 11, 0)
@@ -265,26 +284,17 @@ void stopTimers() {
 }
 
 void printTimers() {
-	uint32_t div = 1000 * 1000;
+	float div = 1000 * 1000;
 
-	printf("clocks: %lu %lu %lu\n", HAL_RCC_GetHCLKFreq() / div, HAL_RCC_GetPCLK1Freq() / div, HAL_RCC_GetPCLK2Freq() / div);
+	channel.p1("clocks");
+	channel.send("hclk", HAL_RCC_GetHCLKFreq() / div);
+	channel.send("pclk1", HAL_RCC_GetPCLK1Freq() / div);
+	channel.send("pclk2",  HAL_RCC_GetPCLK2Freq() / div);
+	channel.p2();
+	channel.nl();
 
-	for (int i = 0; i < ntimers; i++) {
-		FastTimer *t = stm32timers + i;
-		printf("timer %2d %2d", i, i + 1);
-		printf(" state=%d", t->state);
-		printf(" bits=%d", t->bits);
-		printf(" clk=%d", t->clock);
-		printf(" apb=%d", t->apb);
-		printf(" on=%d", t->isEnabled());
-		printf(" irq=%2d", t->irq);
-		printf(" ticks=%10d", t->ticks);
-		printf(" per=%10ld", t->handle.Init.Period);
-		printf(" arr=%10ld", t->tim->ARR);
-		printf(" psc=%10ld", t->tim->PSC);
-		printf(" cnt=%10ld", t->tim->CNT);
-		printf("\n");
-	}
+	for (int i = 0; i < ntimers; i++)
+		stm32timers[i].send(i);
 }
 
 void initTimer(TIM_TypeDef *tim) {
@@ -712,7 +722,7 @@ public:
 	}
 
 	inline void sleep(uint32_t future) volatile {
-		uint32_t now = clock_ticks();
+		uint32_t now = clockTicks();
 		int32_t ticks = tdiff32(future, now);
 		ticks = max(0, ticks);
 
@@ -770,7 +780,7 @@ public:
 	}
 
 	inline uint32_t awoke() volatile {
-		uint32_t now = clock_ticks();
+		uint32_t now = clockTicks();
 		asleep = tdiff32(now, last);
 
 		if (!jump) {
@@ -834,7 +844,7 @@ public:
 		uint16_t lates = hist[CountLates];
 
 		if (lates && lates < count)
-			channel.send(F("late"), 100.0 * lates / count, false);
+			channel.send(F("late"), 100.0f * lates / count, false);
 
 		channel.send(F("bits"), bits, false);
 		channel.send(F("jumping"), jump > 0, false);
@@ -893,7 +903,7 @@ static void handleTimer(uint8_t id) {
 			case 1:
 				for (uint8_t i = 0; i < MAXLOOPS; i++) {
 					next = runEvents(now, 0, MAXJITTER);
-					now = clock_ticks();
+					now = clockTicks();
 
 					if (tdiff32(next, now) > MAXJITTER)
 						break;

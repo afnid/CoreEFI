@@ -23,7 +23,7 @@ static inline void runClock(uint32_t seconds) {
 	setTimer(TimeRunSeconds, rpm >= cranking);
 	setTimer(TimeOffSeconds, !isParamSet(SensorIsKeyOn));
 	setTimer(TimeMovingSeconds, isParamSet(SensorVSS));
-	setTimer(TimeIdleSeconds, getParamDouble(SensorTPS) <= 20);
+	setTimer(TimeIdleSeconds, getParamFloat(SensorTPS) <= 20);
 }
 
 static inline uint32_t runStatus() {
@@ -70,10 +70,10 @@ static inline void runTest() {
 	for (uint16_t i = 0; i < 100; i++)
 		getParamUnsigned(ConstEncoderTeeth);
 
-	//setParamDouble(SensorVSS, getParamUnsigned(CalcRPMtoMPH));
-	//getParamDouble(CalcFinalLamda);
-	//getParamDouble(CalcMPG);
-	//getParamDouble(CalcDutyCycle);
+	//setParamFloat(SensorVSS, getParamUnsigned(CalcRPMtoMPH));
+	//getParamFloat(CalcFinalLamda);
+	//getParamFloat(CalcMPG);
+	//getParamFloat(CalcDutyCycle);
 }
 
 enum {
@@ -182,7 +182,7 @@ static struct {
 	}
 
 	inline void setEpoch() {
-		uint32_t now = clock_ticks();
+		uint32_t now = clockTicks();
 
 		for (uint8_t i = 0; i < TaskMax; i++)
 			queue[i].task.setNext(now);
@@ -192,13 +192,13 @@ static struct {
 } tasks;
 
 void sendTasks() {
-	uint32_t now = clock_ticks();
+	uint32_t now = clockTicks();
 	uint32_t us = TicksToMicros(now);
 	Node *n = tasks.head;
 
 	channel.p1(F("tasks"));
 	channel.send(F("slept"), tasks.slept);
-	channel.send(F("ms"), us / 1000.0);
+	channel.send(F("msticks"), us / 1000.0f);
 	channel.p2();
 	channel.nl();
 
@@ -246,7 +246,7 @@ int32_t runTask(uint32_t now) {
 
 		tasks.reschedule(n);
 
-		uint32_t t0 = clock_ticks();
+		uint32_t t0 = clockTicks();
 
 		switch (n->task.getId()) { // could use func ptrs, but then all would take args, and all would return vals, this should perform well
 			case TaskEncoder: {
@@ -260,7 +260,7 @@ int32_t runTask(uint32_t now) {
 			case TaskEvents: {
 				//extern void simTimerEvents(uint32_t ticks);
 				int32_t ticks = runEvents(now, 0, 5);
-				ticks = tdiff32(ticks, clock_ticks());
+				ticks = tdiff32(ticks, clockTicks());
 				ticks = max(ticks, 1);
 				//simTimerEvents(ticks);
 				n->task.setWait(ticks); //wait <= 2 ? 0 : wait / 2); // force recalcs
@@ -297,7 +297,7 @@ int32_t runTask(uint32_t now) {
 				break;
 		}
 
-		now = clock_ticks();
+		now = clockTicks();
 		n->task.calc(tdiff32(now, t0));
 	}
 
@@ -308,7 +308,7 @@ void runTasks() {
 	tasks.setEpoch();
 
 	while (true) {
-		uint32_t now = clock_ticks();
+		uint32_t now = clockTicks();
 		int32_t sleep = runTask(now);
 
 		if (sleep > 0) {
@@ -321,10 +321,10 @@ void runTasks() {
 void runPerfectTasks() {
 	tasks.setEpoch();
 
-	uint32_t last = clock_ticks();
+	uint32_t last = clockTicks();
 
 	while (true) {
-		uint32_t now = clock_ticks();
+		uint32_t now = clockTicks();
 
 		if (tdiff32(now, last) > 0) {
 			int32_t sleep = runTask(last);

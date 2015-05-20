@@ -15,12 +15,12 @@
 #define UNIX 1
 #endif
 
-#include "Ticks.h"
-
 // Utilities
 
 #define min(a, b)	((a) < (b) ? a : b)
 #define max(a, b)	((a) > (b) ? a : b)
+
+// bitmaps
 
 #define bitsize(n) (((n) + 7) >> 3)
 #define bitmask(n) (1 << ((n) & 7))
@@ -34,16 +34,8 @@ void toggleled(uint8_t id);
 
 // Portability
 
-#ifdef STM32
-#define NDEBUG
-#endif
-
 #ifdef ARDUINO
-#define NDEBUG
-#define DEBUG
-
 typedef uint16_t pulse_t;
-
 #else
 
 typedef uint32_t pulse_t;
@@ -58,10 +50,9 @@ typedef uint32_t pulse_t;
 
 #define F(x)	(x)
 
-#define F_CPU (168 * 1000L * 1000L)
-
 #endif
 
+#include "Ticks.h"
 #include <assert.h>
 
 void initSystem();

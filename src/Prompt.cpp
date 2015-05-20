@@ -25,7 +25,7 @@ static void get(const char *s) {
 
 	if (id >= 0) {
 		channel.p1(F("ack"));
-		channel.send(id, getParamDouble(atoi(s)));
+		channel.send(id, getParamFloat(atoi(s)));
 		channel.p2();
 		channel.nl();
 	}
@@ -44,8 +44,8 @@ static void set(char *s) {
 	if (a) {
 		*a++ = 0;
 		uint8_t id = atoi(s);
-		double val = atof(a);
-		setParamDouble(id, val);
+		float val = atof(a);
+		setParamFloat(id, val);
 
 		/*
 		 channel.p1(F("id"));
@@ -59,6 +59,63 @@ static void set(char *s) {
 
 static char cmdbuf[12];
 
+#include <math.h>
+
+static uint32_t runBench1() {
+	uint32_t t1 = clockTicks();
+	uint32_t count = 0;
+	float a = 1.001;
+
+	while (tdiff32(clockTicks(), t1) < 1000000L) {
+		a += 0.01f * sqrtf(a);
+		count++;
+	}
+
+	assert(a > 0 || a <= 0);
+
+	return count;
+}
+
+static uint32_t runBench2() {
+	uint32_t t1 = clockTicks();
+	uint32_t count = 0;
+	double a = 1.001;
+
+	while (tdiff32(clockTicks(), t1) < 1000000L) {
+		a += 0.01 * sqrt(a);
+		count++;
+	}
+
+	assert(a > 0 || a <= 0);
+
+	return count;
+}
+
+static uint32_t runBench3() {
+	uint32_t t1 = clockTicks();
+	uint32_t count = 0;
+	uint32_t a = 1;
+
+	while (tdiff32(clockTicks(), t1) < 1000000L) {
+		a = ((a * a) >> 2) + 2001481UL;
+		count++;
+	}
+
+	assert(a > 0 || a <= 0);
+
+	return count;
+}
+
+static uint32_t runBench4() {
+	uint32_t t1 = clockTicks();
+	uint32_t count = 0;
+
+	while (tdiff32(clockTicks(), t1) < 1000000L)
+		count++;
+
+	return count;
+}
+
 void handleInput(char ch) {
 	if (ch == '\n' || ch == '\r') {
 		for (char *s = cmdbuf; *s; s++) {
@@ -70,6 +127,29 @@ void handleInput(char ch) {
 				case 'u':
 					set(s + 1);
 					myzero(cmdbuf, sizeof(cmdbuf));
+					break;
+
+				case 'b':
+					switch (s[1]) {
+						case '1':
+							channel.send(F("bench1"), runBench1());
+							channel.nl();
+							s++;
+							break;
+						case '2':
+							channel.send(F("bench2"), runBench2());
+							channel.nl();
+							s++;
+							break;
+						case '3':
+							channel.send(F("bench3"), runBench3());
+							channel.nl();
+							s++;
+						case '4':
+							channel.send(F("bench4"), runBench4());
+							channel.nl();
+							s++;
+					}
 					break;
 
 				case 'c':

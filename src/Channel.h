@@ -152,7 +152,7 @@ class Channel {
 	_printOverload("%d", int32_t)
 	_printOverload("%u", uint32_t)
 #endif
-	_printOverload("%.2lf", double)
+	_printOverload("%.2f", float)
 
 	char last;
 
@@ -193,13 +193,13 @@ public:
 	sendNameVal("%d", int32_t)
 	sendNameVal("%u", uint32_t)
 #endif
-	sendNameVal("%.2f", double)
+	sendNameVal("%.2f", float)
 	sendNameVal("%d", char)
 	sendNameVal("%d", bool)
 
 	sendIdVal("%d", int16_t)
 	sendIdVal("%u", uint16_t)
-	sendIdVal("%.2f", double)
+	sendIdVal("%.2f", float)
 	sendIdVal("%d", uint8_t)
 
 	uint8_t getLevel();

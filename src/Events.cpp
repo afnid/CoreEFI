@@ -168,7 +168,7 @@ static volatile struct {
 
 		if (delay <= jitter) {
 			if (delay > 0 && delay <= maxdelay) {
-				delay_ticks(delay);
+				delayTicks(delay);
 				now += delay;
 				addHist(CountDelays);
 			}
@@ -210,7 +210,7 @@ static volatile struct {
 
 			idx++;
 
-			now = clock_ticks();
+			now = clockTicks();
 			calcNext(now);
 		}
 
@@ -286,18 +286,18 @@ void sendEventStatus() {
 	channel.send(F("+late"), events.maxlate);
 
 	uint16_t us = TicksToMicros(decoder.getTicks() >> 1);
-	channel.send(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0 * events.minlate / us, false);
-	channel.send(F("+deg"), us == 0 || events.maxlate == 0 ? 0 : 360.0 * events.maxlate / us);
+	channel.send(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0f * events.minlate / us, false);
+	channel.send(F("+deg"), us == 0 || events.maxlate == 0 ? 0 : 360.0f * events.maxlate / us);
 
 	int16_t total = events.hist[CountEvents];
 
 	if (total && events.valid) {
 		int16_t lates = events.hist[CountLates];
-		channel.send(F("late%"), 100.0 * lates / total);
+		channel.send(F("late%"), 100.0f * lates / total);
 
 		for (uint8_t i = CountLate0; i <= CountLate0; i++) {
 			lates -= events.hist[i];
-			channel.send(F("latex"), 100.0 * lates / total);
+			channel.send(F("latex"), 100.0f * lates / total);
 		}
 	}
 

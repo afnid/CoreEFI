@@ -77,7 +77,7 @@ public:
 static void encoder()
 {
 	volatile Interrupt *i = interrupts.getInterrupt(Interrupt2);
-	decoder.run(clock_ticks(), i->digitalRead());
+	decoder.run(clockTicks(), i->digitalRead());
 }
 
 #endif

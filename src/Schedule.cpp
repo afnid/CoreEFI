@@ -56,9 +56,9 @@ class Schedule {
 	}
 
 	inline void calcSparkAdvance() {
-		static const double DIV720 = 65536 / 720.0;
+		static const float DIV720 = 65536 / 720.0;
 		initMetric(MetricSparkAdvance);
-		uint16_t sparkAdvance = (uint16_t)(DIV720 * getParamDouble(CalcFinalSparkAdvance));
+		uint16_t sparkAdvance = (uint16_t)(DIV720 * getParamFloat(CalcFinalSparkAdvance));
 		calcMetric(MetricSparkAdvance);
 
 		if (this->sparkAdvance != sparkAdvance) {
@@ -68,9 +68,9 @@ class Schedule {
 	}
 
 	inline void calcPulseAdvance() {
-		static const double DIV720 = 65536 / 720.0;
+		static const float DIV720 = 65536 / 720.0;
 		initMetric(MetricPulseAdvance);
-		uint16_t pulseAdvance = (uint16_t)(DIV720 * getParamDouble(CalcFinalPulseAdvance));
+		uint16_t pulseAdvance = (uint16_t)(DIV720 * getParamFloat(CalcFinalPulseAdvance));
 		calcMetric(MetricPulseAdvance);
 
 		if (this->pulseAdvance != pulseAdvance) {
@@ -81,7 +81,7 @@ class Schedule {
 
 	inline void calcPulseWidth() {
 		initMetric(MetricPulseWidth);
-		uint16_t pulseWidth = getParamDouble(CalcFinalPulseWidth);
+		uint16_t pulseWidth = getParamFloat(CalcFinalPulseWidth);
 		calcMetric(MetricPulseWidth);
 
 		if (this->pulseWidth != pulseWidth) {
@@ -108,7 +108,7 @@ class Schedule {
 			initMetric(MetricEvents);
 
 			uint8_t cylinders = getParamUnsigned(ConstCylinders);
-			double arc = 65536.0 / cylinders;
+			float arc = 65536.0 / cylinders;
 			uint8_t n = 0;
 
 			volatile BitPlan *p = schedule->getPlans();

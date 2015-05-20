@@ -15,7 +15,7 @@ uint16_t initTicks(void) {
 	return 0;
 }
 
-uint32_t clock_ticks() {
+uint32_t clockTicks() {
 	return *DWT_CYCCNT / 168;
 }
 
@@ -32,18 +32,18 @@ uint16_t initTicks(void) {
 	return 0;
 }
 
-uint32_t clock_ticks(void) {
+uint32_t clockTicks(void) {
 	return TIM2->CNT;
 }
 
 #endif
 
-void delay_ticks(uint32_t ticks) {
-	uint32_t stop = clock_ticks() + ticks;
+void delayTicks(uint32_t ticks) {
+	uint32_t stop = clockTicks() + ticks;
 	uint32_t now = 0;
 
 	do {
-		now = clock_ticks();
+		now = clockTicks();
 	} while (tdiff32(now, stop) < 0);
 }
 
@@ -55,7 +55,7 @@ void delay_ticks(uint32_t ticks) {
 #define TicksToNanos(x) ((x) * (1000 / TICKTOUS))
 
 #ifdef CLOCK_MONOTONIC
-uint32_t clock_ticks(void) {
+uint32_t clockTicks(void) {
 	static uint32_t offset = (1L << 32) - 5;
 	static uint32_t sec = 0;
 	static struct timespec ts;
@@ -71,7 +71,7 @@ uint32_t clock_ticks(void) {
 }
 
 #else
-uint32_t clock_ticks(void) {
+uint32_t clockTicks(void) {
 	static uint32_t offset = (1L << 32) - 5;
 	static uint32_t sec = 0;
 	static struct timeval tv;
@@ -92,7 +92,7 @@ uint16_t initTicks(void) {
 	return 0;
 }
 
-void delay_ticks(uint32_t ticks) {
+void delayTicks(uint32_t ticks) {
 	static struct timespec req;
 	static struct timespec rem;
 
