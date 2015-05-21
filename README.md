@@ -5,7 +5,7 @@ An electronic fuel injection program written in c++ to see if sequential fuel in
 This shows an example of the event schedule, the Java ui code is not yet released.
 
 <div>
-<img src= href=console.png>
+<img src=console.png>
 </div>
 
 Some distinguishing features:
