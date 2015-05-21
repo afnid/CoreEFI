@@ -2,11 +2,11 @@
 # CoreEFI
 An electronic fuel injection program written in c++ to see if sequential fuel injection with 1 us resolution could be achieved on an Arduino 16 MHZ Mega or 84 MHZ Arduino Due. This has also been run on a STM32F4 407 Cortex processor, but not fully implemented.  This has never been tested with any actual engine, so can't be considered much more than a proof of concept at this point.
 
-This shows an example of the event schedule, the Java ui code is not yet released.
-
 <div>
 <img src=console.png>
 </div>
+
+Above shows an example of the event schedule, the Java ui code is not yet released.
 
 Some distinguishing features:
 
