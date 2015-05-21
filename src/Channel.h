@@ -83,14 +83,15 @@ enum {
 
 #define channel_t __FlashStringHelper
 #define _printOverload(fmt, type) int print(type v) { return out->print(v); }
-#define sendNameVal(f, t) void send(const __FlashStringHelper *label, t v, bool verbose = true) { if (verbose || v) { name(label); out->print(v); }}
-#define sendIdVal(f, t) void send(uint8_t id, t v, bool verbose = true) { if (verbose || v) { name(id); out->print(v); }}
+#define sendNameVal(t) void send(const __FlashStringHelper *label, t v, bool verbose = true) { if (verbose || v) { name(label); out->print(v); }}
+#define sendIdVal(t) void send(uint8_t id, t v, bool verbose = true) { if (verbose || v) { name(id); out->print(v); }}
 
 #else
 
+#define _printOverloadf(f, t) int print(t v) { return printf(f, (double)v); }
 #define _printOverload(f, t) int print(t v) { return printf(f, v); }
-#define sendNameVal(f, t) void send(const channel_t *label, t v, bool verbose = true) { if (verbose || v) { name(label); printf(f, v); }}
-#define sendIdVal(f, t) void send(uint8_t id, t v, bool verbose = true) { if (verbose || v) { name(id); printf(f, v); }}
+#define sendNameVal(t) void send(const channel_t *label, t v, bool verbose = true) { if (verbose || v) { name(label); print(v); }}
+#define sendIdVal(t) void send(uint8_t id, t v, bool verbose = true) { if (verbose || v) { name(id); print(v); }}
 
 #endif
 
@@ -142,17 +143,21 @@ class Channel {
 	}
 #endif
 
-	_printOverload("%c", char)
-	_printOverload("%d", int16_t)
-	_printOverload("%u", uint16_t)
 #ifdef STM32
 	_printOverload("%ld", int32_t)
 	_printOverload("%lu", uint32_t)
+	_printOverloadf("%.2f", float)
 #else
 	_printOverload("%d", int32_t)
 	_printOverload("%u", uint32_t)
-#endif
 	_printOverload("%.2f", float)
+#endif
+	_printOverload("%d", int8_t)
+	_printOverload("%d", uint8_t)
+	_printOverload("%d", int16_t)
+	_printOverload("%u", uint16_t)
+	_printOverload("%c", char)
+	_printOverload("%d", bool)
 
 	char last;
 
@@ -182,25 +187,20 @@ public:
 		last = 0;
 	}
 
-	sendNameVal("%d", int8_t)
-	sendNameVal("%u", uint8_t)
-	sendNameVal("%d", int16_t)
-	sendNameVal("%u", uint16_t)
-#ifdef STM32
-	sendNameVal("%ld", int32_t)
-	sendNameVal("%lu", uint32_t)
-#else
-	sendNameVal("%d", int32_t)
-	sendNameVal("%u", uint32_t)
-#endif
-	sendNameVal("%.2f", float)
-	sendNameVal("%d", char)
-	sendNameVal("%d", bool)
+	sendNameVal(int8_t)
+	sendNameVal(uint8_t)
+	sendNameVal(int16_t)
+	sendNameVal(uint16_t)
+	sendNameVal(int32_t)
+	sendNameVal(uint32_t)
+	sendNameVal(float)
+	sendNameVal(char)
+	sendNameVal(bool)
 
-	sendIdVal("%d", int16_t)
-	sendIdVal("%u", uint16_t)
-	sendIdVal("%.2f", float)
-	sendIdVal("%d", uint8_t)
+	sendIdVal(uint8_t)
+	sendIdVal(int16_t)
+	sendIdVal(uint16_t)
+	sendIdVal(float)
 
 	uint8_t getLevel();
 	uint8_t setLevel(uint8_t level);

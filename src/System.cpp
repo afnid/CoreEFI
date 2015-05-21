@@ -43,6 +43,7 @@ void initSystem()
 	Serial.println("CoreEFI v007a");
 
 	channel.p1(F("mem"));
+	channel.send(F("ticks"), add(total, initTicks()));
 	channel.send(F("prompt"), add(total, initPrompt()));
 	channel.send(F("codes"), add(total, codes.init()));
 	channel.send(F("strategy"), add(total, initStrategy()));

@@ -32,10 +32,8 @@ static inline uint32_t runStatus() {
 	toggleled(0);
 
 	if (!wait) {
+		sendTicks();
 		sendEventStatus();
-#ifdef ARDUINO
-		//sendTimers();
-#endif
 		return MicrosToTicks(3000017UL);
 	}
 

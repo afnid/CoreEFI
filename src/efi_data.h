@@ -81,7 +81,7 @@ static ParamData params[] = {
 	{ 4889, 0, 25600, 0, 0, 6, 4,  }, // 77 - ConstInjLoSlope - ms - 19.09765625, 
 	{ 8, 1, 16, 0, 0, 6, 0,  }, // 78 - ConstCylinders - scalar - 8.0, 
 	{ 1, 1, 16, 0, 0, 6, 0,  }, // 79 - ConstCoils - scalar - 1.0, 
-	{ 12, 2, 62, 0, 0, 6, 0,  }, // 80 - ConstEncoderTeeth - scalar - 12.0, 
+	{ 36, 2, 62, 0, 0, 6, 0,  }, // 80 - ConstEncoderTeeth - scalar - 36.0, 
 	{ 2, 1, 10, 0, 0, 6, 0,  }, // 81 - ConstEncoderRatio - ratio - 2.0, 
 	{ 2, 0, 5, 0, 0, 6, 0,  }, // 82 - ConstEncoderCompare - scalar - 2.0, 
 	{ 0, 0, 1, 0, 0, 6, 0,  }, // 83 - ConstEncoderSyncHigh - bit - 0.0, 
@@ -144,7 +144,7 @@ static struct _LookupHeader lookups[] = {
 	{ 0, 0, 0, 0, 838, 6, 1, 6, 13, 0, 1, 0, }, // 75 - FuncTransmissionRatio - ratio
 }; // 34
 
-static const uint16_t data[] DATAMEM = {
+static uint16_t data[] DATAMEM = {
 	// ACT
 	0, 17280, 
 	2560, 17280, 

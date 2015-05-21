@@ -171,7 +171,7 @@
         <units>rpm</units>
         <value>500.0</value>
         <last>0.0</last>
-        <time>1431723498826</time>
+        <time>1432225088163</time>
         <min>0.0</min>
         <max>7000.0</max>
         <bits>0</bits>
@@ -199,7 +199,7 @@
         <units>scalar</units>
         <value>5.0</value>
         <last>0.0</last>
-        <time>1431723498826</time>
+        <time>1432225088163</time>
         <min>0.0</min>
         <max>5.0</max>
         <bits>0</bits>
@@ -212,7 +212,7 @@
         <units>bit</units>
         <value>1.0</value>
         <last>0.0</last>
-        <time>1431723498825</time>
+        <time>1432225088162</time>
         <min>0.0</min>
         <max>1.0</max>
         <bits>0</bits>
@@ -1085,7 +1085,7 @@
         <desc>Event edges will be teeth * 2</desc>
         <cat>Const</cat>
         <units>scalar</units>
-        <value>12.0</value>
+        <value>36.0</value>
         <last>0.0</last>
         <time>0</time>
         <min>2.0</min>

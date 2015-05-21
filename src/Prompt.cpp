@@ -82,7 +82,7 @@ static uint32_t runBench2() {
 	double a = 1.001;
 
 	while (tdiff32(clockTicks(), t1) < 1000000L) {
-		a += 0.01 * sqrt(a);
+		a += (double)0.01 * sqrt(a);
 		count++;
 	}
 
@@ -116,6 +116,26 @@ static uint32_t runBench4() {
 	return count;
 }
 
+#ifdef ARDUINO
+#include <Arduino.h>
+
+static uint32_t runBench5() {
+	//extern "C" uint32_t micros();
+	extern uint32_t clockTicks2();
+	uint32_t t1 = clockTicks2();
+	uint32_t count = 0;
+
+	while (tdiff32(clockTicks2(), t1) < 1000000L)
+		count++;
+
+	return count;
+}
+#else
+static uint32_t runBench5() {
+	return 0;
+}
+#endif
+
 void handleInput(char ch) {
 	if (ch == '\n' || ch == '\r') {
 		for (char *s = cmdbuf; *s; s++) {
@@ -130,26 +150,13 @@ void handleInput(char ch) {
 					break;
 
 				case 'b':
-					switch (s[1]) {
-						case '1':
-							channel.send(F("bench1"), runBench1());
-							channel.nl();
-							s++;
-							break;
-						case '2':
-							channel.send(F("bench2"), runBench2());
-							channel.nl();
-							s++;
-							break;
-						case '3':
-							channel.send(F("bench3"), runBench3());
-							channel.nl();
-							s++;
-						case '4':
-							channel.send(F("bench4"), runBench4());
-							channel.nl();
-							s++;
-					}
+					channel.send(F("bench1"), runBench1());
+					channel.send(F("bench2"), runBench2());
+					channel.send(F("bench3"), runBench3());
+					channel.send(F("bench4"), runBench4());
+					channel.send(F("bench5"), runBench5());
+					channel.nl();
+					s++;
 					break;
 
 				case 'c':

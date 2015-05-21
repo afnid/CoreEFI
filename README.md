@@ -2,6 +2,12 @@
 # CoreEFI
 An electronic fuel injection program written in c++ to see if sequential fuel injection with 1 us resolution could be achieved on an Arduino 16 MHZ Mega or 84 MHZ Arduino Due. This has also been run on a STM32F4 407 Cortex processor, but not fully implemented.  This has never been tested with any actual engine, so can't be considered much more than a proof of concept at this point.
 
+This shows an example of the event schedule, the Java ui code is not yet released.
+
+<div>
+<img src= href=console.png>
+</div>
+
 Some distinguishing features:
 
 <ol>
@@ -125,9 +131,9 @@ I still do not believe the smt32f4 numbers, the gpio is not enabled yet, and the
 
 Did some basic benchmarking, and the results were impressive.  The 407 has a fpu, but it only works for floating point, not double precision.  The double precision is about 10x faster than the due, but the floating point sqrt is 140x!  A basic 4 byte integer op is 33.5x.  The unusual part which is part of both tests is that the call to my custom clock ticks function the the 407 is 30x faster than the due.  I need to do a similar implementation on the due to see.  Also I think the 407 ticks are a little fast which is a disadvantage, I need to measure both on a scope to really know how they compare but that can't account for a double digit change.
 
-So makde sure all double precision numbers were switch to floats.  There were 4 numbers I compared before and after, the due times were reduced by about 25% for the strategy calc, but the 407 was reduced to 25% of the old number.  Unreal!  It does appear tha the 7 us jitter on the 407 is going to stay constant unless I can optimize out the 4 hal function calls, so they results were unchanged.  The due late percentages dropped by a full 5% at 22k;
+So makde sure all double precision numbers were switch to floats.  There were 4 numbers I compared before and after, the due times were reduced by about 25% for the strategy calc, but the 407 was reduced to 25% of the old number.  Unreal!  It does appear tha the 7 us jitter on the 407 is going to stay constant unless I can optimize out the 4 hal function calls, so the results were unchanged.  The due late percentages dropped by a full 5% at 22k with updated numbers below.
 
-Here are some preliminary results below.
+<b>Here are some stats from the program for 8 cylinders, 32 events, 12 tooth cam encoder (5/19/15):</b>
 
 <pre>
 rpm=    10046	-late=  -7	+late=  0	-deg=   -0.42	+deg=   0.00	late%=  0.00
@@ -139,13 +145,13 @@ rpm=    62046	-late=  -7	+late=  2	-deg=   -2.61	+deg=   0.74	late%=  -0.64
 
 All the different counters say that it is doing the work and the many cross-checks i have appear to line up, but this sounds too good to be true .. but if it is, it says something about avr timer implementations.  The above is running the same as the previous tests.
 
-Here is a test with 16 cylinders..
+Here is a test with 16 cylinders (5/19/15)..
 
 <pre>
 rpm=    20208	-late=  -3	+late=  0	-deg=   -0.36	+deg=   0.00	late%=  0.00
 </pre>
 
-All the work may have been worth it, will update this if the numbers take a nose-dive.  Need to still release a 407 based project for this.
+All the work may have been worth it, will update this if the numbers take a nose-dive.  Need to still release a 407 based project to build this.  Also pretty sure that my clock reference is running .01% too fast.
 
 <h3>Arduino Due (84 MHZ)</h3>
 
@@ -157,56 +163,39 @@ The Due has 32bit timers so there is no requirement to ever use the pre-scalars 
 
 Still the decoder/encoder took 9-30 us, and the scheduler took closer to 40 us. Still not great numbers, but far better than the 16 MHZ Mega.  These times will improve using an external interrupt for the decoder by reducing the time a little more.
 
-<b>Here are some stats from the program for 8 cylinders, 32 events, 12 tooth cam encoder, showing the max late and degrees of error vs RPM:</b>
+<b>Here are some stats from the program for 8 cylinders, 32 events, 12 tooth cam encoder (5/21/15):</b>
 
 <pre>
-+late=  0	rpm=    2194	+deg=   0.00	late%=  0.00
-+late=  8	rpm=    3982	+deg=   0.19	late%=  6.24
-+late=  13	rpm=    6750	+deg=   0.53	late%=  6.22
-+late=  21	rpm=    9874	+deg=   1.24	late%=  32.57
-+late=  39	rpm=    22300	+deg=   5.24	late%=  51.59
+rpm=    2806	-late=  -2	+late=  -1	-deg=   -0.03	+deg=   -0.02	late%=  0.00
+rpm=    7072	-late=  -15	+late=  3	-deg=   -0.64	+deg=   0.13	late%=  0.30
+rpm=    7864	-late=  -15	+late=  0	-deg=   -0.71	+deg=   0.00	late%=  0.00
+rpm=    8352	-late=  -15	+late=  105	-deg=   -0.75	+deg=   5.26	late%=  1.22
+rpm=    10364	-late=  -15	+late=  21	-deg=   -0.93	+deg=   1.31	late%=  29.88	
+rpm=    21826	-late=  -15	+late=  31	-deg=   -1.98	+deg=   4.10	late%=  29.69
 </pre>
 
-Note that this is with running an encoder simulator that runs the decoder.  The encoder has some round-off error and some jitter, thats why the rpm is not a whole number.  An external interrupt should have a little less overhead and should reduce the error some.
+Note that this is with running an encoder simulator that runs the decoder.  The encoder has some round-off error and some jitter, thats why the rpm is not a whole number.  An external interrupt should have a little less overhead and should help overall.
 
-This is with a 12 tooth decoder, there will be more contention with a 36 or 60 tooth decoder, esp if crank driven. Removing metrics that detect past errors would help.
+This is with a 12 tooth decoder, there will be more contention with a 36 or 60 tooth decoder, especially if crank vs cam driven.
 
-2200 rpm's appears to be the cross-over where there is an occasional late every few seconds, anything below that is 100% on time.
+Removing some of the metrics that measure errors would probably help some and they are easy to disable, but then all measurements have to be done externally.
 
-A 1/2 degree of maximum error for 6% of the time is acceptable for an 8 cylinder which would be topped out at under 7000 rpm. 
+The error rates look like they would be acceptable for a standard v8 that doesn't rev past 8k rpm's.
 
-At 22k rpm the durations hit 100% duty cycle so the events get queued.  5 degrees sounds unusable at this rpm. Queued ISR's is what causes the late time to increase.
+2800 rpm's appears to be the cross-over where there is an occasional late every few seconds, anything below that is 100% on time.
 
-<b>Here is a 4 cylinder, 16 events, 12 tooth cam encoder:</b>
+Somewhere around 8k, events get queued and there is a big jump in errors.  The example at 7800 was a best case, and just shows that even at a high rpm events don't always get queueud.  There is a number not shown, which is the % late within 2 us, and the number does not jump as much as late%.
+
+At 22k rpm the durations hit 100% duty cycle so the events get queued.  5+ degrees sounds unusable at this rpm. Queued ISR's is what causes the late time to increase, a single revolution happens in under 3 ms so not much time to fit everything in.
+
+<b>Here is a 4 cylinder, 16 events, 12 tooth cam encoder (5/21/15):</b>
 
 <pre>
-+late=  0	rpm=    2790	+deg=   0.00	late%=  0.00
-+late=  8	rpm=    7942	+deg=   0.38	late%=  6.24
-+late=  15	rpm=    15740	+deg=   1.42	late%=  25.00
-+late=  16	rpm=    21358	+deg=   2.05	late%=  50.00
+rpm=    3888	-late=  -12	+late=  -1	-deg=   -0.28	+deg=   -0.02	late%=  0.00
+rpm=    7882	-late=  -15	+late=  5	-deg=   -0.71	+deg=   0.24	late%=  0.13
+rpm=    16786	-late=  -14	+late=  9	-deg=   -1.41	+deg=   0.91	late%=  24.44	latex=  9.93
+rpm=    22412	-late=  -15	+late=  47	-deg=   -2.01	+deg=   6.31	late%=  33.75	latex=  8.06
 </pre>
-
-Interesting that the 0 error point was not double the 8 cyl rpm?  Half the events, but still the same number of decoder events.
-
-The 8 us error is likely the decoder events, more teeth will mean this will happen sooner.
-
-<b>Here are some stats for running with 1 cylinder, 4 events, 12 tooth cam encoder</b>:
-
-<pre>
-+late=  17	rpm=    22484	+deg=   2.29	late%=  50.04
-+late=  15	rpm=    9898	+deg=   0.89	late%=  25.05
-+late=  0	rpm=    8326	+deg=   0.00	late%=  0.00
-</pre>
-
-Somewhere above 8,400 rpm's, the events get queued.  Again this is a 12 tooth decoder and simulated encoder.
-
-<b>And for a little fun, 16 cylinders, 64 events, 60 tooth cam encoder:</b>
-
-<pre>
-+late=  12	rpm=    3914	+deg=   0.28
-</pre>
-
-Couldn't get reliable results above this rpm, a good stress test!
 
 <h3>Arduino Mega (16 MHZ)</h3>
 
@@ -257,6 +246,9 @@ The plan is to eventually integrate this into the existing system passively and 
 Next Steps:
 
 <ul>
+<li>Fix the bugs, there is a phase related one that sometimes effects error calculations<li>
+<li>Run numbers with an externally triggered decoder simulator<li>
+<li>Verify all numbers externally with an oscilloscope, could be better or worse<li>
 <li>See if the Arduino forums has any suggestion on improving the Mega timers</li>
 <li>Further development with the 407/due with a tft display</li>
 <li>Flush out the strategy computations and incorporate fan controller</li>

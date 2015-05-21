@@ -47,7 +47,7 @@ class BitEvent {
 public:
 
 	uint32_t act;
-	int16_t late;
+	int32_t late;
 	int16_t drift;
 	uint8_t calcs;
 	uint8_t calls;
@@ -302,8 +302,8 @@ void sendEventStatus() {
 	}
 
 	sendHist(events.hist, HistMax);
-	events.minlate = 30000;
-	events.maxlate = -events.minlate;
+	events.minlate = 32768;
+	events.maxlate = -32767;
 
 	channel.p2();
 	channel.nl();
