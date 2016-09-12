@@ -44,7 +44,7 @@ static const uint16_t MAXSLOP = MicrosToTicks(5);
 static const uint16_t MAXJITTER = MicrosToTicks(10);
 static const uint8_t MAXLOOPS = 4;
 
-#include "st_main.h"
+#include "stm32_main.h"
 
 static int stprio = 0;
 

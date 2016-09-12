@@ -196,7 +196,7 @@ void addPromptCallbacks(PromptCallback *callbacks, uint8_t ncallbacks) {
 
 #ifdef STM32
 
-#include "st_main.h"
+#include "stm32_main.h"
 
 bool available(int fd) {
 	extern bool VCP_avail();

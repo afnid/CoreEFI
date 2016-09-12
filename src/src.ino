@@ -5,7 +5,7 @@
 
 void setup()
 {
-	initSystem();
+	initSystem(true);
 }
 
 void loop()

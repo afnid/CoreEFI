@@ -131,7 +131,7 @@ void myzero(void *p, uint16_t len) {
 
 #ifdef STM32
 
-#include "st_main.h"
+#include "stm32_main.h"
 
 void toggleled(uint8_t id) {
 #ifdef __STM32F4_DISCOVERY_H

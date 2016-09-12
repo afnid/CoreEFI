@@ -7,6 +7,7 @@ all:: cube proj
 cube: 
 	$(STM32) $(STDIR) $(STINC)
 	@ln -sf $(PWD)/cube $(PWD)/cube/Legacy
+	rm -rf cube/*template*
 	@exit
 
 STLINK=~/dev/stm32/texane/stlink/build
@@ -46,8 +47,8 @@ STSRCS := $(shell find cube/ -name "*.c")
 STHDRS := $(shell find cube/ -name "*.h")
 STOBJS = $(STSRCS:.c=.o)
 
-SRCS:=$(shell echo *.cpp src/*.cpp)
-HDRS:=$(shell echo *.h src/*.h)
+SRCS:=$(shell echo src/*.cpp)
+HDRS:=$(shell echo src/*.h)
 OBJS = $(STSRCS:.cpp=.o)
 
 $(PROJ).elf: cube Makefile $(HDRS) $(STHDRS) $(SRCS) $(STSRCS)
