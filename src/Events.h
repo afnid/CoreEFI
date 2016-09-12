@@ -3,13 +3,13 @@
 class BitPlan {
 protected:
 
-	uint32_t pos :24;
-	uint32_t id :7;
-	uint32_t hi :1;
+	uint32_t pos;
+	uint32_t max;
 
-	uint32_t max :24;
-	uint32_t cyl :4;
-	uint32_t pin :4;
+	uint16_t id :6;
+	uint16_t hi :1;
+	uint16_t cyl :4;
+	uint16_t pin :5;
 
 	uint16_t ang;
 	int16_t off;
@@ -126,8 +126,7 @@ public:
 
 uint16_t initEvents();
 void refreshEvents();
-uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint8_t jitter);
-
+uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint16_t jitter);
 void checkEvents();
-void sendEventStatus();
-void sendEventList();
+void sendEventStatus(void *data);
+void sendEventList(void *data);

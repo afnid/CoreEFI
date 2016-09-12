@@ -1,6 +1,12 @@
 // copyright to me, released under GPL V3
 
+typedef uint32_t (*TaskCallback)(uint32_t t0, void *data);
+
 class Task {
+	const channel_t *name;
+	TaskCallback cb;
+	void *data;
+
 	uint16_t minticks;
 	uint16_t maxticks;
 	int32_t loops;
@@ -24,6 +30,10 @@ class Task {
 
 public:
 
+	inline uint32_t call(uint32_t t0) {
+		return cb(t0, data);
+	}
+
 	inline uint8_t getId() {
 		return id;
 	}
@@ -43,7 +53,11 @@ public:
 		this->next += getWait();
 	}
 
-	inline void init(int32_t wait, int8_t id) {
+	inline void init(const channel_t *name, TaskCallback cb, void *data, int32_t wait, int8_t id) {
+		this->name = name;
+		this->cb = cb;
+		this->data = data;
+
 		setId(id);
 		setWait(wait);
 		reset();
@@ -68,7 +82,7 @@ public:
 			//printf("%d %d %d\n", now / 10000, next / 10000, diff);
 
 			if (diff)
-				late = diff;
+				late = max(late, diff);
 
 			next = now + getWait();
 			loops++;
@@ -80,8 +94,6 @@ public:
 	}
 
 	inline void calc(int32_t ticks) {
-		assert(ticks >= 0);
-
 		if (ticks > 0) {
 			minticks = min(minticks, ticks);
 			maxticks = max(maxticks, ticks);
@@ -90,28 +102,29 @@ public:
 
 	void send(uint32_t now) {
 		channel.p1(F("tsk"));
-		channel.send(F("id"), id);
 
 		if (minticks != 65535)
-			channel.send(F("-ticks"), minticks);
+			channel.send(F("-ticks"), TicksToMicrosf(minticks));
 		else
-			channel.send(F("-ticks"), maxticks);
+			channel.send(F("-ticks"), TicksToMicrosf(maxticks));
 
-		channel.send(F("+ticks"), maxticks);
+		channel.send(F("+ticks"), TicksToMicrosf(maxticks));
 		channel.send(F("loops"), loops);
-		channel.send(F("late"), late);
-		channel.send(F("next"), next);
+		channel.send(F("late"), TicksToMicrosf(late));
+		channel.send(F("next"), TicksToMicrosf(next));
 
 		//float n = tdiff32(next, now) / 1000.0;
-		channel.send(F("next"), tdiff32(next, now));
+		channel.send(F("next"), TicksToMicrosf(tdiff32(next, now)));
 		//channel.send(F("next"), n);
 
 		uint32_t w = getWait();
 
 		if (w > 1000)
-			channel.send(F("kticks"), w / 1000.0f);
+			channel.send(F("kticks"), TicksToMicrosf(w / 1000.0f));
 		else
-			channel.send(F("wait"), w);
+			channel.send(F("ticks"), TicksToMicrosf(w));
+
+		channel.send(name, id);
 		channel.p2();
 		channel.nl();
 
@@ -119,7 +132,14 @@ public:
 	}
 };
 
-uint16_t initTasks();
-void runTasks();
-void sendTasks();
+class TaskMgr {
+public:
+
+	static uint16_t initTasks();
+
+	static void runTasks();
+
+	static void addTask(const channel_t *name, TaskCallback cb, void *data, uint32_t sliceus);
+};
+
 void runInput();

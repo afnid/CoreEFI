@@ -1,5 +1,6 @@
 // copyright to me, released under GPL V3
 
+#include "GPIO.h"
 #include "System.h"
 #include "Channel.h"
 #include "Metrics.h"
@@ -22,29 +23,27 @@ enum {
 };
 
 class Interrupt {
-	volatile PinInfo *pin;
+	GPIO::PinId pid;
 
 public:
 
 	uint8_t id;
 
-	inline void init(volatile PinInfo *pin) volatile {
+	inline void init(const GPIO::PinDef *pd) volatile {
 #ifdef ARDUINO
 		this->id = digitalPinToInterrupt(pin->getPin());
-#else
-		this->id = pin->getPin();
 #endif
-		this->pin = pin;
+		this->pid = pd->getId();
 	}
 
 	uint16_t digitalRead() volatile {
-		return pin->digitalRead();
+		return GPIO::isPinSet(pid);
 	}
 
 	void send() volatile {
 		channel.p1(F("isr"));
 		channel.send(F("id"), id);
-		channel.send(F("pin"), pin, false);
+		channel.send(F("pin"), (uint8_t)pid);
 		channel.p2();
 		channel.nl();
 	}
@@ -62,7 +61,7 @@ public:
 		return interrupts + id;
 	}
 
-	void initInterrupt(uint8_t id, volatile PinInfo *pin) volatile {
+	void initInterrupt(uint8_t id, const GPIO::PinDef *pin) volatile {
 		interrupts[id].init(pin);
 	}
 
@@ -83,8 +82,8 @@ static void encoder()
 #endif
 
 uint16_t initInterrupts() {
-	volatile PinInfo *pin = getParamPin(SensorDEC);
-	interrupts.initInterrupt(Interrupt2, pin);
+	//volatile PinInfo *pin = getParamPin(SensorDEC);
+	//interrupts.initInterrupt(Interrupt2, pin);
 
 #ifdef ARDUINO
 	//volatile Interrupt *i = interrupts.getInterrupt(Interrupt2);

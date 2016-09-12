@@ -2,11 +2,14 @@
 
 #include "System.h"
 #include "Channel.h"
+#include "Prompt.h"
 #include "Metrics.h"
 #include "Params.h"
 
+#include "Tasks.h"
 #include "Events.h"
 #include "Decoder.h"
+#include "Encoder.h"
 #include "Schedule.h"
 #include "Pins.h"
 
@@ -118,8 +121,8 @@ class Schedule {
 				uint16_t pulse1 = tdc - pulseAdvance;
 				uint16_t spark1 = tdc - sparkAdvance;
 
-				uint8_t pulsepin = getInjectorPin(cyl);
-				uint8_t sparkpin = getSparkPin(cyl);
+				uint8_t pulsepin = PinMgr::getInjectorPin(cyl);
+				uint8_t sparkpin = PinMgr::getSparkPin(cyl);
 
 				p++->setEvent(n++, cyl, pulsepin, pulse1, 0, true);
 				p++->setEvent(n++, cyl, pulsepin, pulse1, pulseWidth, false);
@@ -200,15 +203,52 @@ public:
 	}
 } schedule;
 
-void runSchedule() {
+static inline uint32_t runSchedule(uint32_t t0, void *data) {
 	schedule.runSchedule();
+	return decoder.getTicks() / 2;
+}
+
+static inline uint32_t runStatus(uint32_t t0, void *data) {
+	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
+
+	toggleled(0);
+
+	if (!wait) {
+		sendEventStatus(0);
+		return MicrosToTicks(3000017UL);
+	}
+
+	decoder.sendList();
+	sendEventList(0);
+
+	wait = max(wait, 500);
+
+	return wait * 3000;
+}
+
+static inline uint32_t runRefresh(uint32_t now, void *data) {
+	refreshEvents();
+	encoder.refresh();
+	decoder.refresh(now);
+	return 0;
+}
+
+static void sendSchedule(void *data) {
+	schedule.sendSchedule();
 }
 
 uint16_t initSchedule() {
 	myzero(&schedule, sizeof(schedule));
-	return sizeof(schedule);
-}
 
-void sendSchedule() {
-	schedule.sendSchedule();
+	TaskMgr::addTask(F("Schedule"), runSchedule, 0, 25);
+	TaskMgr::addTask(F("Refresh"), runRefresh, 0, 2000);
+	TaskMgr::addTask(F("Status"), runStatus, 0, 3000);
+
+	static PromptCallback callbacks[] = {
+		{ F("s"), sendSchedule },
+	};
+
+	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+
+	return sizeof(schedule) + sizeof(callbacks);
 }

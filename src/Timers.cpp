@@ -2,6 +2,7 @@
 
 #include "System.h"
 #include "Channel.h"
+#include "Prompt.h"
 #include "Metrics.h"
 #include "Params.h"
 
@@ -10,7 +11,7 @@
 #include "Timers.h"
 #include "Events.h"
 
-#ifdef STM32
+#if defined(STM32) || defined(ARDUINO_DUE)
 //#define TIMER_TEST
 #endif
 
@@ -19,13 +20,13 @@
 // Timers 0-8 valid on due, all 32 bit
 
 enum {
-	TimerId4,
+	TimerId2,
 	TimerId5,
 	// first too are always used unless TIMER_TEST is defined
 	MaxTimers, // after here are disabled..
+	TimerId4,
 
 	TimerId1,
-	TimerId2,
 	TimerId3,
 
 	TimerId6,
@@ -38,17 +39,12 @@ static void handleTimer(uint8_t id);
 
 #ifdef STM32
 
-static const uint8_t  DEFSLOP = 5;
-static const uint8_t  MAXSLOP = 100;
-static const uint8_t MAXJITTER = 10;
+static const uint16_t DEFSLOP = MicrosToTicks(1);
+static const uint16_t MAXSLOP = MicrosToTicks(5);
+static const uint16_t MAXJITTER = MicrosToTicks(10);
 static const uint8_t MAXLOOPS = 4;
 
-#include "main.h"
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_rcc.h"
-#include "stm32f4xx_hal_tim.h"
-
-extern "C" void ErrorHandler(void);
+#include "st_main.h"
 
 static int stprio = 0;
 
@@ -118,15 +114,18 @@ public:
 	volatile uint16_t ints;
 	volatile uint8_t state;
 	volatile uint16_t hist[HistMax];
+	volatile uint32_t ticks;
 
 	void init() {
 		if (!state) {
 			div = getFreq() / 1000L / 1000L;
+			div = 4;
+
 			myzero(&handle, sizeof(handle));
 			handle.Instance = tim;
 
-			handle.Init.Period = 1000000L - 1;
-			handle.Init.Prescaler = div - 1;
+			handle.Init.Period = MicrosToTicks(1000000L) / div - 1;
+			handle.Init.Prescaler = 1;
 			handle.Init.CounterMode = TIM_COUNTERMODE_UP;
 
 			if (HAL_TIM_Base_Init(&handle) != HAL_OK)
@@ -142,7 +141,11 @@ public:
 	}
 
 	void start(int32_t ticks) {
-		ticks = max(ticks, 2) - 1;
+		static const int32_t minticks = MicrosToTicks(1);
+
+		this->ticks = ticks;
+		ticks = ticks / 4 - 1;
+		ticks = max(ticks, minticks);
 
 		__HAL_TIM_SET_AUTORELOAD(&handle, ticks);
 
@@ -177,8 +180,8 @@ public:
 		enable();
 
 		if (irq) {
-			HAL_NVIC_SetPriority((IRQn_Type)irq, stprio, stprio);
-			HAL_NVIC_EnableIRQ((IRQn_Type)irq);
+			HAL_NVIC_SetPriority((IRQn_Type) irq, stprio, stprio);
+			HAL_NVIC_EnableIRQ((IRQn_Type) irq);
 			stprio++;
 		}
 
@@ -193,12 +196,13 @@ public:
 		channel.send("bits", bits);
 		channel.send("clk", clock);
 		channel.send("apb", apb);
-		channel.send("en", (uint8_t)isEnabled());
+		channel.send("en", (uint8_t) isEnabled());
 		channel.send("rq", irq);
 		channel.send("per", handle.Init.Period);
 		channel.send("arr", tim->ARR);
 		channel.send("psc", tim->PSC);
 		channel.send("cnt", tim->CNT);
+		channel.send("ticks", ticks);
 		sendHist(hist, HistMax);
 		channel.p2();
 		channel.nl();
@@ -206,22 +210,22 @@ public:
 };
 
 static FastTimer stm32timers[] = {
-		{ {}, TIM1, 16, 0, 2, 0, RCC_APB2ENR_TIM1EN, 0, 0, 0 },
-		{ {}, TIM2, 32, 2, 1, TIM2_IRQn, RCC_APB1ENR_TIM2EN, 0, 0, 0 },
-		{ {}, TIM3, 16, 2, 1, TIM3_IRQn, RCC_APB1ENR_TIM3EN, 0, 0, 0 },
-		{ {}, TIM4, 16, 2, 1, TIM4_IRQn, RCC_APB1ENR_TIM4EN, 0, 0, 0 },
-		{ {}, TIM5, 32, 2, 1, TIM5_IRQn, RCC_APB1ENR_TIM5EN, 0, 0, 0 },
-		{ {}, TIM6, 16, 2, 1, 0, RCC_APB1ENR_TIM6EN, 0, 0, 0 },
-		{ {}, TIM7, 16, 2, 1, TIM7_IRQn, RCC_APB1ENR_TIM7EN, 0, 0, 0 },
-		{ {}, TIM8, 16, 0, 2, 0, RCC_APB2ENR_TIM8EN, 0, 0, 0 },
-		{ {}, TIM9, 16, 0, 2, 0, RCC_APB2ENR_TIM9EN, 0, 0, 0 },
-		{ {}, TIM10, 16, 0, 2, 0, RCC_APB2ENR_TIM10EN, 0, 0, 0 },
-		{ {}, TIM11, 16, 0, 2, 0, RCC_APB2ENR_TIM11EN, 0, 0, 0 },
-		{ {}, TIM12, 16, 2, 1, 0, RCC_APB1ENR_TIM12EN, 0, 0, 0 },
-		{ {}, TIM13, 16, 2, 1, 0, RCC_APB1ENR_TIM13EN, 0, 0, 0 },
-		{ {}, TIM14, 16, 2, 1, 0, RCC_APB1ENR_TIM14EN, 0, 0, 0 }
-		// all timers added for completeness, turned them all on!
-		// 2 is used for my clock timer, and 3 is used by usb system
+	{ { }, TIM1, 16, 0, 2, 0, RCC_APB2ENR_TIM1EN, 0, 0, 0 },
+	{ { }, TIM2, 32, 2, 1, TIM2_IRQn, RCC_APB1ENR_TIM2EN, 0, 0, 0 },
+	{ { }, TIM3, 16, 2, 1, TIM3_IRQn, RCC_APB1ENR_TIM3EN, 0, 0, 0 },
+	{ { }, TIM4, 16, 2, 1, TIM4_IRQn, RCC_APB1ENR_TIM4EN, 0, 0, 0 },
+	{ { }, TIM5, 32, 2, 1, TIM5_IRQn, RCC_APB1ENR_TIM5EN, 0, 0, 0 },
+	{ { }, TIM6, 16, 2, 1, 0, RCC_APB1ENR_TIM6EN, 0, 0, 0 },
+	{ { }, TIM7, 16, 2, 1, TIM7_IRQn, RCC_APB1ENR_TIM7EN, 0, 0, 0 },
+	{ { }, TIM8, 16, 0, 2, 0, RCC_APB2ENR_TIM8EN, 0, 0, 0 },
+	{ { }, TIM9, 16, 0, 2, 0, RCC_APB2ENR_TIM9EN, 0, 0, 0 },
+	{ { }, TIM10, 16, 0, 2, 0, RCC_APB2ENR_TIM10EN, 0, 0, 0 },
+	{ { }, TIM11, 16, 0, 2, 0, RCC_APB2ENR_TIM11EN, 0, 0, 0 },
+	{ { }, TIM12, 16, 2, 1, 0, RCC_APB1ENR_TIM12EN, 0, 0, 0 },
+	{ { }, TIM13, 16, 2, 1, 0, RCC_APB1ENR_TIM13EN, 0, 0, 0 },
+	{ { }, TIM14, 16, 2, 1, 0, RCC_APB1ENR_TIM14EN, 0, 0, 0 }
+	// all timers added for completeness, turned them all on!
+	// 2 is used for my clock timer, and 3 is used by usb system
 };
 
 static const int ntimers = sizeof(stm32timers) / sizeof(stm32timers[0]);
@@ -247,8 +251,7 @@ static FastTimer *getFastTimer(uint8_t id) {
 
 #define myHandler(idx, id)	extern "C" void TIM##id##_IRQHandler() {\
 		stm32timers[idx].notifyHal();\
-		if (TimerId##id != TimerId2)\
-			handleTimer(TimerId##id);\
+		handleTimer(TimerId##id);\
 }
 
 #define myHandler2(idx, id)	extern "C" void TIM##id##_IRQHandler() {\
@@ -322,13 +325,13 @@ void stopTimers() {
 			stm32timers[i].stop();
 }
 
-void printTimers() {
+static void printTimers() {
 	float div = 1000 * 1000;
 
 	channel.p1("clocks");
 	channel.send("hclk", HAL_RCC_GetHCLKFreq() / div);
 	channel.send("pclk1", HAL_RCC_GetPCLK1Freq() / div);
-	channel.send("pclk2",  HAL_RCC_GetPCLK2Freq() / div);
+	channel.send("pclk2", HAL_RCC_GetPCLK2Freq() / div);
 	channel.p2();
 	channel.nl();
 
@@ -338,9 +341,9 @@ void printTimers() {
 
 #elif defined(ARDUINO_DUE)
 #include <Arduino.h>
-static const uint8_t DEFSLOP = MicrosToTicks(6);
-static const uint8_t MAXSLOP = MicrosToTicks(40);
-static const uint8_t MAXJITTER = MicrosToTicks(15);
+static const uint16_t DEFSLOP = MicrosToTicks(1);
+static const uint16_t MAXSLOP = MicrosToTicks(10);
+static const uint16_t MAXJITTER = MicrosToTicks(15);
 static const uint8_t MAXLOOPS = 4;
 
 #if 1
@@ -351,27 +354,34 @@ typedef struct {
 	uint32_t chn;
 	IRQn_Type irq;
 	uint32_t ticks;
+	TcChannel *ch;
 
 	void init() volatile {
-        pmc_set_writeprotect(false);
-        pmc_enable_periph_clk((uint32_t)irq);
-        TC_Configure(tc, chn, TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC | TC_CMR_TCCLKS_TIMER_CLOCK1);
-        tc->TC_CHANNEL[chn].TC_IER = TC_IER_CPCS;
-        tc->TC_CHANNEL[chn].TC_IDR = ~TC_IER_CPCS;
+		ch = tc->TC_CHANNEL + chn;
+		pmc_set_writeprotect(false);
+		pmc_enable_periph_clk((uint32_t)irq);
+		TC_Configure(tc, chn, TC_CMR_WAVE | TC_CMR_WAVSEL_UP_RC | TC_CMR_TCCLKS_TIMER_CLOCK1);
+		ch->TC_IER = TC_IER_CPCS;
+		ch->TC_IDR = ~TC_IER_CPCS;
+		NVIC_ClearPendingIRQ(irq); // NVIC functions are already inline.
+		NVIC_EnableIRQ(irq);
 	}
 
 	inline void start(uint32_t ticks) {
 		this->ticks = ticks;
-    	NVIC_ClearPendingIRQ(irq);
-		ticks = max(ticks, 1);
-        TC_SetRC(tc, chn, dueratio * ticks - 1);
-		TC_Start(tc, chn);
-    	NVIC_EnableIRQ(irq);
+		ticks >>= 1;
+		ticks = max(ticks, 2);
+		ch->TC_RC = ticks - 1; // TC_SetRC(tc, chn, ticks - 1); //TC_SetRC(tc, chn, dueratio * ticks - 1);
+		ch->TC_CCR = TC_CCR_CLKEN | TC_CCR_SWTRG; // TC_Start(tc, chn);
 	}
 
 	inline void stop() {
-		NVIC_DisableIRQ(irq);
-		TC_Stop(tc, chn);
+		//NVIC_DisableIRQ(irq);
+		ch->TC_CCR = TC_CCR_CLKDIS; // TC_Stop(tc, chn);
+	}
+
+	inline uint32_t status() {
+		return ch->TC_SR;
 	}
 
 	inline void send(uint8_t i) {
@@ -388,20 +398,20 @@ typedef struct {
 } FastTimer;
 
 static FastTimer duetimers[] = {
-		{ TC0, 0, TC0_IRQn },
-		{ TC0, 1, TC1_IRQn },
-		{ TC0, 2, TC2_IRQn },
-		{ TC1, 0, TC3_IRQn },
-		{ TC1, 1, TC4_IRQn },
-		{ TC1, 2, TC5_IRQn },
-		{ TC2, 0, TC6_IRQn },
-		{ TC2, 1, TC7_IRQn },
-		{ TC2, 2, TC8_IRQn },
+	{ TC0, 0, TC0_IRQn },
+	{ TC0, 1, TC1_IRQn },
+	{ TC0, 2, TC2_IRQn },
+	{ TC1, 0, TC3_IRQn },
+	{ TC1, 1, TC4_IRQn },
+	{ TC1, 2, TC5_IRQn },
+	{ TC2, 0, TC6_IRQn },
+	{ TC2, 1, TC7_IRQn },
+	{ TC2, 2, TC8_IRQn },
 };
 
 static const int ntimers = sizeof(duetimers) / sizeof(duetimers[0]);
 
-#define myHandler2(id, tc, c)	void TC##id##_Handler() { TC_GetStatus(TC##tc, c); handleTimer(TimerId##id); }
+#define myHandler2(id, tc, c)	void TC##id##_Handler() { duetimers[id].status(); handleTimer(TimerId##id); }
 
 myHandler2(0, 0, 0)
 myHandler2(1, 0, 1)
@@ -444,7 +454,7 @@ void initTickTimer(uint8_t id, uint32_t us)
 	duetimers[id].start(us);
 }
 
-void printTimers() {
+static void printTimers() {
 	float div = 1000 * 1000;
 
 	channel.p1(F("clocks"));
@@ -521,9 +531,9 @@ static FastTimer *getFastTimer(uint8_t id) {
 #elif ARDUINO // MEGA
 #include <Arduino.h>
 // TODO: had < 2% error up to 2k rpm, but broke it when i optimized for due and added the additional calls for current time
-static const uint8_t DEFSLOP = 90;
-static const uint8_t MAXSLOP = 255;
-static const uint8_t MAXJITTER = 50;
+static const uint16_t DEFSLOP = MicrosToTicks(90);
+static const uint16_t MAXSLOP = MicrosToTicks(255);
+static const uint16_t MAXJITTER = MicrosToTicks(50);
 static const uint8_t MAXLOOPS = 1;
 
 static inline uint8_t getPrescaleBits(uint8_t id, int32_t &us) {
@@ -532,10 +542,10 @@ static inline uint8_t getPrescaleBits(uint8_t id, int32_t &us) {
 	static const uint16_t max8 = 255;
 
 	uint16_t max = id == TimerId2 || id == TimerId0 ? max8 : max16;
-	us = max(us, 1); // TODO: bump this up for lockups
+	us = max(us, 1);// TODO: bump this up for lockups
 	us = us * TIME_RATIO - 1;
 
-	if (us <= max) // heavily modified/fixed from timer1/timer3
+	if (us <= max)// heavily modified/fixed from timer1/timer3
 		return 0;
 	if ((us >>= 3) <= max)
 		return 3;
@@ -552,23 +562,23 @@ static inline uint8_t getPrescaleBits(uint8_t id, int32_t &us) {
 
 static inline uint8_t mask(uint8_t id, uint8_t shift, uint8_t b0, uint8_t b1, uint8_t b2) {
 	if (id == TimerId2)
-		switch (shift) { // pg 191
-			case 0:
-				return bit(b0);
-			case 3:
-				return bit(b1);
-			case 5:
-				return bit(b1) | bit(b0);
-			case 6:
-				return bit(b2);
-			case 7:
-				return bit(b2) | bit(b0);
-			case 8:
-				return bit(b2) | bit(b1);
-			case 10:
-			default:
-				return bit(b2) | bit(b1) | bit(b0);
-		}
+	switch (shift) { // pg 191
+		case 0:
+			return bit(b0);
+		case 3:
+			return bit(b1);
+		case 5:
+			return bit(b1) | bit(b0);
+		case 6:
+			return bit(b2);
+		case 7:
+			return bit(b2) | bit(b0);
+		case 8:
+			return bit(b2) | bit(b1);
+		case 10:
+		default:
+			return bit(b2) | bit(b1) | bit(b0);
+	}
 
 	switch (shift) {
 		case 0: // pg 134 for 0, 161 for the rest
@@ -617,18 +627,23 @@ ISR(TIMER##id##_COMPA_vect) { TCCR##id##B = 0; handleTimer(TimerId##id); }
 oneShotTimer(0);
 oneShotTimer(1);
 oneShotTimer(2);
+
+#ifdef ARDUINO_MEGA
 oneShotTimer(3);
 oneShotTimer(4);
 oneShotTimer(5);
+#endif
 
 static FastTimer *getFastTimer(uint8_t id) {
 	static FastTimer timers[] = {
-			{ initTimer0, startTimer0 }, // 8 bit
-			{ initTimer1, startTimer1 },
-			{ initTimer2, startTimer2 }, // 8 bit
-			{ initTimer3, startTimer3 },
-			{ initTimer4, startTimer4 },
-			{ initTimer5, startTimer5 },
+		{ initTimer0, startTimer0 }, // 8 bit
+		{ initTimer1, startTimer1 },
+		{ initTimer2, startTimer2 }, // 8 bit
+#ifdef ARDUINO_MEGA
+		{ initTimer3, startTimer3 },
+		{ initTimer4, startTimer4 },
+		{ initTimer5, startTimer5 },
+#endif
 	};
 
 	switch (id) {
@@ -653,9 +668,9 @@ static void printTimers() {
 }
 
 #else
-static const uint8_t  DEFSLOP = 0;
-static const uint8_t  MAXSLOP = 0;
-static const uint8_t MAXJITTER = 0;
+static const uint16_t DEFSLOP = 0;
+static const uint16_t MAXSLOP = 0;
+static const uint16_t MAXJITTER = 0;
 static const uint8_t MAXLOOPS = 1;
 
 typedef struct {
@@ -667,7 +682,7 @@ typedef struct {
 
 	void stop() volatile {
 	}
-} FastTimer;
+}FastTimer;
 
 static FastTimer *getFastTimer(uint8_t id) {
 	static FastTimer timer;
@@ -689,13 +704,14 @@ class TimerInfo {
 
 		CountSleeps, // 5
 		CountArrivals,
-		CountLates,
+		CountLate,
+		CountDec,
 
-		CountJumps, // 8
+		CountJumps,
 		CountLoops,
 		CountSpurious,
 
-		CountLong, // 11
+		CountLong,
 
 		HistMax,
 	};
@@ -705,6 +721,7 @@ class TimerInfo {
 	uint32_t next;
 	uint32_t jump;
 
+	uint32_t cycle1;
 	uint32_t asleep;
 
 	int16_t minlate;
@@ -712,14 +729,14 @@ class TimerInfo {
 	int16_t minawake;
 	int16_t maxawake;
 
-	uint8_t slop;
+	uint16_t slop;
+	uint8_t retest;
 	uint8_t idx;
 	uint8_t bits;
-	uint8_t retest;
 
 	uint16_t hist[HistMax];
 
-	static const int16_t InvalidVal = 32767;
+	static const int16_t InvalidVal = 32000;
 
 	inline void addHist(uint8_t h) volatile {
 		if (h < HistMax && hist[h] + 1 != 0)
@@ -728,9 +745,10 @@ class TimerInfo {
 
 	inline void reset() volatile {
 		minlate = InvalidVal;
-		maxlate = -minlate;
 		minawake = InvalidVal;
-		maxawake = -minawake;
+
+		maxlate = -InvalidVal;
+		maxawake = -InvalidVal;
 	}
 
 	inline uint8_t getId() const volatile {
@@ -765,7 +783,7 @@ public:
 			timer->stop();
 	}
 
-	inline void init(uint8_t id, uint16_t us) volatile {
+	inline void init(uint8_t id) volatile {
 		this->idx = id;
 
 		if ((timer = getFastTimer(id)))
@@ -775,13 +793,13 @@ public:
 		next = 0;
 
 		bits = 0;
-		retest = 0;
 		jump = 0;
 
+		retest = 255;
 		slop = DEFSLOP;
 
 		reset();
-		sleep(0);
+		sleep(MicrosToTicks(4096));
 	}
 
 	inline uint32_t getJump(uint32_t now) volatile {
@@ -798,19 +816,11 @@ public:
 		int32_t ticks = tdiff32(future, now);
 		ticks = max(0, ticks);
 
-		if (!jump) {
-			int32_t awake = tdiff32(now, last);
-			minawake = min(minawake, awake);
-			maxawake = max(maxawake, awake);
-			addHist(CountSleeps);
-		}
-
-		last = now;
 		next = now + ticks;
 
 		if (ticks == 0)
 			addHist(Count0);
-		else if (ticks > 20000)
+		else if (ticks > MicrosToTicks(20000))
 			addHist(CountLong);
 		else {
 			uint16_t idx = ticks >> 10; // 1024
@@ -828,9 +838,9 @@ public:
 			jump = 0;
 
 			if (ticks >= slop)
-				ticks -= slop;
+			ticks -= slop;
 			else
-				ticks = 0;
+			ticks = 0;
 		}
 #else
 		if (ticks >= slop)
@@ -839,54 +849,59 @@ public:
 			ticks = 0;
 #endif
 
-		ticks = TicksToMicros(ticks);
-
 		if (timer) {
-#ifdef ARDUINO_MEGA
+#ifdef ARDUINO
 			bits = getPrescaleBits(idx, ticks);
 			timer->start(bits, ticks);
 #else
 			timer->start(ticks);
 #endif
 		}
+
+		if (!jump) {
+			uint32_t now = clockTicks();
+			int32_t awake = tdiff32(now, last);
+			minawake = min(minawake, awake);
+			maxawake = max(maxawake, awake);
+			addHist(CountSleeps);
+		}
+
+		last = now;
 	}
 
 	inline uint32_t awoke() volatile {
 		uint32_t now = clockTicks();
 		asleep = tdiff32(now, last);
+		last = now;
 
 		if (!jump) {
 			addHist(CountArrivals);
 
 			int32_t late = tdiff32(now, next);
 
-			if (late) {
-				if (-late > slop) {
-					addHist(CountSpurious);
-				} else {
-					minlate = min(minlate, late);
-					maxlate = max(maxlate, late);
+			if (-late > slop) {
+				addHist(CountSpurious);
+			} else {
+				static const int8_t EARLY = (TICKTOUS >> 2);
+				minlate = min(minlate, late);
+				maxlate = max(maxlate, late);
 
-					if (late > 0) {
-						slop = min(slop + 1, MAXSLOP);
-						retest = 255;
-						addHist(CountLates);
-					} else if (late < -1 && slop > 1) { // consistently early
-						if (!retest) {
-							retest = 64; // reward good behavior
-							slop--;
-						} else
-							retest--;
-					} else
-						retest = 255;
+				if (late <= -EARLY) {
+					addHist(CountLate);
+					if (slop > 1)
+						slop--;
+					retest = 255;
+				} else if (late >= EARLY) {
+					if (!(--retest)) {
+						addHist(CountDec);
+						retest = 8;
+						slop = max(slop + 1, 1);
+					}
+				} else {
+					retest = 255;
 				}
-			} else { // try to be a little early
-				slop = min(slop + 1, MAXSLOP);
-				retest = 255;
 			}
 		}
-
-		last = now;
 
 		return now;
 	}
@@ -895,31 +910,31 @@ public:
 		channel.p1(F("timer"));
 		channel.send(F("id"), getId());
 		channel.send(F("idx"), idx);
-		channel.send(F("slop"), slop);
-
-		channel.send(F("sleep"), tdiff32(next, last), false);
-		channel.send(F("asleep"), asleep, false);
+		channel.send(F("slop"), TicksToMicrosf(slop));
 
 		if (minawake != InvalidVal) {
-			channel.send(F("-awake"), minawake, false);
-			channel.send(F("+awake"), maxawake, false);
+			channel.send(F("-cycles"), minawake, false);
+			channel.send(F("+cycles"), maxawake, false);
+			channel.send(F("-awake"), TicksToMicrosf(minawake), false);
+			channel.send(F("+awake"), TicksToMicrosf(maxawake), false);
 		}
 
 		if (minlate != InvalidVal) {
-			channel.send(F("-late"), minlate, false);
-			channel.send(F("+late"), maxlate, false);
+			channel.send(F("-late"), TicksToMicrosf(minlate), false);
+			channel.send(F("+late"), TicksToMicrosf(maxlate), false);
 		}
 
-		channel.send(F("retest"), retest, false);
-
 		uint16_t count = hist[CountSleeps];
-		uint16_t lates = hist[CountLates];
+		uint16_t lates = hist[CountLate];
 
 		if (lates && lates < count)
 			channel.send(F("late"), 100.0f * lates / count, false);
 
 		channel.send(F("bits"), bits, false);
 		channel.send(F("jumping"), jump > 0, false);
+
+		channel.send(F("sleep"), TicksToMicrosf(tdiff32(next, last)), false);
+		channel.send(F("asleep"), TicksToMicrosf(asleep), false);
 
 		sendHist(hist, HistMax);
 
@@ -949,7 +964,7 @@ public:
 
 	void initTimers() volatile {
 		for (uint8_t i = 0; i < MaxTimers; i++)
-			timers[i].init(i, MicrosToTicks(4096));
+			timers[i].init(i);
 	}
 
 	void send() volatile {
@@ -986,7 +1001,7 @@ static void handleTimer(uint8_t id) {
 					break;
 #endif
 				default:
-					next = now + MicrosToTicks(200);
+					next = now + MicrosToTicks(4000);
 			}
 
 		t->sleep(next);
@@ -1005,17 +1020,23 @@ void simTimerEvents(uint32_t next) {
 	t->sleep(next);
 }
 
+static void sendTimers(void *data) {
+	timers.send();
+}
+
 uint16_t initTimers() {
 	timers.initTimers();
 
 	if (0)
 		handleTimer(TimerId1); // get rid of warning
 
-	return sizeof(timers);
-}
+	static PromptCallback callbacks[] = {
+		{ F("timers"), sendTimers },
+	};
 
-void sendTimers() {
-	timers.send();
+	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+
+	return sizeof(timers) + sizeof(callbacks);
 }
 
 void idleSleep(uint32_t us) {

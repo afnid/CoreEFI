@@ -1,5 +1,6 @@
 // copyright to me, released under GPL V3
 
+#include "GPIO.h"
 #include "System.h"
 #include "Channel.h"
 #include "Params.h"
@@ -12,7 +13,7 @@
 #include "Schedule.h"
 #include "efi_types.h"
 
-static const int TimesMax = TimeMovingSeconds - TimeOnSeconds + 1;
+static const int TimesMax = TimeMovingSeconds - TimeRunSeconds + 1;
 
 static struct {
 	uint16_t times[TimesMax];
@@ -60,25 +61,27 @@ static inline float calcMPH() {
 }
 
 static inline uint16_t getTimer(uint8_t id) {
-	int idx = id - TimeOnSeconds;
+	int idx = id - TimeRunSeconds;
 	assert(idx >= 0);
 	assert(idx < TimesMax);
 
 	if (!strategy.times[idx])
 		return 0;
 
-	return tdiff16(getParamUnsigned(TimeOnSeconds), strategy.times[idx]);
+	const GPIO::PinDef *pd = GPIO::getPinDef(GPIO::IsKeyOn);
+	return tdiff32(pd->changed, strategy.times[idx]);
 }
 
-void setTimer(uint8_t id, bool enable) {
-	int idx = id - TimeOnSeconds;
+void setTimer(ParamTypeId id, bool enable) {
+	int idx = id - TimeRunSeconds;
 	assert(idx >= 0);
 	assert(idx < TimesMax);
 
 	bool isset = strategy.times[idx] != 0;
 
 	if (enable != isset) {
-		uint16_t epoch = !enable ? 0 : getParamUnsigned(TimeOnSeconds);
+		const GPIO::PinDef *pd = GPIO::getPinDef(GPIO::IsKeyOn);
+		uint16_t epoch = !enable ? 0 : pd->changed;
 		strategy.times[idx] = epoch;
 		setParamUnsigned(id, epoch);
 	}
@@ -146,8 +149,8 @@ static float getFinalSparkAdvance() {
 	return deg;
 }
 
-void expireCached(uint8_t id) {
-	extern void clearCached(uint8_t id);
+void expireCached(ParamTypeId id) {
+	extern void clearCached(ParamTypeId id);
 
 	switch (id) {
 		case FlagIsLimpMode:
@@ -165,19 +168,22 @@ void expireCached(uint8_t id) {
 			clearCached(FuncWotSparkAdvanceVsEct);
 			clearCached(FuncWotSparkAdvanceVsAct);
 			break;
-		case SensorIsCranking:
-			clearCached(FuncCrankFuelPulseWidthMultiplier);
-			clearCached(FuncCrankingFuelPulseWidthVsEct);
-			break;
 		case FlagIsClosedLoop:
 			clearCached(FuncOpenLoopFuelMultiplierVsAct);
 			clearCached(FuncOpenLoopFuelMultiplierVsRpm);
 			break;
+		default:
+			break;
+	}
+
+	if (GPIO::isPinSet(GPIO::IsCranking)) {
+		clearCached(FuncCrankFuelPulseWidthMultiplier);
+		clearCached(FuncCrankingFuelPulseWidthVsEct);
 	}
 }
 
-float getStrategyDouble(uint8_t id, ParamData *pd) {
-	extern float lookupParam(uint8_t id, ParamData *pd);
+float getStrategyDouble(ParamTypeId id, ParamData *pd) {
+	extern float lookupParam(ParamTypeId id, ParamData *pd);
 	extern float dblDecode(ParamData *pd, uint16_t v);
 	extern uint16_t uint16Decode(ParamData *pd, uint16_t v);
 
@@ -204,13 +210,15 @@ float getStrategyDouble(uint8_t id, ParamData *pd) {
 				break;
 			case FuncCrankFuelPulseWidthMultiplier:
 			case FuncCrankingFuelPulseWidthVsEct:
-				if (!isParamSet(SensorIsCranking))
+				if (!GPIO::isPinSet(GPIO::IsCranking))
 					return 0;
 				break;
 			case FuncOpenLoopFuelMultiplierVsAct:
 			case FuncOpenLoopFuelMultiplierVsRpm:
 				if (isParamSet(FlagIsClosedLoop))
 					return 0;
+				break;
+			default:
 				break;
 		}
 
@@ -270,15 +278,17 @@ float getStrategyDouble(uint8_t id, ParamData *pd) {
 		case CalcFan1:
 		case CalcFan2:
 		case CalcFuelPump:
-		case CalcEPAS:
+		case CalcEPAS2:
 			return uint16Decode(pd, pd->value);
+		default:
+			break;
 	}
 
 	if (pd->cat == CatConst || pd->cat == CatSensor)
 		return dblDecode(pd, pd->value);
 
 	if (pd->cat == CatTime) {
-		if (id == TimeOnSeconds)
+		if (id == TimeRunSeconds)
 			return uint16Decode(pd, pd->value);
 		return getTimer(id);
 	}

@@ -174,6 +174,10 @@ public:
 		last = 0;
 	}
 
+	void print(const char *s) {
+		eputstr(s);
+	}
+
 	void send(const channel_t *s) {
 		putstr(s);
 		last = 0;

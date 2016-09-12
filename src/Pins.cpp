@@ -1,10 +1,16 @@
 // copyright to me, released under GPL V3
 
+#include "GPIO.h"
+#include "Pins.h"
+
+#if 0
 #include "System.h"
 #include "Channel.h"
+#include "Prompt.h"
 #include "Params.h"
 
 #include "Pins.h"
+#include "Epoch.h"
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -18,44 +24,70 @@
 #define digitalPinToBitMask(p) (1)
 #endif
 
-static volatile class Pins {
-	static const uint8_t EXTRA_PINS = 20;
+class PinInternal: public PinInfo {
+	uint8_t *getPinPort(uint8_t pin) {
+#if 0 //ndef ARDUINO_DUE
+		port = digitalPinToPort(pin);
+		mask = 1 << digitalPinToBitMask(pin);
+#endif
+		return 0;
+	}
+
+	uint8_t getPinMask(uint8_t pin) {
+		return 0;
+	}
+
+public:
+
+	inline bool readPin() {
+		if (def->mode & (PinModeInput|PinModeAnalog)) {
+			uint16_t v = Device::analogRead(def->id);
+
+			if (abs(v - def->last) > def->hyst) {
+				setParamUnsigned(def->id, v);
+				def->changed = Epoch::millis();
+				def->last = v;
+				return true;
+			}
+		} else if (def->mode & PinModeInput) {
+			uint8_t v = Device::digitalRead(def->id);
+
+			if (def->invert)
+				v = !v;
+
+			if (def->last != v) {
+				setParamUnsigned(def.id, v);
+				def->changed = Epoch::millis();
+				def->last = v;
+				return true;
+			}
+		}
+
+		return false;
+	}
+};
+
+static class Local {
+public:
+
+	static const uint8_t EXTRA_PINS = 60;
 	static const uint8_t MAX_PINS = MaxCylinders + MaxCoils + EXTRA_PINS;
 
-	class PinDetails: public PinInfo {
-	public:
-		uint16_t val;
-		uint8_t mode :4;
-		uint8_t hyst :4;
-
-		inline void clear() volatile {
-			PinInfo::init(0, 0, 0);
-
-			val = 0;
-			mode = 0;
-			hyst = 0;
-		}
-	};
-
-	enum {
-		PinUndef = 0,
-		PinInput = 1,
-		PinOutput = 2,
-		PinAnalog = 4,
-		PinISR = 8,
-	};
-
+	uint8_t input;
+	uint8_t output;
 	uint8_t valid;
 	uint8_t injectors[MaxCylinders];
 	uint8_t sparks[MaxCylinders];
 	uint8_t params[EXTRA_PINS + 2]; // offset
-	PinDetails pins[MAX_PINS];
+	PinInfo *last[4];
 
-	inline void clear() volatile {
+	inline void clear() {
 		valid = 0;
+		input = 0;
+		output = 0;
 
-		for (uint8_t i = 0; i < MAX_PINS; i++)
-			pins[i].clear();
+		for (uint8_t i = 0; i < ARRSIZE(last); i++)
+			last[i] = 0;
 
 		for (uint8_t i = 0; i < sizeof(injectors); i++)
 			injectors[i] = 0;
@@ -65,52 +97,17 @@ static volatile class Pins {
 			params[i] = 0;
 	}
 
-	uint8_t initPin(uint8_t pin, uint8_t mode, uint8_t hyst) volatile {
+	PinInternal *allocPin() {
 		assert(valid >= 0 && valid < MAX_PINS);
-		volatile PinDetails *p = pins + valid;
-		assert(!p->getMask());
-		assert(!p->getPin());
-
-		volatile uint8_t *port = 0;
-		uint8_t mask = 0;
-
-#if 0 //ndef ARDUINO_DUE
-		port = digitalPinToPort(pin);
-		mask = 1 << digitalPinToBitMask(pin);
-#endif
-
-		if (mask == 0)
-			mask = -1;
-
-		p->init(pin, mask, port);
-		p->mode = mode;
-		p->hyst = hyst;
-
-		assert(p->getPin() == pin);
-		assert(p->hyst == hyst);
-
-		valid++;
-
-#ifdef ARDUINO
-		if (mode & (PinInput|PinISR))
-			pinMode(pin, INPUT);
-		if (mode & PinOutput)
-			pinMode(pin, OUTPUT);
-#endif
-		return valid - 1;
+		return pins + (valid >= MAX_PINS ? 0 : valid++);
 	}
 
-	void initParamPin(uint8_t pin, uint8_t id, uint8_t mode, uint8_t hyst) volatile {
-		assert(id >= 0 && id < sizeof(params));
-		params[id] = initPin(pin, mode, hyst);
+	void initInjectorPin(uint8_t pin, uint8_t cyl) {
+		maxinj = pin;
 	}
 
-	void initInjectorPin(uint8_t pin, uint8_t cyl) volatile {
-		assert(cyl >= 0 && cyl < sizeof(injectors));
-		injectors[cyl] = initPin(pin, PinOutput, 0);
-	}
-
-	void initSparkPin(uint8_t pin, uint8_t cyl, uint8_t coils) volatile {
+	void initSparkPin(uint8_t pin, uint8_t cyl, uint8_t coils) {
+		maxinj = pin;
 		assert(cyl >= 0 && cyl < sizeof(sparks));
 
 		if (cyl >= coils) {
@@ -119,63 +116,61 @@ static volatile class Pins {
 		}
 
 		//coils == 1 ? cylinders : cyl + cylinders * 2;
-		sparks[cyl] = initPin(pin, PinOutput, 0);
+		PinInternal *p = allocPin();
+		sparks[cyl] = valid;
+		p->initPin(pin, PinModeInput);
 	}
 
 public:
 
-	inline void initPins() volatile {
+	Local() {
+		clear();
+	}
+
+	inline void initEnginePins() {
 		clear();
 
 		uint8_t cyl = getParamUnsigned(ConstCylinders);
-		uint8_t engine = 2;
+		uint8_t pin = 2;
 
 		for (uint8_t i = 0; i < cyl; i++)
-			initInjectorPin(engine++, i);
+			initInjectorPin(pin++, i);
 
 		uint8_t coils = getParamUnsigned(ConstCoils);
 
 		for (uint8_t i = 0; i < cyl; i++)
-			initSparkPin(engine++, i, coils);
-
-		uint8_t analog = 8;
-		initParamPin(analog++, SensorMAF, PinAnalog, 1);
-		initParamPin(analog++, SensorACT, PinAnalog, 1);
-		initParamPin(analog++, SensorECT, PinAnalog, 1);
-		initParamPin(analog++, SensorHEGO1, PinAnalog, 1);
-		initParamPin(analog++, SensorHEGO2, PinAnalog, 1);
-		initParamPin(analog++, SensorBAR, PinAnalog, 1);
-		initParamPin(analog++, SensorEGR, PinAnalog, 1);
-		initParamPin(analog++, SensorVCC, PinAnalog, 1);
-
-		uint8_t digital = 21; // interrupt 2
-		initParamPin(digital++, SensorDEC, PinISR, 0);
-		initParamPin(digital++, SensorTPS, PinInput, 0);
-		initParamPin(digital++, SensorVSS, PinInput, 0);
-		initParamPin(digital++, SensorGEAR, PinInput, 0);
-		initParamPin(digital++, SensorIsKeyOn, PinInput, 0);
-		initParamPin(digital++, SensorIsCranking, PinInput, 0);
-		initParamPin(digital++, SensorIsAirOn, PinInput, 0);
-		initParamPin(digital++, SensorIsBrakeOn, PinInput, 0);
-
-		initParamPin(digital++, CalcFuelPump, PinOutput, 0);
-		initParamPin(digital++, CalcFan1, PinOutput, 0);
-		initParamPin(digital++, CalcFan2, PinOutput, 0);
-		initParamPin(digital++, CalcEPAS, PinOutput, 0);
+			initSparkPin(pin++, i, coils);
 	}
 
-	inline volatile PinDetails *getPin(uint8_t idx) volatile {
-		assert(idx < MAX_PINS);
-		return pins + idx;
+	inline void initPins(DevicePinDef *pins) {
+		uint8_t n = 0;
+
+		while (pins->mode) {
+			PinInternal *p = allocPin();
+			params[n++] = valid;
+			p->initPin(pins++);
+			assert(n < sizeof(params));
+		}
 	}
 
-	inline volatile PinInfo *getParamPin(uint8_t id) volatile {
-		assert(id < sizeof(params));
-		int idx = params[id];
-		return getPin(idx);
+	inline PinInternal *getPinByIdx1(uint8_t id) {
+		assert(id >= 1 && id <= valid);
+		return pins + id - 1;
 	}
 
-	inline uint8_t getSparkPin(uint8_t cyl) volatile {
+	inline PinInternal *getPinById(uint8_t id) {
+		for (uint8_t i = 0; i < valid; i++)
+			if (pins[i].getId() == id)
+				return pins + i;
+
+		return 0;
+	}
+
+	inline PinInternal *getParamPin(uint8_t idx) {
+		return getPinByIdx1(params[idx]);
+	}
+
+	inline uint8_t getSparkPin(uint8_t cyl) {
 		int max = getParamUnsigned(ConstCoils);
 
 		while (cyl && cyl >= max)
@@ -185,7 +180,7 @@ public:
 		return sparks[cyl];
 	}
 
-	inline uint8_t getInjectorPin(uint8_t cyl) volatile {
+	inline uint8_t getInjectorPin(uint8_t cyl) {
 		int max = getParamUnsigned(ConstCylinders);
 
 		while (cyl && cyl >= max)
@@ -195,121 +190,171 @@ public:
 		return injectors[cyl];
 	}
 
-	inline void resetOutputPins() volatile {
-		for (uint8_t id = 0; id < sizeof(params); id++) {
-			if (params[id]) {
-				volatile PinDetails *p = getPin(id);
+	inline void resetOutputPins() {
+		for (uint8_t i = 0; i < sizeof(params) && params[i]; i++) {
+			PinInternal *p = getParamPin(i);
 
-				if (p->mode == PinOutput)
-					p->clr();
-			}
+			if (!p->isInput())
+				p->clr();
 		}
 	}
 
-	inline void readPins() volatile {
-		for (uint8_t id = 0; id < sizeof(params); id++) {
-			if (params[id]) {
-				volatile PinDetails *p = getPin(id);
+	inline PinInternal *nextPin(uint8_t &idx, bool input) {
+		for (uint8_t i = 0; i < sizeof(params) && params[i]; i++) {
+			if (params[idx]) {
+				PinInternal *p = getParamPin(idx++);
 
-				if (p->mode == PinAnalog) {
-					uint16_t val = p->analogRead();
-
-					if (abs(val - p->val) > p->hyst) {
-						p->val = val;
-						setSensorParam(id, val);
-					}
-				} else if (p->mode == PinInput) {
-					uint8_t val = p->digitalRead();
-
-					if (val != p->val) {
-						p->val = val;
-						setSensorParam(id, val);
-					}
-				}
+				if (input == p->isInput())
+					return p;
 			}
+
+			if (!params[idx] || idx >= sizeof(params))
+				idx = 0;
 		}
+
+		return 0;
 	}
 
-	inline void sendPins() volatile {
-		channel.p1(F("pins"));
-		channel.send(F("valid"), valid);
-		channel.send(F("data"), (uint16_t) sizeof(Pins));
-		channel.send(F("max"), MAX_PINS);
-		channel.send(F("used"), valid);
-		channel.p2();
-		channel.nl();
+	inline PinInternal *getNextOutputPin() {
+		return nextPin(output, false);
+	}
 
-		for (uint8_t i = 0; i < MAX_PINS; i++) {
-			volatile PinDetails *p = pins + i;
+	inline void addLast(PinInfo *next) {
+		uint8_t type = next->getType();
 
-			if (p->mode) {
-				channel.p1(F("pin"));
-				channel.send(F("i"), i);
-				channel.send(F("pin"), p->getPin());
-				channel.send(F("mode"), p->mode);
-				channel.send(F("val"), p->val);
-				channel.send(F("hyst"), p->hyst);
-				channel.send(F("mask"), p->getMask());
-				channel.send(F("port"), p->getPort() != 0);
-				channel.p2();
-				channel.nl();
+		if (isInput()) {
+			uint8_t n = 0;
+
+			for (uint8_t i = 0; i < ARRSIZE(last); i++) {
+				while (n < ARRSIZE(last) && last[n] && last[n]->getPin() == next->getPin())
+					n++;
+
+				last[i] = n >= ARRSIZE(last) ? 0 : last[n++];
 			}
+
+			for (uint8_t i = ARRSIZE(last) - 1; i > 0; i--)
+				last[i] = last[i - 1];
+
+			last[0] = next;
 		}
 	}
 } local;
 
-volatile PinInfo *getPin(uint8_t id) {
-	return local.getPin(id);
+static void sendPins(void *data) {
+	channel.p1(F("pins"));
+	channel.send(F("valid"), local.valid);
+	channel.send(F("input"), local.input);
+	channel.send(F("output"), local.output);
+	channel.send(F("data"), (uint16_t) sizeof(Local));
+	channel.send(F("max"), Local::MAX_PINS);
+	channel.send(F("used"), local.valid);
+
+	channel.p2();
+	channel.nl();
+
+	for (uint8_t i = 0; i < local.valid; i++) {
+		PinInternal *p = local.pins + i;
+		p->sendPin(i);
+	}
 }
 
-volatile PinInfo *getParamPin(uint8_t id) {
-	return local.getParamPin(id);
-}
-
-uint8_t getSparkPin(uint8_t cyl) {
-	return local.getSparkPin(cyl);
-}
-
-uint8_t getInjectorPin(uint8_t cyl) {
-	return local.getInjectorPin(cyl);
-}
-
-uint16_t initPins() {
-	local.initPins();
-	return sizeof(local);
-}
-
-void resetOutputPins() {
+void PinMgr::resetOutputPins() {
 	local.resetOutputPins();
 }
 
-void readPins() {
-	local.readPins();
+void PinMgr::readPins() {
+	for (uint8_t i = 0; i < sizeof(local.params) && local.params[i]; i++) {
+		PinInternal *p = local.getParamPin(i);
+		p->readPin();
+	}
 }
 
-void sendPins() {
-	local.sendPins();
+PinInfo *PinMgr::getLast(uint8_t idx) {
+	return idx >= ARRSIZE(local.last) ? 0 : local.last[idx];
 }
 
-void PinInfo::digitalWrite(uint8_t v) const volatile {
-#ifdef ARDUINO
-	return ::digitalWrite(pin, v);
-#else
+uint16_t PinMgr::initPins(DevicePinDef *pins) {
+	local.initPins(pins);
+
+	static PromptCallback callbacks[] = {
+		{ F("pins"), sendPins },
+	};
+
+	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+
+	return sizeof(local) + sizeof(callbacks);
+}
+
+bool PinInfo::isInput() const {
+	return (def->mode & PinModeInput) != 0;
+}
+
+uint32_t PinInfo::ms() const {
+	return tdiff32(Epoch::millis(), def->changed);
+}
+
+void PinInfo::writePin(uint16_t v) {
+	if (!isInput()) {
+		if (def->last != v) {
+			local.addLast(this);
+			def->changed = Epoch::millis();
+		}
+
+		def->last = v;
+
+		if (def->mode & PinModePWM)
+			Device::analogWrite(def->id, v);
+		else
+			Device::digitalWrite(def->id, def->invert ? !v : v);
+	}
+}
+
+void PinInfo::sendPin(uint8_t i) const {
+	channel.p1(F("pin"));
+	channel.send(F("i"), i);
+	channel.send(F("pin"), getPin());
+	channel.send(F("id"), getId());
+	channel.send(F("mode"), def->mode);
+	channel.send(F("val"), getVal());
+	channel.send(F("hyst"), def->hyst);
+	channel.send(F("mask"), getMask());
+	channel.send(F("port"), getPort() != 0);
+	channel.send(F("ms"), ms());
+	channel.send(getParamName(getId()), getPin());
+	channel.p2();
+	channel.nl();
+}
+
+
+PinInfo *PinMgr::getNextOutputPin() {
+	return local.getNextOutputPin();
+}
+
+PinInfo *PinMgr::getPinById(uint8_t id) {
+	return local.getPinById(id);
+}
+
+PinInfo *PinMgr::getPinByIdx1(uint8_t id) {
+	return local.getPinByIdx1(id);
+}
+
+PinInfo *PinMgr::readNextInputPin() {
+	PinInternal *next = local.nextPin(local.input, true);
+
+	if (next && next->readPin()) {
+		local.addLast(next);
+		return next;
+	}
+
+	return 0;
+}
+
 #endif
+
+GPIO::PinId PinMgr::getSparkPin(uint8_t cyl) {
+	return (GPIO::PinId)(GPIO::Spark1 + cyl);
 }
 
-uint16_t PinInfo::digitalRead() const volatile {
-#ifdef ARDUINO
-	return ::digitalRead(pin);
-#else
-	return pin;
-#endif
-}
-
-uint16_t PinInfo::analogRead() const volatile {
-#ifdef ARDUINO
-	return ::analogRead(pin);
-#else
-	return pin;
-#endif
+GPIO::PinId PinMgr::getInjectorPin(uint8_t cyl) {
+	return (GPIO::PinId)(GPIO::Injector1 + cyl);
 }

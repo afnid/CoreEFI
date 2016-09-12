@@ -195,7 +195,7 @@ public:
 	}
 
 	inline uint16_t getRPM() volatile {
-		return total == 0 ? 0 : 60000000LU / TicksToMicros(total);
+		return total == 0 ? 0 : 60000000UL / TicksToMicros(total);
 	}
 
 	inline void refresh(uint32_t now) volatile {
@@ -220,26 +220,7 @@ public:
 		}
 	}
 
-	inline int init() volatile {
-		valid = 0;
-		total = 0;
-		tdcts = 0;
-
-		idx = 0;
-		tdc = 0;
-		last = 0;
-		sum = 0;
-		edges = 0;
-		teeth = 0;
-		key = -1;
-
-		for (uint8_t i = 0; i < MaxEncoderTeeth * 2; i++)
-			pulses[i] = 0;
-
-		refresh(0);
-
-		return sizeof(Decoder);
-	}
+	uint16_t init() volatile;
 
 	void sendStatus() volatile {
 		channel.p1(F("decoder"));

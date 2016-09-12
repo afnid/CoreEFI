@@ -31,7 +31,7 @@ void sendHist(uint16_t *hist, uint8_t count) {
 
 	for (int i = 0; i < count; i++) {
 		if (!n++)
-			channel.p1(F("hist"));
+			channel.p1(F("counts"));
 		channel.send(i, hist[i], false);
 		hist[i] = 0;
 	}
@@ -45,7 +45,7 @@ void sendHist(volatile uint16_t *hist, uint8_t count) {
 
 	for (int i = 0; i < count; i++) {
 		if (!n++)
-			channel.p1(F("hist"));
+			channel.p1(F("counts"));
 		channel.send(i, hist[i], false);
 		hist[i] = 0;
 	}

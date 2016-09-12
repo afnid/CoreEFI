@@ -12,16 +12,7 @@ class Encoder {
 
 public:
 
-	uint16_t init() {
-		ratio = 0;
-		rpm = 0;
-		edges = 0;
-		teeth = 0;
-		edge = 0;
-		miss = 0;
-		pulse = MicrosToTicks(65535U);
-		return sizeof(Encoder);
-	}
+	uint16_t init();
 
 	void skipEncoder() {
 		skip = true;
@@ -35,7 +26,7 @@ public:
 			edges = teeth << 1;
 			miss = (teeth >> 1) + 1;
 			rpm = 0;
-			ratio = edges == 0 ? 0 : 60000000 / edges;
+			ratio = edges == 0 ? 0 : MicrosToTicks(60000000UL / edges);
 		}
 
 		uint16_t rpm = getParamUnsigned(SensorDEC);
@@ -43,11 +34,10 @@ public:
 		if (this->rpm != rpm) {
 			this->rpm = rpm;
 			pulse = ratio == 0 || rpm == 0 ? 0 : ratio / rpm;
-			pulse = MicrosToTicks(pulse);
 		}
 
 		if (pulse == 0)
-			pulse = MicrosToTicks(65535U);
+			pulse = ratio / 1000;
 
 		return pulse;
 	}

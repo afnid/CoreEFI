@@ -2,28 +2,54 @@
 <EFI>
     <name>Contains everything required to generate the configuration source code</name>
     <config>
-        <plots>49</plots>
-        <plots>52</plots>
-        <plots>24</plots>
-        <plots>23</plots>
-        <plots>35</plots>
-        <plots>36</plots>
-        <plots>2</plots>
-        <plots>28</plots>
-        <gauges>11</gauges>
-        <gauges>28</gauges>
-        <gauges>24</gauges>
-        <gauges>23</gauges>
-        <gauges>26</gauges>
-        <gauges>25</gauges>
-        <gauges>35</gauges>
+        <plots>51</plots>
+        <plots>54</plots>
+        <plots>27</plots>
+        <plots>26</plots>
+        <plots>38</plots>
+        <plots>39</plots>
+        <plots>4</plots>
+        <plots>31</plots>
+        <gauges>13</gauges>
+        <gauges>31</gauges>
         <gauges>27</gauges>
-        <gauges>32</gauges>
-        <status>34</status>
-        <status>35</status>
-        <status>4</status>
-        <status>11</status>
+        <gauges>26</gauges>
+        <gauges>29</gauges>
+        <gauges>28</gauges>
+        <gauges>38</gauges>
+        <gauges>30</gauges>
+        <gauges>35</gauges>
+        <status>37</status>
+        <status>38</status>
+        <status>6</status>
+        <status>13</status>
     </config>
+    <dictionary>
+        <name>IsKeyOn</name>
+        <cat>Sensor</cat>
+        <units>bit</units>
+        <value>1.0</value>
+        <last>0.0</last>
+        <time>1473670302641</time>
+        <min>0.0</min>
+        <max>1.0</max>
+        <bits>0</bits>
+        <scale>1</scale>
+        <id>1</id>
+    </dictionary>
+    <dictionary>
+        <name>IsCranking</name>
+        <cat>Sensor</cat>
+        <units>bit</units>
+        <value>0.0</value>
+        <last>0.0</last>
+        <time>0</time>
+        <min>0.0</min>
+        <max>1.0</max>
+        <bits>0</bits>
+        <scale>1</scale>
+        <id>2</id>
+    </dictionary>
     <dictionary>
         <name>DEC</name>
         <desc>Decoder RPM</desc>
@@ -36,7 +62,7 @@
         <max>3500.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>1</id>
+        <id>3</id>
     </dictionary>
     <dictionary>
         <name>TPS</name>
@@ -50,7 +76,7 @@
         <max>100.0</max>
         <bits>8</bits>
         <scale>10</scale>
-        <id>2</id>
+        <id>4</id>
     </dictionary>
     <dictionary>
         <name>MAF</name>
@@ -64,7 +90,7 @@
         <max>16.0</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>3</id>
+        <id>5</id>
     </dictionary>
     <dictionary>
         <name>VSS</name>
@@ -78,7 +104,7 @@
         <max>200.0</max>
         <bits>6</bits>
         <scale>100</scale>
-        <id>4</id>
+        <id>6</id>
     </dictionary>
     <dictionary>
         <name>ACT</name>
@@ -92,7 +118,7 @@
         <max>270.0</max>
         <bits>6</bits>
         <scale>10</scale>
-        <id>5</id>
+        <id>7</id>
     </dictionary>
     <dictionary>
         <name>ECT</name>
@@ -106,7 +132,7 @@
         <max>270.0</max>
         <bits>6</bits>
         <scale>10</scale>
-        <id>6</id>
+        <id>8</id>
     </dictionary>
     <dictionary>
         <name>HEGO1</name>
@@ -120,7 +146,7 @@
         <max>1.5</max>
         <bits>10</bits>
         <scale>1000</scale>
-        <id>7</id>
+        <id>9</id>
     </dictionary>
     <dictionary>
         <name>HEGO2</name>
@@ -134,7 +160,7 @@
         <max>1.5</max>
         <bits>10</bits>
         <scale>1000</scale>
-        <id>8</id>
+        <id>10</id>
     </dictionary>
     <dictionary>
         <name>BAR</name>
@@ -148,7 +174,7 @@
         <max>32.05</max>
         <bits>8</bits>
         <scale>100</scale>
-        <id>9</id>
+        <id>11</id>
     </dictionary>
     <dictionary>
         <name>EGR</name>
@@ -162,7 +188,7 @@
         <max>1.0</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>10</id>
+        <id>12</id>
     </dictionary>
     <dictionary>
         <name>RPM</name>
@@ -171,12 +197,25 @@
         <units>rpm</units>
         <value>500.0</value>
         <last>0.0</last>
-        <time>1432225088163</time>
+        <time>1473670302641</time>
         <min>0.0</min>
         <max>7000.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>11</id>
+        <id>13</id>
+    </dictionary>
+    <dictionary>
+        <name>AMPS1</name>
+        <cat>Sensor</cat>
+        <units>f</units>
+        <value>0.0</value>
+        <last>0.0</last>
+        <time>0</time>
+        <min>0.0</min>
+        <max>10.0</max>
+        <bits>10</bits>
+        <scale>10</scale>
+        <id>14</id>
     </dictionary>
     <dictionary>
         <name>VCC</name>
@@ -190,7 +229,7 @@
         <max>16.0</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>12</id>
+        <id>15</id>
     </dictionary>
     <dictionary>
         <name>GEAR</name>
@@ -199,77 +238,64 @@
         <units>scalar</units>
         <value>5.0</value>
         <last>0.0</last>
-        <time>1432225088163</time>
+        <time>1473670302641</time>
         <min>0.0</min>
         <max>5.0</max>
-        <bits>0</bits>
-        <scale>1</scale>
-        <id>13</id>
-    </dictionary>
-    <dictionary>
-        <name>IsKeyOn</name>
-        <cat>Sensor</cat>
-        <units>bit</units>
-        <value>1.0</value>
-        <last>0.0</last>
-        <time>1432225088162</time>
-        <min>0.0</min>
-        <max>1.0</max>
-        <bits>0</bits>
-        <scale>1</scale>
-        <id>14</id>
-    </dictionary>
-    <dictionary>
-        <name>IsCranking</name>
-        <cat>Sensor</cat>
-        <units>bit</units>
-        <value>0.0</value>
-        <last>0.0</last>
-        <time>0</time>
-        <min>0.0</min>
-        <max>1.0</max>
-        <bits>0</bits>
-        <scale>1</scale>
-        <id>15</id>
-    </dictionary>
-    <dictionary>
-        <name>IsAirOn</name>
-        <cat>Sensor</cat>
-        <units>bit</units>
-        <value>0.0</value>
-        <last>0.0</last>
-        <time>0</time>
-        <min>0.0</min>
-        <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
         <id>16</id>
     </dictionary>
     <dictionary>
-        <name>IsBrakeOn</name>
-        <cat>Sensor</cat>
-        <units>bit</units>
+        <name>FuelSender</name>
+        <cat>Vehicle</cat>
+        <units>pct</units>
         <value>0.0</value>
         <last>0.0</last>
         <time>0</time>
         <min>0.0</min>
-        <max>1.0</max>
+        <max>100.0</max>
         <bits>0</bits>
         <scale>1</scale>
         <id>17</id>
     </dictionary>
     <dictionary>
-        <name>IsLightsOn</name>
-        <cat>Sensor</cat>
-        <units>bit</units>
+        <name>RadiatorTemp</name>
+        <cat>Vehicle</cat>
+        <units>deg</units>
         <value>0.0</value>
         <last>0.0</last>
         <time>0</time>
         <min>0.0</min>
-        <max>1.0</max>
+        <max>280.0</max>
         <bits>0</bits>
         <scale>1</scale>
         <id>18</id>
+    </dictionary>
+    <dictionary>
+        <name>Gauge1</name>
+        <cat>Vehicle</cat>
+        <units>pct</units>
+        <value>0.0</value>
+        <last>0.0</last>
+        <time>0</time>
+        <min>0.0</min>
+        <max>100.0</max>
+        <bits>0</bits>
+        <scale>1</scale>
+        <id>19</id>
+    </dictionary>
+    <dictionary>
+        <name>Gauge2</name>
+        <cat>Vehicle</cat>
+        <units>deg</units>
+        <value>0.0</value>
+        <last>0.0</last>
+        <time>0</time>
+        <min>0.0</min>
+        <max>280.0</max>
+        <bits>0</bits>
+        <scale>1</scale>
+        <id>20</id>
     </dictionary>
     <dictionary>
         <name>FuelPump</name>
@@ -282,7 +308,7 @@
         <max>100.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>19</id>
+        <id>21</id>
     </dictionary>
     <dictionary>
         <name>Fan1</name>
@@ -295,7 +321,7 @@
         <max>100.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>20</id>
+        <id>22</id>
     </dictionary>
     <dictionary>
         <name>Fan2</name>
@@ -308,10 +334,10 @@
         <max>100.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>21</id>
+        <id>23</id>
     </dictionary>
     <dictionary>
-        <name>EPAS</name>
+        <name>EPAS1</name>
         <cat>Calc</cat>
         <units>pwm</units>
         <value>0.0</value>
@@ -321,7 +347,20 @@
         <max>100.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>22</id>
+        <id>24</id>
+    </dictionary>
+    <dictionary>
+        <name>EPAS2</name>
+        <cat>Calc</cat>
+        <units>pwm</units>
+        <value>0.0</value>
+        <last>0.0</last>
+        <time>0</time>
+        <min>0.0</min>
+        <max>100.0</max>
+        <bits>0</bits>
+        <scale>1</scale>
+        <id>25</id>
     </dictionary>
     <dictionary>
         <name>FinalPulseAdvance</name>
@@ -334,7 +373,7 @@
         <max>450.0</max>
         <bits>6</bits>
         <scale>100</scale>
-        <id>23</id>
+        <id>26</id>
     </dictionary>
     <dictionary>
         <name>FinalSparkAdvance</name>
@@ -347,7 +386,7 @@
         <max>180.0</max>
         <bits>6</bits>
         <scale>100</scale>
-        <id>24</id>
+        <id>27</id>
     </dictionary>
     <dictionary>
         <name>FinalPulseWidth</name>
@@ -360,7 +399,7 @@
         <max>20000.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>25</id>
+        <id>28</id>
     </dictionary>
     <dictionary>
         <name>FinalSparkWidth</name>
@@ -373,7 +412,7 @@
         <max>20000.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>26</id>
+        <id>29</id>
     </dictionary>
     <dictionary>
         <name>FinalLamda</name>
@@ -386,7 +425,7 @@
         <max>1.5</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>27</id>
+        <id>30</id>
     </dictionary>
     <dictionary>
         <name>Load</name>
@@ -399,7 +438,7 @@
         <max>200.0</max>
         <bits>6</bits>
         <scale>10</scale>
-        <id>28</id>
+        <id>31</id>
     </dictionary>
     <dictionary>
         <name>VolumetricRate</name>
@@ -412,7 +451,7 @@
         <max>5000.0</max>
         <bits>2</bits>
         <scale>100</scale>
-        <id>29</id>
+        <id>32</id>
     </dictionary>
     <dictionary>
         <name>TheoreticalRate</name>
@@ -425,7 +464,7 @@
         <max>5000.0</max>
         <bits>2</bits>
         <scale>100</scale>
-        <id>30</id>
+        <id>33</id>
     </dictionary>
     <dictionary>
         <name>DisplacementVolume</name>
@@ -438,7 +477,7 @@
         <max>1000.0</max>
         <bits>4</bits>
         <scale>10</scale>
-        <id>31</id>
+        <id>34</id>
     </dictionary>
     <dictionary>
         <name>LbsPerHr</name>
@@ -451,7 +490,7 @@
         <max>100.0</max>
         <bits>8</bits>
         <scale>100</scale>
-        <id>32</id>
+        <id>35</id>
     </dictionary>
     <dictionary>
         <name>GalPerHour</name>
@@ -464,7 +503,7 @@
         <max>50.0</max>
         <bits>8</bits>
         <scale>100</scale>
-        <id>33</id>
+        <id>36</id>
     </dictionary>
     <dictionary>
         <name>MPG</name>
@@ -477,7 +516,7 @@
         <max>500.0</max>
         <bits>6</bits>
         <scale>100</scale>
-        <id>34</id>
+        <id>37</id>
     </dictionary>
     <dictionary>
         <name>DutyCycle</name>
@@ -490,7 +529,7 @@
         <max>100.0</max>
         <bits>8</bits>
         <scale>100</scale>
-        <id>35</id>
+        <id>38</id>
     </dictionary>
     <dictionary>
         <name>ThrottleRate</name>
@@ -503,7 +542,7 @@
         <max>125.0</max>
         <bits>8</bits>
         <scale>100</scale>
-        <id>36</id>
+        <id>39</id>
     </dictionary>
     <dictionary>
         <name>RPMtoMPH</name>
@@ -516,7 +555,7 @@
         <max>200.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>37</id>
+        <id>40</id>
     </dictionary>
     <dictionary>
         <name>IsWOT</name>
@@ -529,7 +568,7 @@
         <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>38</id>
+        <id>41</id>
     </dictionary>
     <dictionary>
         <name>IsLimpMode</name>
@@ -542,7 +581,7 @@
         <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>39</id>
+        <id>42</id>
     </dictionary>
     <dictionary>
         <name>IsClosedLoop</name>
@@ -555,7 +594,7 @@
         <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>40</id>
+        <id>43</id>
     </dictionary>
     <dictionary>
         <name>IsHighAlt</name>
@@ -568,7 +607,7 @@
         <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>41</id>
+        <id>44</id>
     </dictionary>
     <dictionary>
         <name>IsMonitoring</name>
@@ -581,7 +620,7 @@
         <max>3000.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>42</id>
+        <id>45</id>
     </dictionary>
     <dictionary>
         <name>OnSeconds</name>
@@ -594,20 +633,7 @@
         <max>65535.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>43</id>
-    </dictionary>
-    <dictionary>
-        <name>OffSeconds</name>
-        <cat>Time</cat>
-        <units>sec</units>
-        <value>0.0</value>
-        <last>0.0</last>
-        <time>0</time>
-        <min>0.0</min>
-        <max>65535.0</max>
-        <bits>0</bits>
-        <scale>1</scale>
-        <id>44</id>
+        <id>46</id>
     </dictionary>
     <dictionary>
         <name>CrankSeconds</name>
@@ -620,7 +646,7 @@
         <max>65535.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>45</id>
+        <id>47</id>
     </dictionary>
     <dictionary>
         <name>RunSeconds</name>
@@ -633,7 +659,7 @@
         <max>65535.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>46</id>
+        <id>48</id>
     </dictionary>
     <dictionary>
         <name>IdleSeconds</name>
@@ -646,7 +672,7 @@
         <max>65535.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>47</id>
+        <id>49</id>
     </dictionary>
     <dictionary>
         <name>MovingSeconds</name>
@@ -659,7 +685,7 @@
         <max>65535.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>48</id>
+        <id>50</id>
     </dictionary>
     <dictionary>
         <name>AccelEnrichment</name>
@@ -672,7 +698,7 @@
         <max>56000.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>49</id>
+        <id>51</id>
     </dictionary>
     <dictionary>
         <name>FuelBase</name>
@@ -685,7 +711,7 @@
         <max>17.875</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>50</id>
+        <id>52</id>
     </dictionary>
     <dictionary>
         <name>FuelStartup</name>
@@ -698,7 +724,7 @@
         <max>4.125</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>51</id>
+        <id>53</id>
     </dictionary>
     <dictionary>
         <name>InjectorTiming</name>
@@ -711,7 +737,7 @@
         <max>464.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>52</id>
+        <id>54</id>
     </dictionary>
     <dictionary>
         <name>SparkAltitude</name>
@@ -724,7 +750,7 @@
         <max>43.75</max>
         <bits>8</bits>
         <scale>10</scale>
-        <id>53</id>
+        <id>55</id>
     </dictionary>
     <dictionary>
         <name>SparkBase</name>
@@ -737,7 +763,7 @@
         <max>46.0</max>
         <bits>8</bits>
         <scale>10</scale>
-        <id>54</id>
+        <id>56</id>
     </dictionary>
     <dictionary>
         <name>SparkLimp</name>
@@ -750,7 +776,7 @@
         <max>43.75</max>
         <bits>8</bits>
         <scale>10</scale>
-        <id>55</id>
+        <id>57</id>
     </dictionary>
     <dictionary>
         <name>EecLoadScaling</name>
@@ -763,7 +789,7 @@
         <max>7.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>56</id>
+        <id>58</id>
     </dictionary>
     <dictionary>
         <name>MafTransfer</name>
@@ -776,7 +802,7 @@
         <max>659.25</max>
         <bits>4</bits>
         <scale>10</scale>
-        <id>57</id>
+        <id>59</id>
     </dictionary>
     <dictionary>
         <name>AcceleratorEnrichmentMultiplierVsTp</name>
@@ -789,7 +815,7 @@
         <max>1.0</max>
         <bits>10</bits>
         <scale>10000</scale>
-        <id>58</id>
+        <id>60</id>
     </dictionary>
     <dictionary>
         <name>OpenLoopFuelMultiplierVsAct</name>
@@ -802,7 +828,7 @@
         <max>1.0</max>
         <bits>10</bits>
         <scale>10000</scale>
-        <id>59</id>
+        <id>61</id>
     </dictionary>
     <dictionary>
         <name>MinLowSpeedDwell</name>
@@ -815,7 +841,7 @@
         <max>589.75</max>
         <bits>4</bits>
         <scale>10</scale>
-        <id>60</id>
+        <id>62</id>
     </dictionary>
     <dictionary>
         <name>MinHighSpeedDwell</name>
@@ -828,7 +854,7 @@
         <max>655.25</max>
         <bits>4</bits>
         <scale>10</scale>
-        <id>61</id>
+        <id>63</id>
     </dictionary>
     <dictionary>
         <name>MaximumDashpotClip</name>
@@ -841,7 +867,7 @@
         <max>1.60009765625</max>
         <bits>10</bits>
         <scale>10000</scale>
-        <id>62</id>
+        <id>64</id>
     </dictionary>
     <dictionary>
         <name>SeaLevelLuggingOLFuelMultiplier</name>
@@ -854,7 +880,7 @@
         <max>1.203125</max>
         <bits>10</bits>
         <scale>10000</scale>
-        <id>63</id>
+        <id>65</id>
     </dictionary>
     <dictionary>
         <name>AltitudeLuggingOLFuelMultiplier</name>
@@ -867,7 +893,7 @@
         <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>64</id>
+        <id>66</id>
     </dictionary>
     <dictionary>
         <name>InjectorOffsetVsBatteryVoltage</name>
@@ -880,7 +906,7 @@
         <max>7.5</max>
         <bits>10</bits>
         <scale>10000</scale>
-        <id>65</id>
+        <id>67</id>
     </dictionary>
     <dictionary>
         <name>OpenLoopFuelMultiplierVsRpm</name>
@@ -893,7 +919,7 @@
         <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>66</id>
+        <id>68</id>
     </dictionary>
     <dictionary>
         <name>CrankFuelPulseWidthMultiplier</name>
@@ -906,7 +932,7 @@
         <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>67</id>
+        <id>69</id>
     </dictionary>
     <dictionary>
         <name>CrankingFuelPulseWidthVsEct</name>
@@ -919,7 +945,7 @@
         <max>39.69140625</max>
         <bits>8</bits>
         <scale>10000</scale>
-        <id>68</id>
+        <id>70</id>
     </dictionary>
     <dictionary>
         <name>SparkAdvanceVsAct</name>
@@ -932,7 +958,7 @@
         <max>4.9E-324</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>69</id>
+        <id>71</id>
     </dictionary>
     <dictionary>
         <name>SparkAdvanceVsBp</name>
@@ -945,7 +971,7 @@
         <max>12.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>70</id>
+        <id>72</id>
     </dictionary>
     <dictionary>
         <name>SparkAdvanceRateVsRpm</name>
@@ -958,7 +984,7 @@
         <max>2.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>71</id>
+        <id>73</id>
     </dictionary>
     <dictionary>
         <name>WotFuelMultiplierVsRpm</name>
@@ -971,7 +997,7 @@
         <max>1.0</max>
         <bits>10</bits>
         <scale>10000</scale>
-        <id>72</id>
+        <id>74</id>
     </dictionary>
     <dictionary>
         <name>WotSparkAdvanceVsRpm</name>
@@ -984,7 +1010,7 @@
         <max>30.25</max>
         <bits>10</bits>
         <scale>10</scale>
-        <id>73</id>
+        <id>75</id>
     </dictionary>
     <dictionary>
         <name>WotSparkAdvanceVsEct</name>
@@ -997,7 +1023,7 @@
         <max>3.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>74</id>
+        <id>76</id>
     </dictionary>
     <dictionary>
         <name>WotSparkAdvanceVsAct</name>
@@ -1010,7 +1036,7 @@
         <max>4.9E-324</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>75</id>
+        <id>77</id>
     </dictionary>
     <dictionary>
         <name>TransmissionRatio</name>
@@ -1024,7 +1050,7 @@
         <max>5.0</max>
         <bits>10</bits>
         <scale>1000</scale>
-        <id>76</id>
+        <id>78</id>
     </dictionary>
     <dictionary>
         <name>InjHiSlope</name>
@@ -1037,7 +1063,7 @@
         <max>100.0</max>
         <bits>8</bits>
         <scale>100</scale>
-        <id>77</id>
+        <id>79</id>
     </dictionary>
     <dictionary>
         <name>InjLoSlope</name>
@@ -1050,7 +1076,7 @@
         <max>100.0</max>
         <bits>8</bits>
         <scale>100</scale>
-        <id>78</id>
+        <id>80</id>
     </dictionary>
     <dictionary>
         <name>Cylinders</name>
@@ -1064,7 +1090,7 @@
         <max>16.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>79</id>
+        <id>81</id>
     </dictionary>
     <dictionary>
         <name>Coils</name>
@@ -1078,7 +1104,7 @@
         <max>16.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>80</id>
+        <id>82</id>
     </dictionary>
     <dictionary>
         <name>EncoderTeeth</name>
@@ -1092,7 +1118,7 @@
         <max>62.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>81</id>
+        <id>83</id>
     </dictionary>
     <dictionary>
         <name>EncoderRatio</name>
@@ -1106,7 +1132,7 @@
         <max>10.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>82</id>
+        <id>84</id>
     </dictionary>
     <dictionary>
         <name>EncoderCompare</name>
@@ -1120,7 +1146,7 @@
         <max>5.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>83</id>
+        <id>85</id>
     </dictionary>
     <dictionary>
         <name>EncoderSyncHigh</name>
@@ -1134,7 +1160,7 @@
         <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>84</id>
+        <id>86</id>
     </dictionary>
     <dictionary>
         <name>EncoderSyncShort</name>
@@ -1148,7 +1174,7 @@
         <max>1.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>85</id>
+        <id>87</id>
     </dictionary>
     <dictionary>
         <name>EncoderCountOffset</name>
@@ -1162,7 +1188,7 @@
         <max>62.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>86</id>
+        <id>88</id>
     </dictionary>
     <dictionary>
         <name>EncoderDegreesOffset</name>
@@ -1176,7 +1202,7 @@
         <max>30.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>87</id>
+        <id>89</id>
     </dictionary>
     <dictionary>
         <name>AxleRatio</name>
@@ -1190,7 +1216,7 @@
         <max>6.0</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>88</id>
+        <id>90</id>
     </dictionary>
     <dictionary>
         <name>TireDiameter</name>
@@ -1204,7 +1230,7 @@
         <max>30.0</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>89</id>
+        <id>91</id>
     </dictionary>
     <dictionary>
         <name>GallonWeight</name>
@@ -1218,7 +1244,7 @@
         <max>10.0</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>90</id>
+        <id>92</id>
     </dictionary>
     <dictionary>
         <name>CrankingRPM</name>
@@ -1232,7 +1258,7 @@
         <max>1000.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>91</id>
+        <id>93</id>
     </dictionary>
     <dictionary>
         <name>IdleRPM</name>
@@ -1246,7 +1272,7 @@
         <max>1500.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>92</id>
+        <id>94</id>
     </dictionary>
     <dictionary>
         <name>MaxRPM</name>
@@ -1260,7 +1286,7 @@
         <max>20000.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>93</id>
+        <id>95</id>
     </dictionary>
     <dictionary>
         <name>StaticTiming</name>
@@ -1274,7 +1300,7 @@
         <max>10.0</max>
         <bits>10</bits>
         <scale>10</scale>
-        <id>94</id>
+        <id>96</id>
     </dictionary>
     <dictionary>
         <name>ClosedLoopMinTemp</name>
@@ -1287,7 +1313,7 @@
         <max>200.0</max>
         <bits>6</bits>
         <scale>10</scale>
-        <id>95</id>
+        <id>97</id>
     </dictionary>
     <dictionary>
         <name>HighAlt</name>
@@ -1301,7 +1327,7 @@
         <max>32.0</max>
         <bits>8</bits>
         <scale>100</scale>
-        <id>96</id>
+        <id>98</id>
     </dictionary>
     <dictionary>
         <name>WOT</name>
@@ -1315,7 +1341,7 @@
         <max>100.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>97</id>
+        <id>99</id>
     </dictionary>
     <dictionary>
         <name>Lamda</name>
@@ -1328,7 +1354,7 @@
         <max>16.0</max>
         <bits>10</bits>
         <scale>100</scale>
-        <id>98</id>
+        <id>100</id>
     </dictionary>
     <dictionary>
         <name>CamIntakeCenter</name>
@@ -1341,7 +1367,7 @@
         <max>180.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>99</id>
+        <id>101</id>
     </dictionary>
     <dictionary>
         <name>CamIntakeDuration</name>
@@ -1354,7 +1380,7 @@
         <max>360.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>100</id>
+        <id>102</id>
     </dictionary>
     <dictionary>
         <name>CamExhaustCenter</name>
@@ -1367,7 +1393,7 @@
         <max>180.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>101</id>
+        <id>103</id>
     </dictionary>
     <dictionary>
         <name>CamExhaustDuration</name>
@@ -1380,7 +1406,7 @@
         <max>360.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>102</id>
+        <id>104</id>
     </dictionary>
     <dictionary>
         <name>TicksInUS</name>
@@ -1394,7 +1420,7 @@
         <max>1000.0</max>
         <bits>0</bits>
         <scale>1</scale>
-        <id>103</id>
+        <id>105</id>
     </dictionary>
     <dictionary>
         <name>CuIn</name>
@@ -1407,7 +1433,7 @@
         <max>1000.0</max>
         <bits>4</bits>
         <scale>10</scale>
-        <id>104</id>
+        <id>106</id>
     </dictionary>
     <tables>
         <name>ACT</name>

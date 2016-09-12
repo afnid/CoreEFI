@@ -2,101 +2,14 @@
 
 #include "System.h"
 #include "Channel.h"
+#include "Prompt.h"
 #include "Metrics.h"
 #include "Params.h"
 
-#include "Decoder.h"
 #include "Tasks.h"
-#include "Encoder.h"
-#include "Events.h"
 #include "Free.h"
-#include "Pins.h"
-#include "Schedule.h"
-#include "Strategy.h"
-#include "Timers.h"
 
-static inline void runClock(uint32_t seconds) {
-	uint16_t rpm = getParamUnsigned(SensorRPM);
-	uint16_t cranking = getParamUnsigned(ConstCrankingRPM);
-	setParamUnsigned(TimeOnSeconds, seconds + 1);
-	setTimer(TimeCrankSeconds, (rpm > 0 && rpm < cranking) || isParamSet(SensorIsCranking));
-	setTimer(TimeRunSeconds, rpm >= cranking);
-	setTimer(TimeOffSeconds, !isParamSet(SensorIsKeyOn));
-	setTimer(TimeMovingSeconds, isParamSet(SensorVSS));
-	setTimer(TimeIdleSeconds, getParamFloat(SensorTPS) <= 20);
-}
-
-static inline uint32_t runStatus() {
-	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
-
-	toggleled(0);
-
-	if (!wait) {
-		sendTicks();
-		sendEventStatus();
-		return MicrosToTicks(3000017UL);
-	}
-
-	decoder.sendList();
-	sendEventList();
-
-	wait = max(wait, 500);
-
-	return MicrosToTicks(wait * 3000);
-}
-
-static inline uint32_t runChanges() {
-	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
-
-	if (wait) {
-		sendParamChanges();
-		wait = max(wait, 500);
-		wait = min(wait, 1000);
-		return MicrosToTicks(wait);
-	}
-
-	return MicrosToTicks(3000017UL);
-}
-
-static inline void runRefresh(uint32_t now) {
-	refreshEvents();
-	encoder.refresh();
-	decoder.refresh(now);
-}
-
-static inline void runTest() {
-	for (uint16_t i = 0; i < 100; i++)
-		getParamUnsigned(ConstEncoderTeeth);
-
-	//setParamFloat(SensorVSS, getParamUnsigned(CalcRPMtoMPH));
-	//getParamFloat(CalcFinalLamda);
-	//getParamFloat(CalcMPG);
-	//getParamFloat(CalcDutyCycle);
-}
-
-enum {
-	TaskStatus,
-	TaskChanges,
-	TaskInput,
-	TaskSchedule,
-
-	TaskPins,
-	TaskClock,
-	TaskRefresh,
-
-#if defined(ARDUINO) || defined(STM32)
-	TaskMax,
-	TaskEvents,
-	TaskEncoder,
-#else
-	TaskEvents,
-	TaskEncoder,
-	TaskMax,
-#endif
-
-	// disabled
-	TaskTest
-};
+static const uint8_t TaskMax = 15;
 
 typedef struct _Node {
 	Task task;
@@ -148,6 +61,8 @@ static struct {
 	Node *head;
 	uint32_t start;
 	uint32_t slept;
+	uint32_t busy;
+	uint8_t ntasks;
 
 	inline void verify(Node *h) {
 		assert(h == head || tdiff32(h->task.getNext(), h->prev->task.getNext()) >= 0);
@@ -155,7 +70,7 @@ static struct {
 		h->verify();
 	}
 
-	inline void addTask(Node *n) {
+	inline void scheduleTask(Node *n) {
 		Node *h = head;
 
 		while (tdiff32(n->task.getNext(), h->task.getNext()) >= 0 && h->next != head)
@@ -176,7 +91,7 @@ static struct {
 		if (n == head)
 			head = n->next;
 		n->unlink();
-		addTask(n);
+		scheduleTask(n);
 	}
 
 	inline void setEpoch() {
@@ -187,20 +102,53 @@ static struct {
 
 		start = now;
 	}
+
+	inline void addTask(const channel_t *name, TaskCallback cb, void *data, uint32_t waitms) {
+		assert(ntasks < ARRSIZE(queue));
+
+		if (ntasks < ARRSIZE(queue)) {
+			queue[ntasks].next = queue + ntasks;
+			queue[ntasks].prev = queue + ntasks;
+			queue[ntasks].task.init(name, cb, data, MicrosToTicks(waitms * 1000), ntasks);
+			ntasks++;
+		}
+	}
+
+	void boot() {
+		head = queue;
+
+		for (uint8_t i = 1; i < ntasks; i++)
+			scheduleTask(queue + i);
+
+		setEpoch();
+	}
 } tasks;
 
-void sendTasks() {
+static inline void runTest() {
+	for (uint16_t i = 0; i < 100; i++)
+		getParamUnsigned(ConstEncoderTeeth);
+
+	//setParamFloat(SensorVSS, getParamUnsigned(CalcRPMtoMPH));
+	//getParamFloat(CalcFinalLamda);
+	//getParamFloat(CalcMPG);
+	//getParamFloat(CalcDutyCycle);
+}
+
+static void sendTasks(void *data) {
 	uint32_t now = clockTicks();
-	uint32_t us = TicksToMicros(now);
 	Node *n = tasks.head;
 
+	uint32_t since = tdiff32(now, tasks.slept);
+	float duty = !since ? 0 : 100.0f * tasks.busy / since;
+
 	channel.p1(F("tasks"));
-	channel.send(F("slept"), tasks.slept);
-	channel.send(F("msticks"), us / 1000.0f);
+	channel.send(F("duty"), duty);
+	channel.send(F("ntasks"), tasks.ntasks);
 	channel.p2();
 	channel.nl();
 
-	tasks.slept = 0;
+	tasks.slept = now;
+	tasks.busy = 0;
 
 	do {
 		n->task.send(now);
@@ -208,116 +156,42 @@ void sendTasks() {
 	} while (n != tasks.head);
 }
 
-uint16_t initTasks() {
-	myzero(&tasks, sizeof(tasks));
-
-	for (uint8_t i = 0; i < TaskMax; i++) {
-		tasks.queue[i].next = tasks.queue + i;
-		tasks.queue[i].prev = tasks.queue + i;
-		tasks.queue[i].task.init(1000, i);
-	}
-
-	// http://prime-numbers.org/prime-number-2000000-2005000.htm, less contention, but not necessary
-	tasks.queue[TaskEvents].task.setWait(1);
-	tasks.queue[TaskEncoder].task.setWait(MicrosToTicks(encoder.refresh()));
-
-	tasks.queue[TaskSchedule].task.setWait(MicrosToTicks(23431UL));
-	tasks.queue[TaskInput].task.setWait(MicrosToTicks(50341UL));
-	tasks.queue[TaskPins].task.setWait(MicrosToTicks(51797UL));
-	tasks.queue[TaskClock].task.setWait(MicrosToTicks(251263UL));
-	tasks.queue[TaskRefresh].task.setWait(MicrosToTicks(2001481UL));
-	tasks.queue[TaskStatus].task.setWait(MicrosToTicks(3000017UL));
-
-	tasks.head = tasks.queue;
-
-	for (uint8_t i = 1; i < TaskMax; i++)
-		tasks.addTask(tasks.queue + i);
-
-	tasks.setEpoch();
-
-	return sizeof(tasks);
+void TaskMgr::addTask(const channel_t *name, TaskCallback cb, void *data, uint32_t waitms) {
+	tasks.addTask(name, cb, data, waitms);
 }
 
-int32_t runTask(uint32_t now) {
+static int32_t runTask(uint32_t now) {
 	if (tasks.head->task.canRun(now)) {
 		Node *n = tasks.head;
 
-		tasks.reschedule(n);
+		tasks.reschedule(n); // TODO Twice?
 
 		uint32_t t0 = clockTicks();
+		uint32_t ticks = n->task.call(t0);
 
-		switch (n->task.getId()) { // could use func ptrs, but then all would take args, and all would return vals, this should perform well
-			case TaskEncoder: {
-				extern void simTimerEncoder(uint32_t ticks);
-				int32_t ticks = encoder.run(now);
-				//simTimerEncoder(ticks);
-				n->task.setWait(ticks);
-				tasks.reschedule(n);
-				}
-				break;
-			case TaskEvents: {
-				//extern void simTimerEvents(uint32_t ticks);
-				int32_t ticks = runEvents(now, 0, 5);
-				ticks = tdiff32(ticks, clockTicks());
-				ticks = max(ticks, 1);
-				//simTimerEvents(ticks);
-				n->task.setWait(ticks); //wait <= 2 ? 0 : wait / 2); // force recalcs
-				tasks.reschedule(n);
-				}
-				break;
-			case TaskClock:
-				runClock(TicksToMicros(tdiff32(now, tasks.start)) / 1000000L);
-				break;
-			case TaskSchedule:
-				runSchedule();
-				n->task.setWait(decoder.getTicks() / 2);
-				tasks.reschedule(n);
-				break;
-			case TaskPins:
-				readPins();
-				break;
-			case TaskRefresh:
-				runRefresh(now);
-				break;
-			case TaskTest:
-				runTest();
-				break;
-			case TaskChanges:
-				n->task.setWait(runChanges());
-				tasks.reschedule(n);
-				break;
-			case TaskStatus:
-				n->task.setWait(runStatus());
-				tasks.reschedule(n);
-				break;
-			case TaskInput:
-				runInput();
-				break;
+		if (ticks != 0) {
+			n->task.setWait(ticks);
+			tasks.reschedule(n);
 		}
 
 		now = clockTicks();
-		n->task.calc(tdiff32(now, t0));
+		uint32_t busy = tdiff32(now, t0);
+		tasks.busy += busy;
+		n->task.calc(busy);
 	}
 
 	return tasks.head->task.getSleep(now);
 }
 
-void runTasks() {
-	tasks.setEpoch();
+void TaskMgr::runTasks() {
+	tasks.boot();
 
-	while (true) {
-		uint32_t now = clockTicks();
-		int32_t sleep = runTask(now);
-
-		if (sleep > 0) {
-			idleSleep(sleep);
-			tasks.slept += sleep;
-		}
-	}
+	while (true)
+		runTask(clockTicks());
 }
 
 void runPerfectTasks() {
-	tasks.setEpoch();
+	tasks.boot();
 
 	uint32_t last = clockTicks();
 
@@ -329,9 +203,20 @@ void runPerfectTasks() {
 
 			if (false && sleep > 0) {
 				last += sleep;
-				tasks.slept += sleep;
 			} else
 				last += 2; // perfect resolution
 		}
 	}
+}
+
+uint16_t TaskMgr::initTasks() {
+	bzero(&tasks, sizeof(tasks));
+
+	static PromptCallback callbacks[] = {
+		{ F("t"), sendTasks, 0, F("tasks") },
+	};
+
+	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+
+	return sizeof(tasks) + sizeof(callbacks);
 }

@@ -1,147 +1,149 @@
 // Generated code, don't edit
 
 static ParamData params[] = {
-	{ 0, 0, 3500, 0, 0, 0, 0,  }, // 0 - SensorDEC - rpm
-	{ 0, 1280, 25600, 0, 0, 0, 4,  }, // 1 - SensorTPS - deg
-	{ 0, 0, 16384, 0, 0, 0, 5,  }, // 2 - SensorMAF - v
-	{ 0, 1920, 12800, 0, 1, 0, 3,  }, // 3 - SensorVSS - mph
-	{ 0, 2560, 17280, 1, 1, 0, 3,  }, // 4 - SensorACT - f
-	{ 0, 2560, 17280, 2, 1, 0, 3,  }, // 5 - SensorECT - f
-	{ 0, 512, 1536, 3, 0, 0, 5,  }, // 6 - SensorHEGO1 - lamda
-	{ 0, 512, 1536, 4, 0, 0, 5,  }, // 7 - SensorHEGO2 - lamda
-	{ 0, 6016, 8204, 5, 0, 0, 4,  }, // 8 - SensorBAR - bp
-	{ 0, 0, 1024, 0, 0, 0, 5,  }, // 9 - SensorEGR - v
-	{ 0, 0, 7000, 0, 0, 0, 0,  }, // 10 - SensorRPM - rpm
-	{ 0, 0, 16384, 6, 0, 0, 5,  }, // 11 - SensorVCC - v
-	{ 0, 0, 5, 0, 0, 0, 0,  }, // 12 - SensorGEAR - scalar
-	{ 0, 0, 1, 0, 0, 0, 0,  }, // 13 - SensorIsKeyOn - bit
-	{ 0, 0, 1, 0, 0, 0, 0,  }, // 14 - SensorIsCranking - bit
-	{ 0, 0, 1, 0, 0, 0, 0,  }, // 15 - SensorIsAirOn - bit
-	{ 0, 0, 1, 0, 0, 0, 0,  }, // 16 - SensorIsBrakeOn - bit
-	{ 0, 0, 1, 0, 0, 0, 0,  }, // 17 - SensorIsLightsOn - bit
-	{ 0, 0, 100, 0, 0, 1, 0,  }, // 18 - CalcFuelPump - pwm
-	{ 0, 0, 100, 0, 0, 1, 0,  }, // 19 - CalcFan1 - pwm
-	{ 0, 0, 100, 0, 0, 1, 0,  }, // 20 - CalcFan2 - pwm
-	{ 0, 0, 100, 0, 0, 1, 0,  }, // 21 - CalcEPAS - pwm
-	{ 0, 17280, 28800, 0, 0, 1, 3,  }, // 22 - CalcFinalPulseAdvance - deg
-	{ 0, 0, 11520, 0, 0, 1, 3,  }, // 23 - CalcFinalSparkAdvance - deg
-	{ 0, 1, 20000, 0, 0, 1, 0,  }, // 24 - CalcFinalPulseWidth - us
-	{ 0, 0, 20000, 0, 0, 1, 0,  }, // 25 - CalcFinalSparkWidth - us
-	{ 0, 512, 1536, 0, 0, 1, 5,  }, // 26 - CalcFinalLamda - lamda
-	{ 0, 0, 12800, 0, 0, 1, 3,  }, // 27 - CalcLoad - pct
-	{ 0, 0, 20000, 0, 0, 1, 1,  }, // 28 - CalcVolumetricRate - lb/hr
-	{ 0, 0, 20000, 0, 0, 1, 1,  }, // 29 - CalcTheoreticalRate - lb/hr
-	{ 0, 0, 16000, 0, 0, 1, 2,  }, // 30 - CalcDisplacementVolume - cf/min
-	{ 0, 0, 25600, 0, 0, 1, 4,  }, // 31 - CalcLbsPerHr - lb/hr
-	{ 0, 0, 12800, 0, 0, 1, 4,  }, // 32 - CalcGalPerHour - gal/hr
-	{ 0, 0, 32000, 0, 0, 1, 3,  }, // 33 - CalcMPG - mpg
-	{ 0, 0, 25600, 0, 0, 1, 4,  }, // 34 - CalcDutyCycle - pct
-	{ 0, 0, 32000, 0, 0, 1, 4,  }, // 35 - CalcThrottleRate - deg/s
-	{ 0, 0, 200, 0, 0, 1, 0,  }, // 36 - CalcRPMtoMPH - mph
-	{ 0, 0, 1, 0, 0, 2, 0,  }, // 37 - FlagIsWOT - bit
-	{ 0, 0, 1, 0, 0, 2, 0,  }, // 38 - FlagIsLimpMode - bit
-	{ 0, 0, 1, 0, 0, 2, 0,  }, // 39 - FlagIsClosedLoop - bit
-	{ 0, 0, 1, 0, 0, 2, 0,  }, // 40 - FlagIsHighAlt - bit
-	{ 0, 0, 3000, 0, 0, 2, 0,  }, // 41 - FlagIsMonitoring - scalar
-	{ 0, 0, 65535, 0, 0, 3, 0,  }, // 42 - TimeOnSeconds - sec
-	{ 0, 0, 65535, 0, 0, 3, 0,  }, // 43 - TimeOffSeconds - sec
-	{ 0, 0, 65535, 0, 0, 3, 0,  }, // 44 - TimeCrankSeconds - sec
-	{ 0, 0, 65535, 0, 0, 3, 0,  }, // 45 - TimeRunSeconds - sec
-	{ 0, 0, 65535, 0, 0, 3, 0,  }, // 46 - TimeIdleSeconds - sec
-	{ 0, 0, 65535, 0, 0, 3, 0,  }, // 47 - TimeMovingSeconds - sec
-	{ 0, 1500, 56000, 7, 0, 4, 0,  }, // 48 - TableAccelEnrichment - lb/min
-	{ 0, 10752, 18304, 8, 0, 4, 5,  }, // 49 - TableFuelBase - a/f
-	{ 0, 0, 4224, 9, 0, 4, 5,  }, // 50 - TableFuelStartup - a/f
-	{ 0, 352, 464, 10, 0, 4, 0,  }, // 51 - TableInjectorTiming - deg
-	{ 0, 2944, 11200, 11, 0, 4, 4,  }, // 52 - TableSparkAltitude - deg
-	{ 0, 2944, 11776, 12, 0, 4, 4,  }, // 53 - TableSparkBase - deg
-	{ 0, 2304, 11200, 13, 0, 4, 4,  }, // 54 - TableSparkLimp - deg
-	{ 0, 0, 7, 14, 0, 5, 0,  }, // 55 - FuncEecLoadScaling - ratio
-	{ 0, 172, 10548, 15, 0, 5, 2,  }, // 56 - FuncMafTransfer - kg/hr
-	{ 0, 0, 1024, 16, 0, 5, 5,  }, // 57 - FuncAcceleratorEnrichmentMultiplierVsTp - ratio
-	{ 0, 656, 1024, 17, 0, 5, 5,  }, // 58 - FuncOpenLoopFuelMultiplierVsAct - ratio
-	{ 0, 5872, 9436, 18, 0, 5, 2,  }, // 59 - FuncMinLowSpeedDwell - ms
-	{ 0, 6292, 10484, 19, 0, 5, 2,  }, // 60 - FuncMinHighSpeedDwell - ms
-	{ 0, 123, 1638, 20, 0, 5, 5,  }, // 61 - FuncMaximumDashpotClip - lb/min
-	{ 0, 1024, 1232, 21, 0, 5, 5,  }, // 62 - FuncSeaLevelLuggingOLFuelMultiplier - ratio
-	{ 0, 1, 1, 22, 0, 5, 0,  }, // 63 - FuncAltitudeLuggingOLFuelMultiplier - ratio
-	{ 0, 928, 7680, 23, 0, 5, 5,  }, // 64 - FuncInjectorOffsetVsBatteryVoltage - v
-	{ 0, 0, 1, 24, 0, 5, 0,  }, // 65 - FuncOpenLoopFuelMultiplierVsRpm - ratio
-	{ 0, 1, 1, 25, 0, 5, 0,  }, // 66 - FuncCrankFuelPulseWidthMultiplier - ratio
-	{ 0, 523, 10161, 26, 0, 5, 4,  }, // 67 - FuncCrankingFuelPulseWidthVsEct - ms
-	{ 0, 2, 0, 27, 1, 5, 0,  }, // 68 - FuncSparkAdvanceVsAct - deg
-	{ 0, 0, 12, 28, 0, 5, 0,  }, // 69 - FuncSparkAdvanceVsBp - deg
-	{ 0, 1, 2, 29, 0, 5, 0,  }, // 70 - FuncSparkAdvanceRateVsRpm - deg
-	{ 0, 928, 1024, 30, 0, 5, 5,  }, // 71 - FuncWotFuelMultiplierVsRpm - ratio
-	{ 0, 10496, 30976, 31, 0, 5, 5,  }, // 72 - FuncWotSparkAdvanceVsRpm - deg
-	{ 0, 4, 3, 32, 1, 5, 0,  }, // 73 - FuncWotSparkAdvanceVsEct - deg
-	{ 0, 6, 0, 33, 1, 5, 0,  }, // 74 - FuncWotSparkAdvanceVsAct - deg
-	{ 0, 0, 5120, 34, 0, 5, 5,  }, // 75 - FuncTransmissionRatio - ratio
-	{ 6425, 0, 25600, 0, 0, 6, 4,  }, // 76 - ConstInjHiSlope - ms - 25.09765625, 
-	{ 4889, 0, 25600, 0, 0, 6, 4,  }, // 77 - ConstInjLoSlope - ms - 19.09765625, 
-	{ 8, 1, 16, 0, 0, 6, 0,  }, // 78 - ConstCylinders - scalar - 8.0, 
-	{ 1, 1, 16, 0, 0, 6, 0,  }, // 79 - ConstCoils - scalar - 1.0, 
-	{ 36, 2, 62, 0, 0, 6, 0,  }, // 80 - ConstEncoderTeeth - scalar - 36.0, 
-	{ 2, 1, 10, 0, 0, 6, 0,  }, // 81 - ConstEncoderRatio - ratio - 2.0, 
-	{ 2, 0, 5, 0, 0, 6, 0,  }, // 82 - ConstEncoderCompare - scalar - 2.0, 
-	{ 0, 0, 1, 0, 0, 6, 0,  }, // 83 - ConstEncoderSyncHigh - bit - 0.0, 
-	{ 0, 0, 1, 0, 0, 6, 0,  }, // 84 - ConstEncoderSyncShort - bit - 0.0, 
-	{ 0, 0, 62, 0, 0, 6, 0,  }, // 85 - ConstEncoderCountOffset - scalar - 0.0, 
-	{ 0, 0, 30, 0, 0, 6, 0,  }, // 86 - ConstEncoderDegreesOffset - scalar - 0.0, 
-	{ 3584, 2048, 6144, 0, 0, 6, 5,  }, // 87 - ConstAxleRatio - ratio - 3.5, 
-	{ 26931, 5120, 30720, 0, 0, 6, 5,  }, // 88 - ConstTireDiameter - in - 26.2998046875, 
-	{ 6297, 5120, 10240, 0, 0, 6, 5,  }, // 89 - ConstGallonWeight - lbs - 6.1494140625, 
-	{ 300, 0, 1000, 0, 0, 6, 0,  }, // 90 - ConstCrankingRPM - rpm - 300.0, 
-	{ 670, 500, 1500, 0, 0, 6, 0,  }, // 91 - ConstIdleRPM - rpm - 670.0, 
-	{ 7000, 0, 20000, 0, 0, 6, 0,  }, // 92 - ConstMaxRPM - rpm - 7000.0, 
-	{ 5120, 4096, 10240, 0, 1, 6, 5,  }, // 93 - ConstStaticTiming - deg - 5.0, 
-	{ 10240, 8960, 12800, 0, 0, 6, 3,  }, // 94 - ConstClosedLoopMinTemp - f - 160.0, 
-	{ 7680, 7424, 8192, 0, 0, 6, 4,  }, // 95 - ConstHighAlt - bp - 30.0, 
-	{ 95, 95, 100, 0, 0, 6, 0,  }, // 96 - ConstWOT - deg - 95.0, 
-	{ 15032, 14336, 16384, 0, 0, 6, 5,  }, // 97 - ConstLamda - ratio - 14.6796875, 
-	{ 110, 0, 180, 0, 0, 6, 0,  }, // 98 - ConstCamIntakeCenter - deg - 110.0, 
-	{ 282, 0, 360, 0, 0, 6, 0,  }, // 99 - ConstCamIntakeDuration - deg - 282.0, 
-	{ 110, 0, 180, 0, 0, 6, 0,  }, // 100 - ConstCamExhaustCenter - deg - 110.0, 
-	{ 282, 0, 360, 0, 0, 6, 0,  }, // 101 - ConstCamExhaustDuration - deg - 282.0, 
-	{ 1, 1, 1000, 0, 0, 6, 0,  }, // 102 - ConstTicksInUS - scalar - 1.0, 
-	{ 4832, 0, 16000, 0, 0, 6, 2,  }, // 103 - ConstCuIn - cuin - 302.0, 
+	{ 0, 0, 1, 0, 0, 1, 0,  }, // 0 - SensorIsKeyOn - bit
+	{ 0, 0, 1, 0, 0, 1, 0,  }, // 1 - SensorIsCranking - bit
+	{ 0, 0, 3500, 0, 0, 1, 0,  }, // 2 - SensorDEC - rpm
+	{ 0, 1280, 25600, 0, 0, 1, 4,  }, // 3 - SensorTPS - deg
+	{ 0, 0, 16384, 0, 0, 1, 5,  }, // 4 - SensorMAF - v
+	{ 0, 1920, 12800, 0, 1, 1, 3,  }, // 5 - SensorVSS - mph
+	{ 0, 2560, 17280, 1, 1, 1, 3,  }, // 6 - SensorACT - f
+	{ 0, 2560, 17280, 2, 1, 1, 3,  }, // 7 - SensorECT - f
+	{ 0, 512, 1536, 3, 0, 1, 5,  }, // 8 - SensorHEGO1 - lamda
+	{ 0, 512, 1536, 4, 0, 1, 5,  }, // 9 - SensorHEGO2 - lamda
+	{ 0, 6016, 8204, 5, 0, 1, 4,  }, // 10 - SensorBAR - bp
+	{ 0, 0, 1024, 0, 0, 1, 5,  }, // 11 - SensorEGR - v
+	{ 0, 0, 7000, 0, 0, 1, 0,  }, // 12 - SensorRPM - rpm
+	{ 0, 0, 10240, 0, 0, 1, 5,  }, // 13 - SensorAMPS1 - f
+	{ 0, 0, 16384, 6, 0, 1, 5,  }, // 14 - SensorVCC - v
+	{ 0, 0, 5, 0, 0, 1, 0,  }, // 15 - SensorGEAR - scalar
+	{ 0, 0, 100, 0, 0, 0, 0,  }, // 16 - VehicleFuelSender - pct
+	{ 0, 0, 280, 0, 0, 0, 0,  }, // 17 - VehicleRadiatorTemp - deg
+	{ 0, 0, 100, 0, 0, 0, 0,  }, // 18 - VehicleGauge1 - pct
+	{ 0, 0, 280, 0, 0, 0, 0,  }, // 19 - VehicleGauge2 - deg
+	{ 0, 0, 100, 0, 0, 2, 0,  }, // 20 - CalcFuelPump - pwm
+	{ 0, 0, 100, 0, 0, 2, 0,  }, // 21 - CalcFan1 - pwm
+	{ 0, 0, 100, 0, 0, 2, 0,  }, // 22 - CalcFan2 - pwm
+	{ 0, 0, 100, 0, 0, 2, 0,  }, // 23 - CalcEPAS1 - pwm
+	{ 0, 0, 100, 0, 0, 2, 0,  }, // 24 - CalcEPAS2 - pwm
+	{ 0, 17280, 28800, 0, 0, 2, 3,  }, // 25 - CalcFinalPulseAdvance - deg
+	{ 0, 0, 11520, 0, 0, 2, 3,  }, // 26 - CalcFinalSparkAdvance - deg
+	{ 0, 1, 20000, 0, 0, 2, 0,  }, // 27 - CalcFinalPulseWidth - us
+	{ 0, 0, 20000, 0, 0, 2, 0,  }, // 28 - CalcFinalSparkWidth - us
+	{ 0, 512, 1536, 0, 0, 2, 5,  }, // 29 - CalcFinalLamda - lamda
+	{ 0, 0, 12800, 0, 0, 2, 3,  }, // 30 - CalcLoad - pct
+	{ 0, 0, 20000, 0, 0, 2, 1,  }, // 31 - CalcVolumetricRate - lb/hr
+	{ 0, 0, 20000, 0, 0, 2, 1,  }, // 32 - CalcTheoreticalRate - lb/hr
+	{ 0, 0, 16000, 0, 0, 2, 2,  }, // 33 - CalcDisplacementVolume - cf/min
+	{ 0, 0, 25600, 0, 0, 2, 4,  }, // 34 - CalcLbsPerHr - lb/hr
+	{ 0, 0, 12800, 0, 0, 2, 4,  }, // 35 - CalcGalPerHour - gal/hr
+	{ 0, 0, 32000, 0, 0, 2, 3,  }, // 36 - CalcMPG - mpg
+	{ 0, 0, 25600, 0, 0, 2, 4,  }, // 37 - CalcDutyCycle - pct
+	{ 0, 0, 32000, 0, 0, 2, 4,  }, // 38 - CalcThrottleRate - deg/s
+	{ 0, 0, 200, 0, 0, 2, 0,  }, // 39 - CalcRPMtoMPH - mph
+	{ 0, 0, 1, 0, 0, 3, 0,  }, // 40 - FlagIsWOT - bit
+	{ 0, 0, 1, 0, 0, 3, 0,  }, // 41 - FlagIsLimpMode - bit
+	{ 0, 0, 1, 0, 0, 3, 0,  }, // 42 - FlagIsClosedLoop - bit
+	{ 0, 0, 1, 0, 0, 3, 0,  }, // 43 - FlagIsHighAlt - bit
+	{ 0, 0, 3000, 0, 0, 3, 0,  }, // 44 - FlagIsMonitoring - scalar
+	{ 0, 0, 65535, 0, 0, 4, 0,  }, // 45 - TimeOnSeconds - sec
+	{ 0, 0, 65535, 0, 0, 4, 0,  }, // 46 - TimeCrankSeconds - sec
+	{ 0, 0, 65535, 0, 0, 4, 0,  }, // 47 - TimeRunSeconds - sec
+	{ 0, 0, 65535, 0, 0, 4, 0,  }, // 48 - TimeIdleSeconds - sec
+	{ 0, 0, 65535, 0, 0, 4, 0,  }, // 49 - TimeMovingSeconds - sec
+	{ 0, 1500, 56000, 7, 0, 5, 0,  }, // 50 - TableAccelEnrichment - lb/min
+	{ 0, 10752, 18304, 8, 0, 5, 5,  }, // 51 - TableFuelBase - a/f
+	{ 0, 0, 4224, 9, 0, 5, 5,  }, // 52 - TableFuelStartup - a/f
+	{ 0, 352, 464, 10, 0, 5, 0,  }, // 53 - TableInjectorTiming - deg
+	{ 0, 2944, 11200, 11, 0, 5, 4,  }, // 54 - TableSparkAltitude - deg
+	{ 0, 2944, 11776, 12, 0, 5, 4,  }, // 55 - TableSparkBase - deg
+	{ 0, 2304, 11200, 13, 0, 5, 4,  }, // 56 - TableSparkLimp - deg
+	{ 0, 0, 7, 14, 0, 6, 0,  }, // 57 - FuncEecLoadScaling - ratio
+	{ 0, 172, 10548, 15, 0, 6, 2,  }, // 58 - FuncMafTransfer - kg/hr
+	{ 0, 0, 1024, 16, 0, 6, 5,  }, // 59 - FuncAcceleratorEnrichmentMultiplierVsTp - ratio
+	{ 0, 656, 1024, 17, 0, 6, 5,  }, // 60 - FuncOpenLoopFuelMultiplierVsAct - ratio
+	{ 0, 5872, 9436, 18, 0, 6, 2,  }, // 61 - FuncMinLowSpeedDwell - ms
+	{ 0, 6292, 10484, 19, 0, 6, 2,  }, // 62 - FuncMinHighSpeedDwell - ms
+	{ 0, 123, 1638, 20, 0, 6, 5,  }, // 63 - FuncMaximumDashpotClip - lb/min
+	{ 0, 1024, 1232, 21, 0, 6, 5,  }, // 64 - FuncSeaLevelLuggingOLFuelMultiplier - ratio
+	{ 0, 1, 1, 22, 0, 6, 0,  }, // 65 - FuncAltitudeLuggingOLFuelMultiplier - ratio
+	{ 0, 928, 7680, 23, 0, 6, 5,  }, // 66 - FuncInjectorOffsetVsBatteryVoltage - v
+	{ 0, 0, 1, 24, 0, 6, 0,  }, // 67 - FuncOpenLoopFuelMultiplierVsRpm - ratio
+	{ 0, 1, 1, 25, 0, 6, 0,  }, // 68 - FuncCrankFuelPulseWidthMultiplier - ratio
+	{ 0, 523, 10161, 26, 0, 6, 4,  }, // 69 - FuncCrankingFuelPulseWidthVsEct - ms
+	{ 0, 2, 0, 27, 1, 6, 0,  }, // 70 - FuncSparkAdvanceVsAct - deg
+	{ 0, 0, 12, 28, 0, 6, 0,  }, // 71 - FuncSparkAdvanceVsBp - deg
+	{ 0, 1, 2, 29, 0, 6, 0,  }, // 72 - FuncSparkAdvanceRateVsRpm - deg
+	{ 0, 928, 1024, 30, 0, 6, 5,  }, // 73 - FuncWotFuelMultiplierVsRpm - ratio
+	{ 0, 10496, 30976, 31, 0, 6, 5,  }, // 74 - FuncWotSparkAdvanceVsRpm - deg
+	{ 0, 4, 3, 32, 1, 6, 0,  }, // 75 - FuncWotSparkAdvanceVsEct - deg
+	{ 0, 6, 0, 33, 1, 6, 0,  }, // 76 - FuncWotSparkAdvanceVsAct - deg
+	{ 0, 0, 5120, 34, 0, 6, 5,  }, // 77 - FuncTransmissionRatio - ratio
+	{ 6425, 0, 25600, 0, 0, 7, 4,  }, // 78 - ConstInjHiSlope - ms - 25.09765625, 
+	{ 4889, 0, 25600, 0, 0, 7, 4,  }, // 79 - ConstInjLoSlope - ms - 19.09765625, 
+	{ 8, 1, 16, 0, 0, 7, 0,  }, // 80 - ConstCylinders - scalar - 8.0, 
+	{ 1, 1, 16, 0, 0, 7, 0,  }, // 81 - ConstCoils - scalar - 1.0, 
+	{ 36, 2, 62, 0, 0, 7, 0,  }, // 82 - ConstEncoderTeeth - scalar - 36.0, 
+	{ 2, 1, 10, 0, 0, 7, 0,  }, // 83 - ConstEncoderRatio - ratio - 2.0, 
+	{ 2, 0, 5, 0, 0, 7, 0,  }, // 84 - ConstEncoderCompare - scalar - 2.0, 
+	{ 0, 0, 1, 0, 0, 7, 0,  }, // 85 - ConstEncoderSyncHigh - bit - 0.0, 
+	{ 0, 0, 1, 0, 0, 7, 0,  }, // 86 - ConstEncoderSyncShort - bit - 0.0, 
+	{ 0, 0, 62, 0, 0, 7, 0,  }, // 87 - ConstEncoderCountOffset - scalar - 0.0, 
+	{ 0, 0, 30, 0, 0, 7, 0,  }, // 88 - ConstEncoderDegreesOffset - scalar - 0.0, 
+	{ 3584, 2048, 6144, 0, 0, 7, 5,  }, // 89 - ConstAxleRatio - ratio - 3.5, 
+	{ 26931, 5120, 30720, 0, 0, 7, 5,  }, // 90 - ConstTireDiameter - in - 26.2998046875, 
+	{ 6297, 5120, 10240, 0, 0, 7, 5,  }, // 91 - ConstGallonWeight - lbs - 6.1494140625, 
+	{ 300, 0, 1000, 0, 0, 7, 0,  }, // 92 - ConstCrankingRPM - rpm - 300.0, 
+	{ 670, 500, 1500, 0, 0, 7, 0,  }, // 93 - ConstIdleRPM - rpm - 670.0, 
+	{ 7000, 0, 20000, 0, 0, 7, 0,  }, // 94 - ConstMaxRPM - rpm - 7000.0, 
+	{ 5120, 4096, 10240, 0, 1, 7, 5,  }, // 95 - ConstStaticTiming - deg - 5.0, 
+	{ 10240, 8960, 12800, 0, 0, 7, 3,  }, // 96 - ConstClosedLoopMinTemp - f - 160.0, 
+	{ 7680, 7424, 8192, 0, 0, 7, 4,  }, // 97 - ConstHighAlt - bp - 30.0, 
+	{ 95, 95, 100, 0, 0, 7, 0,  }, // 98 - ConstWOT - deg - 95.0, 
+	{ 15032, 14336, 16384, 0, 0, 7, 5,  }, // 99 - ConstLamda - ratio - 14.6796875, 
+	{ 110, 0, 180, 0, 0, 7, 0,  }, // 100 - ConstCamIntakeCenter - deg - 110.0, 
+	{ 282, 0, 360, 0, 0, 7, 0,  }, // 101 - ConstCamIntakeDuration - deg - 282.0, 
+	{ 110, 0, 180, 0, 0, 7, 0,  }, // 102 - ConstCamExhaustCenter - deg - 110.0, 
+	{ 282, 0, 360, 0, 0, 7, 0,  }, // 103 - ConstCamExhaustDuration - deg - 282.0, 
+	{ 1, 1, 1000, 0, 0, 7, 0,  }, // 104 - ConstTicksInUS - scalar - 1.0, 
+	{ 4832, 0, 16000, 0, 0, 7, 2,  }, // 105 - ConstCuIn - cuin - 302.0, 
 };
 
 static struct _LookupHeader lookups[] = {
-	{ 0, 0, 0, 0, 0, 4, 2, 2, 0, 0, 0, 0, }, // 4 - SensorACT - f
-	{ 0, 0, 0, 0, 4, 4, 2, 2, 0, 0, 0, 0, }, // 5 - SensorECT - f
-	{ 0, 0, 0, 0, 8, 4, 2, 2, 0, 0, 0, 0, }, // 6 - SensorHEGO1 - lamda
-	{ 0, 0, 0, 0, 12, 4, 2, 2, 0, 0, 0, 0, }, // 7 - SensorHEGO2 - lamda
-	{ 0, 0, 0, 0, 16, 4, 2, 2, 0, 0, 0, 0, }, // 8 - SensorBAR - bp
-	{ 0, 0, 0, 0, 20, 4, 2, 2, 0, 0, 0, 0, }, // 11 - SensorVCC - v
-	{ 3840, 32000, 12800, 1920, 24, 56, 7, 8, 36, 6, 0, 0, }, // 48 - TableAccelEnrichment - lb/min
-	{ 1920, 13440, 5760, 320, 80, 80, 8, 10, 6, 28, 0, 0, }, // 49 - TableFuelBase - a/f
-	{ 1920, 15360, 45, 0, 160, 80, 8, 10, 6, 46, 0, 0, }, // 50 - TableFuelStartup - a/f
-	{ 500, 1000, 4800, 320, 240, 80, 8, 10, 11, 28, 0, 0, }, // 51 - TableInjectorTiming - deg
-	{ 500, 4000, 4800, 320, 320, 80, 8, 10, 11, 28, 0, 0, }, // 52 - TableSparkAltitude - deg
-	{ 500, 4000, 4800, 320, 400, 80, 8, 10, 11, 28, 0, 0, }, // 53 - TableSparkBase - deg
-	{ 500, 4000, 4800, 320, 480, 80, 8, 10, 11, 28, 0, 0, }, // 54 - TableSparkLimp - deg
-	{ 0, 0, 0, 0, 560, 12, 2, 6, 28, 0, 0, 0, }, // 55 - FuncEecLoadScaling - ratio
-	{ 0, 0, 0, 0, 572, 60, 2, 30, 3, 0, 0, 0, }, // 56 - FuncMafTransfer - kg/hr
-	{ 1280, 1280, 0, 0, 632, 10, 2, 5, 2, 0, 0, 0, }, // 57 - FuncAcceleratorEnrichmentMultiplierVsTp - ratio
-	{ 0, 0, 0, 0, 642, 8, 2, 4, 5, 0, 0, 0, }, // 58 - FuncOpenLoopFuelMultiplierVsAct - ratio
-	{ 0, 0, 0, 0, 650, 10, 2, 5, 12, 0, 0, 0, }, // 59 - FuncMinLowSpeedDwell - ms
-	{ 0, 0, 0, 0, 660, 10, 2, 5, 12, 0, 0, 0, }, // 60 - FuncMinHighSpeedDwell - ms
-	{ 0, 0, 0, 0, 670, 8, 2, 4, 11, 0, 0, 0, }, // 61 - FuncMaximumDashpotClip - lb/min
-	{ 0, 0, 0, 0, 678, 12, 2, 6, 11, 0, 0, 0, }, // 62 - FuncSeaLevelLuggingOLFuelMultiplier - ratio
-	{ 0, 0, 0, 0, 690, 12, 2, 6, 11, 0, 0, 0, }, // 63 - FuncAltitudeLuggingOLFuelMultiplier - ratio
-	{ 0, 0, 0, 0, 702, 24, 2, 12, 12, 0, 0, 0, }, // 64 - FuncInjectorOffsetVsBatteryVoltage - v
-	{ 0, 0, 0, 0, 726, 10, 2, 5, 11, 0, 0, 0, }, // 65 - FuncOpenLoopFuelMultiplierVsRpm - ratio
-	{ 0, 0, 0, 0, 736, 12, 2, 6, 45, 0, 0, 0, }, // 66 - FuncCrankFuelPulseWidthMultiplier - ratio
-	{ 0, 0, 0, 0, 748, 18, 2, 9, 6, 0, 0, 0, }, // 67 - FuncCrankingFuelPulseWidthVsEct - ms
-	{ 0, 0, 0, 0, 766, 6, 2, 3, 5, 0, 0, 0, }, // 68 - FuncSparkAdvanceVsAct - deg
-	{ 6016, 6016, 0, 0, 772, 10, 2, 5, 9, 0, 0, 0, }, // 69 - FuncSparkAdvanceVsBp - deg
-	{ 0, 0, 0, 0, 782, 10, 2, 5, 11, 0, 0, 0, }, // 70 - FuncSparkAdvanceRateVsRpm - deg
-	{ 0, 0, 0, 0, 792, 14, 2, 7, 11, 0, 0, 0, }, // 71 - FuncWotFuelMultiplierVsRpm - ratio
-	{ 0, 0, 0, 0, 806, 14, 2, 7, 11, 0, 0, 0, }, // 72 - FuncWotSparkAdvanceVsRpm - deg
-	{ 0, 0, 0, 0, 820, 12, 2, 6, 6, 0, 0, 0, }, // 73 - FuncWotSparkAdvanceVsEct - deg
-	{ 0, 0, 0, 0, 832, 6, 2, 3, 5, 0, 0, 0, }, // 74 - FuncWotSparkAdvanceVsAct - deg
-	{ 0, 0, 0, 0, 838, 6, 1, 6, 13, 0, 1, 0, }, // 75 - FuncTransmissionRatio - ratio
+	{ 0, 0, 0, 0, 0, 4, 2, 2, 0, 0, 0, 0, }, // 6 - SensorACT - f
+	{ 0, 0, 0, 0, 4, 4, 2, 2, 0, 0, 0, 0, }, // 7 - SensorECT - f
+	{ 0, 0, 0, 0, 8, 4, 2, 2, 0, 0, 0, 0, }, // 8 - SensorHEGO1 - lamda
+	{ 0, 0, 0, 0, 12, 4, 2, 2, 0, 0, 0, 0, }, // 9 - SensorHEGO2 - lamda
+	{ 0, 0, 0, 0, 16, 4, 2, 2, 0, 0, 0, 0, }, // 10 - SensorBAR - bp
+	{ 0, 0, 0, 0, 20, 4, 2, 2, 0, 0, 0, 0, }, // 14 - SensorVCC - v
+	{ 3840, 32000, 12800, 1920, 24, 56, 7, 8, 39, 8, 0, 0, }, // 50 - TableAccelEnrichment - lb/min
+	{ 1920, 13440, 5760, 320, 80, 80, 8, 10, 8, 31, 0, 0, }, // 51 - TableFuelBase - a/f
+	{ 1920, 15360, 45, 0, 160, 80, 8, 10, 8, 48, 0, 0, }, // 52 - TableFuelStartup - a/f
+	{ 500, 1000, 4800, 320, 240, 80, 8, 10, 13, 31, 0, 0, }, // 53 - TableInjectorTiming - deg
+	{ 500, 4000, 4800, 320, 320, 80, 8, 10, 13, 31, 0, 0, }, // 54 - TableSparkAltitude - deg
+	{ 500, 4000, 4800, 320, 400, 80, 8, 10, 13, 31, 0, 0, }, // 55 - TableSparkBase - deg
+	{ 500, 4000, 4800, 320, 480, 80, 8, 10, 13, 31, 0, 0, }, // 56 - TableSparkLimp - deg
+	{ 0, 0, 0, 0, 560, 12, 2, 6, 31, 0, 0, 0, }, // 57 - FuncEecLoadScaling - ratio
+	{ 0, 0, 0, 0, 572, 60, 2, 30, 5, 0, 0, 0, }, // 58 - FuncMafTransfer - kg/hr
+	{ 1280, 1280, 0, 0, 632, 10, 2, 5, 4, 0, 0, 0, }, // 59 - FuncAcceleratorEnrichmentMultiplierVsTp - ratio
+	{ 0, 0, 0, 0, 642, 8, 2, 4, 7, 0, 0, 0, }, // 60 - FuncOpenLoopFuelMultiplierVsAct - ratio
+	{ 0, 0, 0, 0, 650, 10, 2, 5, 15, 0, 0, 0, }, // 61 - FuncMinLowSpeedDwell - ms
+	{ 0, 0, 0, 0, 660, 10, 2, 5, 15, 0, 0, 0, }, // 62 - FuncMinHighSpeedDwell - ms
+	{ 0, 0, 0, 0, 670, 8, 2, 4, 13, 0, 0, 0, }, // 63 - FuncMaximumDashpotClip - lb/min
+	{ 0, 0, 0, 0, 678, 12, 2, 6, 13, 0, 0, 0, }, // 64 - FuncSeaLevelLuggingOLFuelMultiplier - ratio
+	{ 0, 0, 0, 0, 690, 12, 2, 6, 13, 0, 0, 0, }, // 65 - FuncAltitudeLuggingOLFuelMultiplier - ratio
+	{ 0, 0, 0, 0, 702, 24, 2, 12, 15, 0, 0, 0, }, // 66 - FuncInjectorOffsetVsBatteryVoltage - v
+	{ 0, 0, 0, 0, 726, 10, 2, 5, 13, 0, 0, 0, }, // 67 - FuncOpenLoopFuelMultiplierVsRpm - ratio
+	{ 0, 0, 0, 0, 736, 12, 2, 6, 47, 0, 0, 0, }, // 68 - FuncCrankFuelPulseWidthMultiplier - ratio
+	{ 0, 0, 0, 0, 748, 18, 2, 9, 8, 0, 0, 0, }, // 69 - FuncCrankingFuelPulseWidthVsEct - ms
+	{ 0, 0, 0, 0, 766, 6, 2, 3, 7, 0, 0, 0, }, // 70 - FuncSparkAdvanceVsAct - deg
+	{ 6016, 6016, 0, 0, 772, 10, 2, 5, 11, 0, 0, 0, }, // 71 - FuncSparkAdvanceVsBp - deg
+	{ 0, 0, 0, 0, 782, 10, 2, 5, 13, 0, 0, 0, }, // 72 - FuncSparkAdvanceRateVsRpm - deg
+	{ 0, 0, 0, 0, 792, 14, 2, 7, 13, 0, 0, 0, }, // 73 - FuncWotFuelMultiplierVsRpm - ratio
+	{ 0, 0, 0, 0, 806, 14, 2, 7, 13, 0, 0, 0, }, // 74 - FuncWotSparkAdvanceVsRpm - deg
+	{ 0, 0, 0, 0, 820, 12, 2, 6, 8, 0, 0, 0, }, // 75 - FuncWotSparkAdvanceVsEct - deg
+	{ 0, 0, 0, 0, 832, 6, 2, 3, 7, 0, 0, 0, }, // 76 - FuncWotSparkAdvanceVsAct - deg
+	{ 0, 0, 0, 0, 838, 6, 1, 6, 16, 0, 1, 0, }, // 77 - FuncTransmissionRatio - ratio
 }; // 34
 
 static uint16_t data[] DATAMEM = {
@@ -293,112 +295,116 @@ static uint16_t data[] DATAMEM = {
 
 static const uint16_t nameidx[] NAMEMEM = {
 	0,
-	4,
 	8,
-	12,
-	16,
-	20,
-	24,
-	30,
-	36,
-	40,
-	44,
-	48,
-	52,
-	57,
-	65,
-	76,
-	84,
-	94,
-	105,
-	114,
-	119,
-	124,
+	19,
+	23,
+	27,
+	31,
+	35,
+	39,
+	43,
+	49,
+	55,
+	59,
+	63,
+	67,
+	73,
+	77,
+	82,
+	93,
+	106,
+	113,
+	120,
 	129,
-	147,
-	165,
-	181,
-	197,
-	208,
-	213,
-	228,
-	244,
-	263,
-	272,
-	283,
-	287,
-	297,
-	310,
+	134,
+	139,
+	145,
+	151,
+	169,
+	187,
+	203,
+	219,
+	230,
+	235,
+	250,
+	266,
+	285,
+	294,
+	305,
+	309,
 	319,
-	325,
-	336,
-	349,
-	359,
-	372,
-	382,
-	393,
-	406,
+	332,
+	341,
+	347,
+	358,
+	371,
+	381,
+	394,
+	404,
 	417,
-	429,
-	443,
-	459,
-	468,
-	480,
-	495,
-	509,
-	519,
-	529,
-	544,
-	556,
-	592,
-	620,
-	637,
-	655,
-	674,
-	706,
-	738,
-	769,
-	797,
-	827,
-	855,
-	873,
-	890,
-	912,
-	935,
-	956,
-	977,
-	998,
-	1016,
+	428,
+	440,
+	454,
+	470,
+	479,
+	491,
+	506,
+	520,
+	530,
+	540,
+	555,
+	567,
+	603,
+	631,
+	648,
+	666,
+	685,
+	717,
+	749,
+	780,
+	808,
+	838,
+	866,
+	884,
+	901,
+	923,
+	946,
+	967,
+	988,
+	1009,
 	1027,
 	1038,
-	1048,
-	1054,
-	1067,
-	1080,
-	1095,
-	1111,
-	1128,
-	1147,
-	1168,
-	1178,
-	1191,
-	1204,
-	1216,
-	1224,
-	1231,
-	1244,
-	1262,
-	1270,
-	1274,
-	1280,
-	1296,
-	1314,
-	1331,
-	1350,
-	1360,
-}; // 1365
+	1049,
+	1059,
+	1065,
+	1078,
+	1091,
+	1106,
+	1122,
+	1139,
+	1158,
+	1179,
+	1189,
+	1202,
+	1215,
+	1227,
+	1235,
+	1242,
+	1255,
+	1273,
+	1281,
+	1285,
+	1291,
+	1307,
+	1325,
+	1342,
+	1361,
+	1371,
+}; // 1376
 
 static const char names[] NAMEMEM = {
+	'I', 's', 'K', 'e', 'y', 'O', 'n', 0,
+	'I', 's', 'C', 'r', 'a', 'n', 'k', 'i', 'n', 'g', 0,
 	'D', 'E', 'C', 0,
 	'T', 'P', 'S', 0,
 	'M', 'A', 'F', 0,
@@ -410,17 +416,18 @@ static const char names[] NAMEMEM = {
 	'B', 'A', 'R', 0,
 	'E', 'G', 'R', 0,
 	'R', 'P', 'M', 0,
+	'A', 'M', 'P', 'S', '1', 0,
 	'V', 'C', 'C', 0,
 	'G', 'E', 'A', 'R', 0,
-	'I', 's', 'K', 'e', 'y', 'O', 'n', 0,
-	'I', 's', 'C', 'r', 'a', 'n', 'k', 'i', 'n', 'g', 0,
-	'I', 's', 'A', 'i', 'r', 'O', 'n', 0,
-	'I', 's', 'B', 'r', 'a', 'k', 'e', 'O', 'n', 0,
-	'I', 's', 'L', 'i', 'g', 'h', 't', 's', 'O', 'n', 0,
+	'F', 'u', 'e', 'l', 'S', 'e', 'n', 'd', 'e', 'r', 0,
+	'R', 'a', 'd', 'i', 'a', 't', 'o', 'r', 'T', 'e', 'm', 'p', 0,
+	'G', 'a', 'u', 'g', 'e', '1', 0,
+	'G', 'a', 'u', 'g', 'e', '2', 0,
 	'F', 'u', 'e', 'l', 'P', 'u', 'm', 'p', 0,
 	'F', 'a', 'n', '1', 0,
 	'F', 'a', 'n', '2', 0,
-	'E', 'P', 'A', 'S', 0,
+	'E', 'P', 'A', 'S', '1', 0,
+	'E', 'P', 'A', 'S', '2', 0,
 	'F', 'i', 'n', 'a', 'l', 'P', 'u', 'l', 's', 'e', 'A', 'd', 'v', 'a', 'n', 'c', 'e', 0,
 	'F', 'i', 'n', 'a', 'l', 'S', 'p', 'a', 'r', 'k', 'A', 'd', 'v', 'a', 'n', 'c', 'e', 0,
 	'F', 'i', 'n', 'a', 'l', 'P', 'u', 'l', 's', 'e', 'W', 'i', 'd', 't', 'h', 0,
@@ -442,7 +449,6 @@ static const char names[] NAMEMEM = {
 	'I', 's', 'H', 'i', 'g', 'h', 'A', 'l', 't', 0,
 	'I', 's', 'M', 'o', 'n', 'i', 't', 'o', 'r', 'i', 'n', 'g', 0,
 	'O', 'n', 'S', 'e', 'c', 'o', 'n', 'd', 's', 0,
-	'O', 'f', 'f', 'S', 'e', 'c', 'o', 'n', 'd', 's', 0,
 	'C', 'r', 'a', 'n', 'k', 'S', 'e', 'c', 'o', 'n', 'd', 's', 0,
 	'R', 'u', 'n', 'S', 'e', 'c', 'o', 'n', 'd', 's', 0,
 	'I', 'd', 'l', 'e', 'S', 'e', 'c', 'o', 'n', 'd', 's', 0,
@@ -503,5 +509,5 @@ static const char names[] NAMEMEM = {
 	'C', 'a', 'm', 'E', 'x', 'h', 'a', 'u', 's', 't', 'D', 'u', 'r', 'a', 't', 'i', 'o', 'n', 0,
 	'T', 'i', 'c', 'k', 's', 'I', 'n', 'U', 'S', 0,
 	'C', 'u', 'I', 'n', 0,
-}; // 1365
+}; // 1376
 

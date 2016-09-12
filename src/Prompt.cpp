@@ -6,26 +6,33 @@
 #include "Channel.h"
 #include "Metrics.h"
 #include "Params.h"
+#include "Prompt.h"
+#include "Tasks.h"
 
-#include "Codes.h"
+#ifdef ARDUINO
+#include <Arduino.h>
+#endif
+
+#if 0
 #include "Decoder.h"
 #include "Encoder.h"
 #include "Events.h"
-#include "Pins.h"
 #include "Schedule.h"
 #include "Strategy.h"
-#include "Tasks.h"
 #include "Timers.h"
+#endif
+
+static PromptCallback *head = 0;
 
 static void get(const char *s) {
 	while (*s == ' ')
 		s++;
 
-	int id = atoi(s);
+	ParamTypeId id = (ParamTypeId)atoi(s);
 
 	if (id >= 0) {
 		channel.p1(F("ack"));
-		channel.send(id, getParamFloat(atoi(s)));
+		channel.send(id, getParamFloat(id));
 		channel.p2();
 		channel.nl();
 	}
@@ -43,238 +50,106 @@ static void set(char *s) {
 
 	if (a) {
 		*a++ = 0;
-		uint8_t id = atoi(s);
+		ParamTypeId id = (ParamTypeId)atoi(s);
 		float val = atof(a);
 		setParamFloat(id, val);
 
-		/*
-		 channel.p1(F("id"));
-		 channel.send(id);
-		 channel.send(val);
-		 channel.p2();
-		 channel.nl();
-		 */
+		//channel.p1(F("id"));
+		//channel.send(F("n"), id);
+		//channel.send(F("v"), val);
+		//channel.p2();
+		//channel.nl();
 	}
 }
 
-static char cmdbuf[12];
-
-#include <math.h>
-
-static uint32_t runBench1() {
-	uint32_t t1 = clockTicks();
-	uint32_t count = 0;
-	float a = 1.001;
-
-	while (tdiff32(clockTicks(), t1) < 1000000L) {
-		a += 0.01f * sqrtf(a);
-		count++;
-	}
-
-	assert(a > 0 || a <= 0);
-
-	return count;
-}
-
-static uint32_t runBench2() {
-	uint32_t t1 = clockTicks();
-	uint32_t count = 0;
-	double a = 1.001;
-
-	while (tdiff32(clockTicks(), t1) < 1000000L) {
-		a += (double)0.01 * sqrt(a);
-		count++;
-	}
-
-	assert(a > 0 || a <= 0);
-
-	return count;
-}
-
-static uint32_t runBench3() {
-	uint32_t t1 = clockTicks();
-	uint32_t count = 0;
-	uint32_t a = 1;
-
-	while (tdiff32(clockTicks(), t1) < 1000000L) {
-		a = ((a * a) >> 2) + 2001481UL;
-		count++;
-	}
-
-	assert(a > 0 || a <= 0);
-
-	return count;
-}
-
-static uint32_t runBench4() {
-	uint32_t t1 = clockTicks();
-	uint32_t count = 0;
-
-	while (tdiff32(clockTicks(), t1) < 1000000L)
-		count++;
-
-	return count;
-}
-
+static int dumbstrcmp(const char *s1, const channel_t *s2) {
 #ifdef ARDUINO
-#include <Arduino.h>
+	const uint8_t *src = (uint8_t *)s2;
+	char ch = 0;
 
-static uint32_t runBench5() {
-	//extern "C" uint32_t micros();
-	extern uint32_t clockTicks2();
-	uint32_t t1 = clockTicks2();
-	uint32_t count = 0;
+	while (*s1) {
+		ch = pgm_read_byte_near(src++);
 
-	while (tdiff32(clockTicks2(), t1) < 1000000L)
-		count++;
+		if (*s1 != ch)
+			return *s1 - ch;
 
-	return count;
-}
-#else
-static uint32_t runBench5() {
+		s1++;
+	}
+
 	return 0;
-}
+#else
+	return strcmp(s1, s2);
 #endif
+}
+
+static char cmdbuf[20];
 
 void handleInput(char ch) {
 	if (ch == '\n' || ch == '\r') {
-		for (char *s = cmdbuf; *s; s++) {
-			switch (*s) {
-				case 'q':
-					get(s + 1);
-					myzero(cmdbuf, sizeof(cmdbuf));
-					break;
-				case 'u':
-					set(s + 1);
-					myzero(cmdbuf, sizeof(cmdbuf));
-					break;
+		bool found = false;
 
-				case 'b':
-					channel.send(F("bench1"), runBench1());
-					channel.send(F("bench2"), runBench2());
-					channel.send(F("bench3"), runBench3());
-					channel.send(F("bench4"), runBench4());
-					channel.send(F("bench5"), runBench5());
-					channel.nl();
-					s++;
-					break;
+		for (PromptCallback *cb = head; cb; cb = cb->next) {
+			if (!dumbstrcmp(cmdbuf, cb->key)) {
+				cb->callback(cb->data);
+				found = true;
+				break;
+			}
+		}
+		
+		if (!found) {
+			for (char *s = cmdbuf; *s; s++) {
+				switch (*s) {
+					case 'q':
+						get(s + 1);
+						myzero(cmdbuf, sizeof(cmdbuf));
+						break;
+					case 'u':
+						set(s + 1);
+						myzero(cmdbuf, sizeof(cmdbuf));
+						break;
 
-				case 'c':
-					codes.send();
-					break;
-				case 'd':
-					switch (s[1]) {
-						case '0':
-							decoder.sendStatus();
-							s++;
-							break;
-						case '1':
-							decoder.sendList();
-							s++;
-							break;
-						default:
-							decoder.sendStatus();
-							decoder.sendList();
-							break;
-					}
-					break;
-				case 'e':
-					switch (s[1]) {
-						case '0':
-							sendEventStatus();
-							s++;
-							break;
-						case '1':
-							sendEventList();
-							s++;
-							break;
-						default:
-							sendEventStatus();
-							sendEventList();
-							break;
-					}
-					break;
-				case 'h':
-					sendPins();
-					break;
-				case 's':
-					sendSchedule();
-					break;
-				case 'i':
-					sendTimers();
-					break;
-				case 't':
-					sendTasks();
-					break;
-				case 'm':
-					setParamUnsigned(FlagIsMonitoring, isParamSet(FlagIsMonitoring) ? 0 : 5000);
-					break;
+					case 'b':
+						extern void sendBenchmarks();
+						sendBenchmarks();
+						break;
 
-				case 'v':
-					sendParamValues();
-					break;
-				case 'p':
-					switch (s[1]) {
-						case '0':
-							sendParamLookups();
-							s++;
-							break;
-						case '1':
-							sendParamList();
-							s++;
-							break;
-						case '2':
-							sendParamStats();
-							s++;
-							break;
-						case '3':
-							sendParamChanges();
-							s++;
-							break;
-						default:
-							sendParamChanges();
-							break;
-					}
-					break;
-				case 'x':
-					encoder.skipEncoder();
-					break;
-#ifdef STM32
-				case 'y':
-					extern void printTimers();
-					printTimers();
-					break;
-#endif
-				case 'z':
+					case 'k':
+						sendTicks();
+						break;
+					case 'm':
+						setParamUnsigned(FlagIsMonitoring, isParamSet(FlagIsMonitoring) ? 0 : 5000);
+						break;
+
+					case 'z':
 #ifdef UNIX
-					exit(0);
+						exit(0);
 #endif
-					break;
-				case '?':
-					channel.send(F("Usage: u <id> <val>, q <id>, [cdehrstplvd]\n"));
-					channel.send(F("\tm - toggle monitoring\n"));
-					channel.send(F("\tc - codes\n"));
-					channel.send(F("\td0 - decoder status\n"));
-					channel.send(F("\td1 - decoder list\n"));
-					channel.send(F("\te0 - event status\n"));
-					channel.send(F("\te1 - event list\n"));
-					channel.send(F("\th - pins\n"));
-					channel.send(F("\ti - interrupts\n"));
-					channel.send(F("\ts - schedule\n"));
-					channel.send(F("\tt - tasks\n"));
-					channel.send(F("\tv - param values\n"));
-					channel.send(F("\tp0 - param lookups\n"));
-					channel.send(F("\tp1 - param list\n"));
-					channel.send(F("\tp2 - param stats\n"));
-					channel.send(F("\tp3 - param changes\n"));
-					channel.send(F("\tv - values\n"));
-					channel.send(F("\tu - updates a param\n"));
-					channel.send(F("\tq - query a param\n"));
-					break;
-				default:
-					channel.send(F("? for help, Received"), *s);
-					channel.nl();
-					break;
+						break;
+					case '?':
+						channel.send(F("Usage: u <id> <val>, q <id>, [cdehrstplvd]\n"));
+						channel.send(F("\tm - toggle monitoring\n"));
+						channel.send(F("\tu - updates a param, e.g. u 0 5000 sets the decoder rpm to 5k\n"));
+						channel.send(F("\tq - query a param\n"));
+
+						for (PromptCallback *cb = head; cb; cb = cb->next) {
+							channel.send(cb->key);
+
+							if (cb->desc) {
+								channel.send(F(" - "));
+								channel.send(cb->desc);
+							}
+
+							channel.nl();
+						}
+
+						channel.send(F("\tMost stats are reset every time they are displayed\n"));
+
+						break;
+					default:
+						channel.send(F("? for help, Received"), *s);
+						channel.nl();
+						break;
+				}
 			}
 		}
 
@@ -290,7 +165,79 @@ void handleInput(char ch) {
 	}
 }
 
+static uint32_t runInput(uint32_t now, void *data) {
+#ifdef ARDUINO
+	for (int8_t i = 0; i < 20 && Serial.available(); i++)
+		handleInput(Serial.read());
+#else
+	bool available(int fd);
+	char readch(int fd);
+	char ch;
+
+	for (int8_t i = 0; i < 20 && (ch = available(0)); i++)
+		handleInput(readch(0));
+#endif
+
+	return 0;
+}
+
 uint16_t initPrompt() {
 	myzero(cmdbuf, sizeof(cmdbuf));
+	TaskMgr::addTask(F("Prompt"), runInput, 0, 400);
 	return sizeof(cmdbuf);
 }
+
+void addPromptCallbacks(PromptCallback *callbacks, uint8_t ncallbacks) {
+	for (uint8_t i = 0; i < ncallbacks; i++) {
+		callbacks->next = head;
+		head = callbacks++;
+	}
+}
+
+#ifdef STM32
+
+#include "st_main.h"
+
+bool available(int fd) {
+	extern bool VCP_avail();
+	return VCP_avail();
+}
+
+char readch(int fd) {
+	extern char VCP_getchar();
+	return VCP_getchar();
+}
+
+#elif !defined(ARDUINO)
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <signal.h>
+#include <execinfo.h>
+#include <sys/time.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/select.h>
+
+bool available(int fd) {
+	struct timeval tv;
+	fd_set fds;
+	tv.tv_sec = 0;
+	tv.tv_usec = 0;
+	FD_ZERO(&fds);
+	FD_SET(fd, &fds);
+	select(fd + 1, &fds, NULL, NULL, &tv);
+	return (FD_ISSET(0, &fds));
+}
+
+char readch(int fd) {
+	if (!available(fd))  // getting false input indicators
+		return 0;
+	char ch = 0;
+	int n = read(fd, &ch, sizeof(ch));
+	return n == 1 ? ch : 0;
+}
+
+#endif
+

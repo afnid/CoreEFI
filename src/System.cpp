@@ -1,10 +1,15 @@
 // copyright to me, released under GPL V3
 
+#define EXTERN
+
 #include "System.h"
 #include "Channel.h"
 #include "Metrics.h"
 #include "Params.h"
 #include "Free.h"
+
+#include "Tasks.h"
+#include "Epoch.h"
 
 #include "Codes.h"
 #include "Decoder.h"
@@ -14,8 +19,11 @@
 #include "Prompt.h"
 #include "Schedule.h"
 #include "Strategy.h"
-#include "Tasks.h"
 #include "Timers.h"
+
+#include "Display.h"
+#include "Vehicle.h"
+#include "Bus.h"
 
 #ifdef ARDUINO
 #include <HardwareSerial.h>
@@ -25,36 +33,51 @@
 Print Serial;
 #endif
 
-volatile Decoder decoder;
-Codes codes;
-Encoder encoder;
-Channel channel(Serial);
+#if 1
 
-static uint16_t add(uint16_t &total, uint16_t mem)
-{
+Channel channel(Serial);
+Display display;
+CanBus bus;
+
+#define EFI
+
+#ifdef EFI
+volatile Decoder decoder;
+Encoder encoder;
+CycleCount cycle;
+#endif
+
+static uint16_t add(uint16_t &total, uint16_t mem) {
 	total += mem;
 	return mem;
 }
 
-void initSystem()
-{
+void initSystem(bool doefi) {
 	uint16_t total = 0;
-	Serial.begin(57600);
+	Serial.begin(115200);
 	Serial.println("CoreEFI v007a");
 
 	channel.p1(F("mem"));
 	channel.send(F("ticks"), add(total, initTicks()));
+	channel.send(F("cycle"), add(total, cycle.init()));
+	channel.send(F("tasks"), add(total, TaskMgr::initTasks()));
+	channel.send(F("clock"), add(total, Epoch::init()));
 	channel.send(F("prompt"), add(total, initPrompt()));
 	channel.send(F("codes"), add(total, codes.init()));
-	channel.send(F("strategy"), add(total, initStrategy()));
-	channel.send(F("encoder"), add(total, encoder.init()));
-	channel.send(F("decoder"), add(total, decoder.init()));
-	channel.send(F("schedule"), add(total, initSchedule()));
-	channel.send(F("events"), add(total, initEvents()));
 	channel.send(F("params"), add(total, initParams()));
-	channel.send(F("tasks"), add(total, initTasks()));
-	channel.send(F("pins"), add(total, initPins()));
-	channel.send(F("timers"), add(total, initTimers()));
+
+	channel.send(F("display"), add(total, display.init()));
+	channel.send(F("vehicle"), add(total, vehicle.init()));
+
+	if (doefi) {
+		channel.send(F("strategy"), add(total, initStrategy()));
+		channel.send(F("encoder"), add(total, encoder.init()));
+		channel.send(F("decoder"), add(total, decoder.init()));
+		channel.send(F("schedule"), add(total, initSchedule()));
+		channel.send(F("events"), add(total, initEvents()));
+		channel.send(F("timers"), add(total, initTimers()));
+	}
+
 	channel.send(F("bytes"), total);
 	channel.p2();
 	channel.nl();
@@ -66,21 +89,17 @@ void initSystem()
 	channel.send(F("cyls"), getParamUnsigned(ConstCylinders));
 	channel.send(F("coils"), getParamUnsigned(ConstCoils));
 	channel.send(F("teeth"), getParamUnsigned(ConstEncoderTeeth));
-	channel.send(F("int"), (uint16_t)sizeof(int));
-	channel.send(F("long_int"), (uint16_t)sizeof(long int));
-	channel.send(F("long_long_int"), (uint16_t)sizeof(long long int));
-	channel.send(F("pulse"), (uint16_t)sizeof(pulse_t));
+	channel.send(F("int"), (uint16_t) sizeof(int));
+	channel.send(F("long_int"), (uint16_t) sizeof(long int));
+	channel.send(F("long_long_int"), (uint16_t) sizeof(long long int));
+	channel.send(F("pulse"), (uint16_t) sizeof(pulse_t));
 	channel.send(F("ustoticks"), (uint16_t) MicrosToTicks(1u));
 	channel.p2();
 	channel.nl();
 
 	sendMemory();
 
-#if defined(ARDUINO) || defined(STM32)
-	setParamUnsigned(ConstTicksInUS, 1);
-#else
-	setParamUnsigned(ConstTicksInUS, 10);
-#endif
+	setParamUnsigned(ConstTicksInUS, TICKTOUS);
 
 	setParamUnsigned(SensorDEC, 22111);
 	setParamUnsigned(SensorDEC, 1000);
@@ -95,14 +114,14 @@ void initSystem()
 	setParamFloat(SensorTPS, 20);
 	setParamFloat(SensorVCC, 14);
 	setParamUnsigned(SensorGEAR, 5);
-	setParamUnsigned(SensorIsKeyOn, 1);
-}
+	GPIO::setPin(GPIO::IsKeyOn, 1);
 
-void runInput()
-{
-	for (int8_t i = 0; i < 20 && Serial.available(); i++)
-		handleInput(Serial.read());
+#ifdef EFI
+	encoder.refresh();
+	decoder.refresh(clockTicks());
+#endif
 }
+#endif
 
 #include <string.h>
 
@@ -112,15 +131,15 @@ void myzero(void *p, uint16_t len) {
 
 #ifdef STM32
 
-#include "main.h"
+#include "st_main.h"
 
 void toggleled(uint8_t id) {
 #ifdef __STM32F4_DISCOVERY_H
 	static Led_TypeDef leds[] = {
-			LED3,
-			LED4,
-			LED5,
-			LED6,
+		LED3,
+		LED4,
+		LED5,
+		LED6,
 	};
 
 	BSP_LED_Toggle(leds[id & 0x3]);
@@ -168,13 +187,12 @@ static void runDecoderTest() {
 }
 
 int main(int argc, char **argv) {
+	extern void delayTicks(uint32_t ticks);
+
 	assert(tdiff32(1, (1L << 32) - 1) == 2);
 	assert(tdiff32(10, (1L << 32) - 10) == 20);
-	assert(tdiff16(10, (1L << 16) - 10) == 20);
 	assert(tdiff32(10, 2) == 8);
-	assert(tdiff16(10, 2) == 8);
 	assert(tdiff32(2, 10) == -8);
-	assert(tdiff16(2, 10) == -8);
 
 	while (true) {
 		printf("%10u %10u\n", TicksToMicros(clockTicks()), clockTicks());
@@ -192,7 +210,7 @@ int main(int argc, char **argv) {
 	//assert(uelapsed32(2, (1L << 32) - 6) == 8);
 	//assert(uelapsed16(2, (1 << 16) - 3) == 5);
 
-	initSystem();
+	initSystem(false);
 
 	if (false)
 		for (int i = 0; i < 0; i++) {
@@ -203,7 +221,7 @@ int main(int argc, char **argv) {
 		}
 
 	if (false)
-		for (float i = 0; i <= 5; i += 0.125) {
+		for (float i = 0; i <= 5; i += 0.125f) {
 			setParamFloat(SensorMAF, i);
 			stabilize(10);
 			logFine("maf %10g %10g %10g %10g", i, getParamFloat(FuncMafTransfer), getParamFloat(CalcVolumetricRate), getParamFloat(TableInjectorTiming));
@@ -213,7 +231,8 @@ int main(int argc, char **argv) {
 		for (int i = getParamUnsigned(ConstIdleRPM) / 2; i <= 6000; i += 1500) {
 			setParamFloat(SensorDEC, i);
 			stabilize(10 + 60000 / i);
-			logFine("final %10d %10d %10g %10g %10g %10g", i, getParamUnsigned(SensorRPM), getParamFloat(CalcFinalPulseAdvance), getParamFloat(CalcFinalSparkAdvance), getParamFloat(CalcFinalPulseWidth), getParamFloat(CalcFinalSparkWidth));
+			logFine("final %10d %10d %10g %10g %10g %10g", i, getParamUnsigned(SensorRPM), getParamFloat(CalcFinalPulseAdvance), getParamFloat(CalcFinalSparkAdvance),
+					getParamFloat(CalcFinalPulseWidth), getParamFloat(CalcFinalSparkWidth));
 		}
 
 	if (argc > 1) {
@@ -222,7 +241,7 @@ int main(int argc, char **argv) {
 		runPerfectTasks();
 	} else {
 		printf("Running..\n");
-		runTasks();
+		TaskMgr::runTasks();
 	}
 }
 

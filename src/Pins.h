@@ -1,66 +1,25 @@
 // copyright to me, released under GPL V3
 
-class PinInfo {
-	volatile uint8_t *port;
-	uint8_t mask;
-	uint8_t pin;
+#ifndef _Pins_h_
+#define _Pins_h_
 
+#include "GPIO.h"
+
+class PinMgr {
 public:
 
-	void digitalWrite(uint8_t v) const volatile;
-	uint16_t digitalRead() const volatile;
-	uint16_t analogRead() const volatile;
+	//static uint16_t initPins();
+	//static void readPins();
 
-	inline void init(uint8_t pin, uint8_t mask, volatile uint8_t *port) volatile {
-		this->pin = pin;
-		this->mask = mask;
-		this->port = port;
-	}
+	static GPIO::PinId getInjectorPin(uint8_t cyl);
+	static GPIO::PinId getSparkPin(uint8_t cyl);
+	//static void resetOutputPins();
 
-	inline uint8_t getPin() const volatile {
-		return pin;
-	}
-
-	inline uint8_t getMask() const volatile {
-		return mask;
-	}
-
-	inline volatile uint8_t *getPort() const volatile {
-		return port;
-	}
-
-	inline void set() volatile {
-		if (port && mask) {
-			assert(mask);
-			*port |= mask;
-		} else
-			digitalWrite(true);
-	}
-
-	inline void clr() volatile {
-		if (port && mask) {
-			assert(mask);
-			*port &= ~mask;
-		} else
-			digitalWrite(false);
-	}
-
-	inline uint16_t isSet() const volatile {
-		if (port && mask) {
-			assert(mask);
-			return (*port & mask) != 0;
-		}
-
-		return digitalRead();
-	}
+	//static const GPIO::PinDef *readNextInputPin();
+	//static const GPIO::PinDef *getNextOutputPin();
+	//static const GPIO::PinDef *getPinById(GPIO::PinId id);
+	//static const GPIO::PinDef *getPinByIdx1(GPIO::PinId id);
+	//static const GPIO::PinDef *getLast(GPIO::PinId idx);
 };
 
-uint16_t initPins();
-void sendPins();
-void readPins();
-
-volatile PinInfo *getPin(uint8_t id);
-volatile PinInfo *getParamPin(uint8_t id);
-uint8_t getInjectorPin(uint8_t cyl);
-uint8_t getSparkPin(uint8_t cyl);
-void resetOutputPins();
+#endif

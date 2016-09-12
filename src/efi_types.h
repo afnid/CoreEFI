@@ -1,6 +1,7 @@
 // Generated code, don't edit
 
 typedef enum {
+	CatVehicle,
 	CatSensor,
 	CatCalc,
 	CatFlag,

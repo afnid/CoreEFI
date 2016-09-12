@@ -2,23 +2,22 @@
 
 #include "efi_id.h"
 
-void setParamShort(uint8_t i, int16_t v);
-void setParamUnsigned(uint8_t i, uint16_t v);
-void setParamFloat(uint8_t i, float v);
+void setParamShort(ParamTypeId i, int16_t v);
+void setParamUnsigned(ParamTypeId i, uint16_t v);
+void setParamFloat(ParamTypeId i, float v);
 
-int16_t getParamShort(uint8_t i);
-uint16_t getParamUnsigned(uint8_t i);
-float getParamFloat(uint8_t i);
-bool isParamSet(uint8_t i);
+int16_t getParamShort(ParamTypeId i);
+uint16_t getParamUnsigned(ParamTypeId i);
+float getParamFloat(ParamTypeId i);
+bool isParamSet(ParamTypeId i);
 
 void clearParamChanges();
 void clearParamCache();
 
 uint16_t initParams();
-void sendParamLookups();
-void sendParamValues();
-void sendParamChanges();
-void sendParamList();
-void sendParamStats();
+void sendParam(ParamTypeId id);
 
-void setSensorParam(uint8_t id, uint16_t adc);
+void setSensorParam(ParamTypeId id, uint16_t adc);
+
+const char *getParamName(ParamTypeId id, char *buf, int maxlen);
+const channel_t *getParamName(ParamTypeId id);

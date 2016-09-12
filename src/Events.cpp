@@ -2,6 +2,7 @@
 
 #include "System.h"
 #include "Channel.h"
+#include "Prompt.h"
 #include "Metrics.h"
 #include "Params.h"
 
@@ -9,6 +10,7 @@
 #include "Events.h"
 #include "Pins.h"
 #include "Schedule.h"
+#include "Tasks.h"
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -42,6 +44,7 @@ enum {
 };
 
 static const uint8_t MAX_EVENTS = MaxCylinders * 4;
+static const uint8_t BucketDivisor = 1;
 
 class BitEvent {
 public:
@@ -151,7 +154,7 @@ static volatile struct {
 		}
 	}
 
-	inline uint32_t runEvent(uint32_t now, uint8_t maxdelay, uint8_t jitter) volatile {
+	inline uint32_t runEvent(uint32_t now, uint8_t maxdelay, uint16_t jitter) volatile {
 		volatile BitEvent *e = getEvent();
 		volatile BitPlan *p = getPlan();
 
@@ -168,8 +171,8 @@ static volatile struct {
 
 		if (delay <= jitter) {
 			if (delay > 0 && delay <= maxdelay) {
-				delayTicks(delay);
-				now += delay;
+				//delayTicks(delay);
+				//now += delay;
 				addHist(CountDelays);
 			}
 
@@ -185,26 +188,32 @@ static volatile struct {
 
 			addHist(CountEvents);
 
-			if (e->late > 0) {
-				int16_t idx = abs(e->late) / 4;
-				addHist(CountLates);
+			if (e->late) {
+				int16_t idx = abs(e->late);
 
-				if (idx < CountLateX)
-					addHist(idx);
-				else
-					addHist(CountLateX);
+				if (idx >= (TICKTOUS >> 1)) {
+					idx /= MicrosToTicks(BucketDivisor);
+
+					addHist(CountLates);
+
+					if (idx < CountLateX)
+						addHist(idx);
+					else
+						addHist(CountLateX);
+				}
 			}
 
-			volatile PinInfo *pin = getPin(p->getPin());
+			GPIO::PinId id = (GPIO::PinId)(p->getPin() + 1);
+			bool isSet = GPIO::isPinSet(id);
 
-			if (p->isHi() == pin->isSet())
+			if (p->isHi() == isSet)
 				addHist(CountPins);
 
 			if (p->isHi()) {
-				pin->set();
+				GPIO::setPin(id, true);
 				on++;
 			} else {
-				pin->clr();
+				GPIO::setPin(id, false);
 				on--;
 			}
 
@@ -247,7 +256,7 @@ void setEventTDC(uint32_t tdc) {
 	events.sync = true;
 }
 
-uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint8_t jitter) {
+uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint16_t jitter) {
 	if (events.valid)
 		return events.runEvent(now, maxdelay, jitter);
 
@@ -261,43 +270,36 @@ void refreshEvents() {
 		events.reset();
 }
 
-uint16_t initEvents() {
-	events.reset();
-
-	events.schedule1.reset();
-	events.schedule2.reset();
-
-	for (uint8_t i = 0; i < MAX_EVENTS; i++)
-		events.queue[i].clear();
-
-	refreshEvents();
-
-	return sizeof(events);
-}
-
-void sendEventStatus() {
+void sendEventStatus(void *data) {
 	channel.p1(F("events"));
 
 	channel.send(F("idx"), events.idx);
 	channel.send(F("on"), events.on);
 	channel.send(F("rpm"), getParamUnsigned(SensorRPM));
 
-	channel.send(F("-late"), events.minlate, false);
-	channel.send(F("+late"), events.maxlate);
+	float minlate = TicksToMicrosf(events.minlate);
+	float maxlate = TicksToMicrosf(events.maxlate);
+	channel.send(F("-late"), minlate, false);
+	channel.send(F("+late"), maxlate);
 
 	uint16_t us = TicksToMicros(decoder.getTicks() >> 1);
-	channel.send(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0f * events.minlate / us, false);
-	channel.send(F("+deg"), us == 0 || events.maxlate == 0 ? 0 : 360.0f * events.maxlate / us);
+	channel.send(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0f * minlate / us, false);
+	channel.send(F("+deg"), us == 0 || events.maxlate == 0 ? 0 : 360.0f * maxlate / us);
 
 	int16_t total = events.hist[CountEvents];
 
 	if (total && events.valid) {
 		int16_t lates = events.hist[CountLates];
 		channel.send(F("late%"), 100.0f * lates / total);
+		uint8_t bucket = BucketDivisor;
 
-		for (uint8_t i = CountLate0; i <= CountLate0; i++) {
+		for (uint8_t i = CountLate0; i <= CountLate4; i++) {
 			lates -= events.hist[i];
-			channel.send(F("latex"), 100.0f * lates / total);
+
+			if (lates)
+				channel.send(bucket, 100.0f * lates / total);
+
+			bucket += BucketDivisor;
 		}
 	}
 
@@ -309,7 +311,7 @@ void sendEventStatus() {
 	channel.nl();
 }
 
-void sendEventList() {
+void sendEventList(void *data) {
 	volatile BitSchedule *current = events.current;
 	uint32_t last = 0;
 
@@ -349,4 +351,33 @@ void sendEventList() {
 		channel.p2();
 		channel.nl();
 	}
+}
+
+static uint32_t runEvents(uint32_t now, void *data) {
+	int32_t ticks = runEvents(now, 0, 5);
+	ticks = tdiff32(ticks, clockTicks());
+	return max(ticks, 1);
+}
+
+uint16_t initEvents() {
+	events.reset();
+
+	events.schedule1.reset();
+	events.schedule2.reset();
+
+	for (uint8_t i = 0; i < MAX_EVENTS; i++)
+		events.queue[i].clear();
+
+	refreshEvents();
+
+	TaskMgr::addTask(F("Events"), runEvents, 0, 1000);
+
+	static PromptCallback callbacks[] = {
+		{ F("e0"), sendEventStatus },
+		{ F("e1"), sendEventList },
+	};
+
+	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+
+	return sizeof(events) + sizeof(callbacks);
 }
