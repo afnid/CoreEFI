@@ -1,8 +1,8 @@
-#ifndef STM32
+#ifdef STM32
 
 #include <sys/stat.h>
 #include "stm32_main.h"
-#include "usbd_cdc_vcp.h"
+//#include "usbd_cdc_vcp.h"
 
 extern "C" {
 	int __errno;

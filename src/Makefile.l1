@@ -1,0 +1,17 @@
+STDIR=~/dev/stm32/STM32Cube_FW_L1_V1.6.0
+
+STINC=\
+/Drivers/STM32L1xx_HAL_Driver/Src/ \
+/Drivers/STM32L1xx_HAL_Driver/ \
+/Drivers/BSP/STM32L1xx_Nucleo/ \
+/Drivers/CMSIS/Include/ \
+/Drivers/CMSIS/Device/ST/STM32L1xx/ \
+/Drivers/CMSIS/Device/ST/STM32L1xx/Source/Templates/gcc/startup_stm32l152xe.s
+
+CFLAGS = -T../stm32l152re_flash.ld
+CFLAGS += -DSTM32L1 -DSTM32L152xE
+CFLAGS += -mcpu=cortex-m3
+
+include ../Makefile.st
+
+SRCS += cube/startup_stm32l152xe.s

@@ -148,7 +148,7 @@ static char *formatLast(char *buf, GPIO::PinId id) {
 	const GPIO::PinDef *p = GPIO::getPinDef(id);
 
 	if (p && p->ms() < 5000) {
-		itoa(s, p->pin);
+		itoa(s, p->ext);
 		strcat(s, " ");
 		itoa(s, p->mode);
 		strcat(s, " ");

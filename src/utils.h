@@ -10,6 +10,23 @@
 #include <stdlib.h>
 #endif
 
+#ifdef STM32
+#ifdef STM32L0
+#include "stm32l0xx.h"
+#include "stm32l0xx_hal.h"
+#endif
+
+#ifdef STM32L1
+#include "stm32l1xx.h"
+#include "stm32l1xx_hal.h"
+#endif
+
+#ifdef STM32F4
+#include "stm32f4xx.h"
+#include "stm32f4xx_hal.h"
+#endif
+#endif
+
 int mysprintf(char *buf, const char *fmt, ...);
 uint32_t hextol(const char *s);
 

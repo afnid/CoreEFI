@@ -15,7 +15,10 @@ CFLAGS += -fpermissive -fno-threadsafe-statics -std=gnu++11
 CFLAGS += -Wl,--gc-sections
 
 all:
-	make clean
+	@ if [ -d efil1 ]; then echo "-------" efil1; cd efil1; make; fi
+	@ if [ -d efil0 ]; then echo "-------" efil0; cd efil0; make; fi
+	@ if [ -d efif4 ]; then echo "-------" efif4; cd efif4; make; fi
+	# make clean
 	make efi
 
 efi: $(SRCS) $(HDRS) Makefile
@@ -24,7 +27,7 @@ efi: $(SRCS) $(HDRS) Makefile
 
 clean:
 	rm -f efi gmon.out
-	rm -rf efif4
+	rm -rf efil0 efil1 efif4
 
 gprof:
 	gprof efi

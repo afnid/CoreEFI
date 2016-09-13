@@ -20,7 +20,7 @@ public:
 	} PinMode;
 
 	typedef struct {
-		uint8_t pin;
+		uint8_t ext;
 		uint8_t id;
 		const char *name;
 		uint16_t mode;

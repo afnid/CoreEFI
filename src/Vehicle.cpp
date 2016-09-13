@@ -172,8 +172,8 @@ static void setPins() {
 		GPIO::PinId id = ( GPIO::PinId)i;
 		const GPIO::PinDef *pd = GPIO::getPinDef(id);
 
-		if (pd->pin)
-			codes.set(pd->pin);
+		if (pd->ext)
+			codes.set(pd->ext);
 	}
 
 	int input = 24;
@@ -184,22 +184,22 @@ static void setPins() {
 		GPIO::PinId id = ( GPIO::PinId)i;
 		GPIO::PinDef *pd = (GPIO::PinDef *)GPIO::getPinDef(id);
 
-		if (!pd->pin) {
+		if (!pd->ext) {
 			if (pd->mode & GPIO::PinModeAnalog) {
-				pd->pin = analog++ % 16;
+				pd->ext = analog++ % 16;
 			} else if (pd->mode & GPIO::PinModeInput) {
 				while (codes.isSet(input))
 					input++;
 
-				pd->pin = min(53, input);
+				pd->ext = min(53, input);
 			} else if (pd->mode & GPIO::PinModeOutput) {
 				while (codes.isSet(output))
 					output++;
 
-				pd->pin = min(53, output);
+				pd->ext = min(53, output);
 			}
 
-			codes.set(pd->pin);
+			codes.set(pd->ext);
 
 			if (input >= 49)
 				input = 8;

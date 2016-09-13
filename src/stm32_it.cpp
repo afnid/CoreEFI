@@ -1,4 +1,4 @@
-#ifndef STM32
+#ifdef STM32
 
 #include "stm32_main.h"
 

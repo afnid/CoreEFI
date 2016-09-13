@@ -16,8 +16,7 @@ void delayTicks(uint32_t ticks) {
 
 #ifdef STM32
 
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_rcc.h"
+#include "stm32_main.h"
 
 static const uint8_t timebits = 16;
 static const uint32_t timemask = (1L << timebits) - 1;

@@ -37,7 +37,7 @@ enum {
 
 static void handleTimer(uint8_t id);
 
-#ifdef STM32
+#ifdef STM32F4
 
 static const uint16_t DEFSLOP = MicrosToTicks(1);
 static const uint16_t MAXSLOP = MicrosToTicks(5);

@@ -33,23 +33,15 @@ CPPFLAGS += -fpermissive -fno-threadsafe-statics -std=gnu++11
 CPPFLAGS += -Wl,--static -Wl,--gc-sections
 CPPFLAGS += -Wl,-Map=$(PROJ).map
 
-%.o : %.cpp
-	$(CPP) $(CPPFLAGS) -c -o $@ $^
-
-%.o : %.c
-	$(CC) $(CFLAGS) -c -o $@ $^
-
 PROJ=main
 
 proj: $(PROJ).elf
 
 STSRCS := $(shell find cube/ -name "*.c")
 STHDRS := $(shell find cube/ -name "*.h")
-STOBJS = $(STSRCS:.c=.o)
 
 SRCS:=$(shell echo src/*.cpp)
 HDRS:=$(shell echo src/*.h)
-OBJS = $(STSRCS:.cpp=.o)
 
 $(PROJ).elf: cube Makefile $(HDRS) $(STHDRS) $(SRCS) $(STSRCS)
 	@echo $(CPP) $(CPPFLAGS) -o $@
@@ -57,9 +49,6 @@ $(PROJ).elf: cube Makefile $(HDRS) $(STHDRS) $(SRCS) $(STSRCS)
 	@$(OBJCOPY) -O ihex $@ $(PROJ).hex
 	@$(OBJCOPY) -O binary $@ $(PROJ).bin
 	@$(SIZE) $@
-
-$(STLIB): $(STOBJS)
-	$(AR) -r $@ $(STOBJS)
 
 clean:
 	rm -f $(PROJ) $(PROJ).*
