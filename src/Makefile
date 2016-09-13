@@ -40,19 +40,10 @@ count:
 	wc -l *.cpp
 
 efif4:
-	mkdir -p efif4/src
-	ln -sf $(PWD)/*.cpp efif4/src
-	ln -sf $(PWD)/*.h efif4/src
-	ln -sf $(PWD)/Makefile.f4 efif4/Makefile
+	st/cross.sh f4 efi
 
 efil1:
-	mkdir -p efil1/src
-	ln -sf $(PWD)/*.cpp efil1/src
-	ln -sf $(PWD)/*.h efil1/src
-	ln -sf $(PWD)/Makefile.l1 efil1/Makefile
+	st/cross.sh l1 efi
 
 efil0:
-	mkdir -p efil0/src
-	ln -sf $(PWD)/*.cpp efil0/src
-	ln -sf $(PWD)/*.h efil0/src
-	ln -sf $(PWD)/Makefile.l0 efil0/Makefile
+	st/cross.sh l0 efi
