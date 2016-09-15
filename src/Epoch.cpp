@@ -32,7 +32,7 @@ uint16_t Epoch::init() {
 	last = 0;
 	counter = 0;
 
-	TaskMgr::addTask(F("Clock"), runClock, 0, 1000);
+	taskmgr.addTask(F("Clock"), runClock, 0, 1000);
 
 	return sizeof(Epoch);
 }

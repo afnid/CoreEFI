@@ -3,7 +3,8 @@
 #ifndef _Decoder_h_
 #define _Decoder_h_
 
-#include "Buffer.h"
+#include "System.h"
+#include "Params.h"
 
 class Decoder {
 	enum {
@@ -227,32 +228,9 @@ public:
 
 	uint16_t init() volatile;
 
-	void sendStatus(Buffer &send) volatile {
-		send.p1(F("decoder"));
-		send.json(F("edges"), edges);
-		send.json(F("tdc"), tdc);
-		send.json(F("old"), old, false);
-		send.json(F("idx"), idx);
-		send.json(F("total"), getTicks());
-		send.json(F("rpm"), getRPM());
-		send.json(F("invalid"), !isValid(), false);
-		sendHist(send, hist, HistMax);
-		send.p2();
+	void sendStatus(Buffer &send) volatile;
 
-		old = 0;
-	}
-
-	void sendList(Buffer &send) volatile {
-		for (uint8_t i = 0; i < edges; i++) {
-			uint8_t j = index(tdc + i);
-			send.p1(F("pulse"));
-			send.json(F("i"), i);
-			send.json(F("id"), j);
-			send.json(F("pw"), pulses[j]);
-			send.json(F("hi"), ishi(j));
-			send.p2();
-		}
-	}
+	void sendList(Buffer &send) volatile;
 };
 
 extern volatile Decoder decoder;

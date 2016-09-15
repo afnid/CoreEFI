@@ -1,17 +1,12 @@
 // copyright to me, released under GPL V3
 
-#include "System.h"
-#include "Buffer.h"
-#include "Prompt.h"
-#include "Metrics.h"
-#include "Params.h"
-
-#include "Tasks.h"
-#include "Events.h"
-#include "Decoder.h"
-#include "Encoder.h"
 #include "Schedule.h"
-#include "Pins.h"
+
+#include "Encoder.h"
+#include "GPIO.h"
+#include "Metrics.h"
+#include "Shell.h"
+#include "Tasks.h"
 
 class Schedule {
 	enum {
@@ -121,8 +116,8 @@ class Schedule {
 				uint16_t pulse1 = tdc - pulseAdvance;
 				uint16_t spark1 = tdc - sparkAdvance;
 
-				uint8_t pulsepin = PinMgr::getInjectorPin(cyl);
-				uint8_t sparkpin = PinMgr::getSparkPin(cyl);
+				uint8_t pulsepin = GPIO::Injector1 + cyl;
+				uint8_t sparkpin = GPIO::Spark1 + cyl;
 
 				p++->setEvent(n++, cyl, pulsepin, pulse1, 0, true);
 				p++->setEvent(n++, cyl, pulsepin, pulse1, pulseWidth, false);
@@ -232,22 +227,22 @@ static inline uint32_t runRefresh(uint32_t now, void *data) {
 	return 0;
 }
 
-static void sendSchedule(Buffer &send, void *data) {
+static void sendSchedule(Buffer &send, ShellEvent &se, void *data) {
 	schedule.sendSchedule(send);
 }
 
 uint16_t initSchedule() {
-	myzero(&schedule, sizeof(schedule));
+	bzero(&schedule, sizeof(schedule));
 
-	TaskMgr::addTask(F("Schedule"), runSchedule, 0, 25);
-	TaskMgr::addTask(F("Refresh"), runRefresh, 0, 2000);
-	TaskMgr::addTask(F("Status"), runStatus, 0, 3000);
+	taskmgr.addTask(F("Schedule"), runSchedule, 0, 25);
+	taskmgr.addTask(F("Refresh"), runRefresh, 0, 2000);
+	taskmgr.addTask(F("Status"), runStatus, 0, 3000);
 
-	static PromptCallback callbacks[] = {
+	static ShellCallback callbacks[] = {
 		{ F("s"), sendSchedule },
 	};
 
-	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+	shell.add(callbacks, ARRSIZE(callbacks));
 
 	return sizeof(schedule) + sizeof(callbacks);
 }

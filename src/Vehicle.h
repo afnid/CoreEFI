@@ -1,7 +1,8 @@
 #ifndef _Vehicle_h_
 #define _Vehicle_h_
 
-#include "Pins.h"
+#include "GPIO.h"
+#include "Shell.h"
 
 class Coded {
 public:
@@ -41,7 +42,7 @@ class Vehicle {
 
 	Pulsed epas2;
 
-	static void prompt_cb(Buffer &send, void *data);
+	static void prompt_cb(Buffer &send, ShellEvent &se, void *data);
 
 	bool isRunning();
 	void fans_pwm(uint32_t now);

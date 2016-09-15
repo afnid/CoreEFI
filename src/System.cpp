@@ -2,65 +2,48 @@
 
 #define EXTERN
 
-#include "System.h"
-#include "Stream.h"
-#include "Metrics.h"
-#include "Params.h"
-#include "Free.h"
+#include "Schedule.h"
+#include "Strategy.h"
+#include "Codes.h"
+#include "Encoder.h"
+#include "Timers.h"
 
 #include "Hardware.h"
 #include "Tasks.h"
-#include "Epoch.h"
+#include "Shell.h"
 
-#include "Codes.h"
-#include "Decoder.h"
-#include "Encoder.h"
-#include "Events.h"
-#include "Pins.h"
-#include "Prompt.h"
-#include "Schedule.h"
-#include "Strategy.h"
-#include "Timers.h"
+#include "Epoch.h"
+#include "Stream.h"
 
 #include "Display.h"
 #include "Vehicle.h"
 #include "Bus.h"
 
-#ifdef ARDUINO
-#include <HardwareSerial.h>
-//#include <SoftSerial.h>
-#include <Arduino.h>
-#endif
-
-#if 1
-
-Buffer channel;
-//Stream channel(Serial);
-Display display;
-CanBus bus;
-
-#define EFI
-
-#ifdef EFI
 volatile Decoder decoder;
 Encoder encoder;
-CycleCount cycle;
-#endif
+Buffer channel;
+Display display;
+CanBus bus;
 
 static uint16_t add(uint16_t &total, uint16_t mem) {
 	total += mem;
 	return mem;
 }
 
+static uint32_t shellcb(uint32_t now, void *data) {
+	((Shell *) data)->run(hardware.channels[0]);
+	return 0;
+}
+
 void initSystem(Buffer &send, bool doefi) {
 	uint16_t total = 0;
 
+	taskmgr.addTask(F("Shell"), shellcb, &shell, 400);
+
 	send.p1(F("mem"));
-	send.json(F("ticks"), add(total, initTicks()));
-	send.json(F("cycle"), add(total, cycle.init()));
-	send.json(F("tasks"), add(total, TaskMgr::initTasks()));
+	send.json(F("tasks"), add(total, taskmgr.init()));
 	send.json(F("clock"), add(total, Epoch::init()));
-	send.json(F("prompt"), add(total, initPrompt()));
+	send.json(F("prompt"), add(total, shell.init()));
 	send.json(F("codes"), add(total, codes.init()));
 	send.json(F("params"), add(total, initParams()));
 
@@ -77,8 +60,7 @@ void initSystem(Buffer &send, bool doefi) {
 	}
 
 	send.json(F("bytes"), total);
-	channel.p2();
-	channel.nl();
+	send.p2();
 
 	send.p1(F("max"));
 	send.json(F("cyls"), MaxCylinders);
@@ -94,8 +76,6 @@ void initSystem(Buffer &send, bool doefi) {
 	send.json(F("ustoticks"), (uint16_t) MicrosToTicks(1u));
 	channel.p2();
 	channel.nl();
-
-	sendMemory();
 
 	setParamUnsigned(ConstTicksInUS, TICKTOUS);
 
@@ -118,13 +98,6 @@ void initSystem(Buffer &send, bool doefi) {
 	encoder.refresh();
 	decoder.refresh(clockTicks());
 #endif
-}
-#endif
-
-#include <string.h>
-
-void myzero(void *p, uint16_t len) {
-	memset(p, 0, len);
 }
 
 #ifdef STM32
@@ -173,7 +146,7 @@ static void stabilize(uint16_t ms) {
 static void runDecoderTest() {
 	BitPlan bp;
 
-	myzero(&bp, sizeof(bp));
+	bzero(&bp, sizeof(bp));
 
 	for (uint32_t max = 10000; max <= 100000; max *= 10) {
 		for (uint32_t ang = 0; ang <= 65536u; ang += 8192) {
@@ -249,9 +222,32 @@ int main(int argc, char **argv) {
 		runPerfectTasks();
 	} else {
 		printf("Running..\n");
-		TaskMgr::runTasks();
+
+		while (true)
+			taskmgr.loop();
 	}
 }
 
 #endif
+#endif
+
+#ifdef linux
+
+#include <unistd.h>
+
+void Hardware::flush() {
+	char buf[32];
+	size_t n = 0;
+	extern int available(int fd);
+
+	while (available(0) > 0)
+		if ((n = read(0, buf, 1)) > 0)
+			hardware.channels[0].recv.write(buf, n);
+
+	while ((n = hardware.channels[0].send.read(buf, sizeof(buf))) > 0) {
+		n = fwrite(buf, 1, n, stdout);
+		fflush(stdout);
+	}
+}
+
 #endif

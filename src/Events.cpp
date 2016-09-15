@@ -1,16 +1,13 @@
 // copyright to me, released under GPL V3
 
-#include "System.h"
-#include "Buffer.h"
-#include "Prompt.h"
+#include "Events.h"
+#include "Decoder.h"
+#include "Shell.h"
 #include "Metrics.h"
 #include "Params.h"
-
-#include "Decoder.h"
-#include "Events.h"
-#include "Pins.h"
 #include "Schedule.h"
 #include "Tasks.h"
+#include "GPIO.h"
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -270,7 +267,7 @@ void refreshEvents() {
 		events.reset();
 }
 
-void sendEventStatus(Buffer &send, void *data) {
+void sendEventStatus(Buffer &send, ShellEvent &se, void *data) {
 	send.p1(F("events"));
 
 	send.json(F("idx"), events.idx);
@@ -310,7 +307,7 @@ void sendEventStatus(Buffer &send, void *data) {
 	send.p2();
 }
 
-void sendEventList(Buffer &send, void *data) {
+void sendEventList(Buffer &send, ShellEvent &se, void *data) {
 	volatile BitSchedule *current = events.current;
 	uint32_t last = 0;
 
@@ -368,14 +365,14 @@ uint16_t initEvents() {
 
 	refreshEvents();
 
-	TaskMgr::addTask(F("Events"), runEvents, 0, 1000);
+	taskmgr.addTask(F("Events"), runEvents, 0, 1000);
 
-	static PromptCallback callbacks[] = {
+	static ShellCallback callbacks[] = {
 		{ F("e0"), sendEventStatus },
 		{ F("e1"), sendEventList },
 	};
 
-	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+	shell.add(callbacks, ARRSIZE(callbacks));
 
 	return sizeof(events) + sizeof(callbacks);
 }

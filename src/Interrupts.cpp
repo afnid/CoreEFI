@@ -1,13 +1,12 @@
 // copyright to me, released under GPL V3
 
+#include "Interrupts.h"
+#include "Params.h"
 #include "GPIO.h"
 #include "System.h"
-#include "Buffer.h"
 #include "Metrics.h"
-#include "Params.h"
 
 #include "Pins.h"
-#include "Interrupts.h"
 #include "Decoder.h"
 
 #ifdef ARDUINO

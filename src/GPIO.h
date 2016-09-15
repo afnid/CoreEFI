@@ -3,21 +3,12 @@
 
 #include "utils.h"
 
+#include "Pins.h"
+
 class GPIO {
 public:
 
 #include "efi_gpio.h"
-
-	typedef enum {
-		PinModePullup = (1 << 0),
-		PinModeAnalog = (1 << 1),
-		PinModeInput = (1 << 2),
-		PinModeOutput = (1 << 3),
-		PinModePWM = (1 << 4),
-		PinModeNoInit = (1 << 5),
-		PinModeChanges = (1 << 6),
-		PinModeEdge = (1 << 7)
-	} PinMode;
 
 	typedef struct {
 		uint8_t ext;
@@ -31,7 +22,7 @@ public:
 		uint8_t invert;
 		char info[6];
 
-		inline PinId getId() const {
+		PinId getId() const {
 			return (PinId)id;
 		}
 

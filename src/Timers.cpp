@@ -2,7 +2,7 @@
 
 #include "System.h"
 #include "Buffer.h"
-#include "Prompt.h"
+#include "Shell.h"
 #include "Metrics.h"
 #include "Params.h"
 
@@ -1018,7 +1018,7 @@ void simTimerEvents(uint32_t next) {
 	t->sleep(next);
 }
 
-static void sendTimers(Buffer &send, void *data) {
+static void sendTimers(Buffer &send, ShellEvent &se, void *data) {
 	timers.send(send);
 }
 
@@ -1028,11 +1028,11 @@ uint16_t initTimers() {
 	if (0)
 		handleTimer(TimerId1); // get rid of warning
 
-	static PromptCallback callbacks[] = {
+	static ShellCallback callbacks[] = {
 		{ F("timers"), sendTimers },
 	};
 
-	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+	shell.add(callbacks, ARRSIZE(callbacks));
 
 	return sizeof(timers) + sizeof(callbacks);
 }

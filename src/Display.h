@@ -1,6 +1,8 @@
 #ifndef _Display_h_
 #define _Display_h_
 
+#include "Buffer.h"
+
 class Display {
 	char display[4][21];
 

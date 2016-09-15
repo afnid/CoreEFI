@@ -1,5 +1,10 @@
 // copyright to me, released under GPL V3
 
+#ifndef _Events_h_
+#define _Events_h_
+
+#include "utils.h"
+
 class BitPlan {
 protected:
 
@@ -130,3 +135,5 @@ uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint16_t jitter);
 void checkEvents();
 void sendEventStatus(void *data);
 void sendEventList(void *data);
+
+#endif

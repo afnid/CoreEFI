@@ -301,7 +301,7 @@ float getStrategyDouble(ParamTypeId id, ParamData *pd) {
 }
 
 uint16_t initStrategy() {
-	myzero(&strategy, sizeof(strategy));
+	bzero(&strategy, sizeof(strategy));
 
 	setParamUnsigned(ConstCoils, min(MaxCoils, getParamUnsigned(ConstCoils)));
 	setParamUnsigned(ConstCylinders, min(MaxCylinders, getParamUnsigned(ConstCylinders)));

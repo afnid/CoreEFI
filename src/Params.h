@@ -1,5 +1,10 @@
 // copyright to me, released under GPL V3
 
+#ifndef _Params_h_
+#define _Params_h_
+
+#include "Buffer.h"
+
 #include "efi_id.h"
 
 void setParamShort(ParamTypeId i, int16_t v);
@@ -21,3 +26,5 @@ void setSensorParam(ParamTypeId id, uint16_t adc);
 
 const char *getParamName(ParamTypeId id, char *buf, int maxlen);
 const channel_t *getParamName(ParamTypeId id);
+
+#endif

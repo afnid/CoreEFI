@@ -1,5 +1,12 @@
 // copyright to me, released under GPL V3
 
+#ifndef _Schedule_h_
+#define _Schedule_h_
+
+#include "Params.h"
+#include "Events.h"
+#include "Decoder.h"
+
 class BitSchedule {
 	static const uint8_t MAX_EVENTS = MaxCylinders * 4;
 
@@ -9,7 +16,7 @@ class BitSchedule {
 
 	inline void reorder() volatile {
 		uint8_t bits[bitsize(MaxCylinders * 4)];
-		myzero(bits, bitsize(MaxCylinders * 4));
+		bzero(bits, bitsize(MaxCylinders * 4));
 
 		int16_t min = 0;
 		int16_t max = count - 1;
@@ -61,7 +68,7 @@ public:
 
 	inline void reset() volatile {
 		BitPlan bp;
-		myzero(&bp, sizeof(bp));
+		bzero(&bp, sizeof(bp));
 
 		for (uint8_t i = 0; i < MAX_EVENTS; i++) {
 			index[i] = i;
@@ -88,3 +95,5 @@ void swapSchedule();
 uint16_t initSchedule();
 void runSchedule();
 void sendSchedule();
+
+#endif

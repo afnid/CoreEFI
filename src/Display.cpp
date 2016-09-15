@@ -8,44 +8,15 @@
 LiquidCrystal_I2C lcd(LCD_ADDR, 20, 4); // a4, a5
 #endif
 
+#include "Display.h"
 #include "System.h"
 #include "Buffer.h"
 #include "Params.h"
-#include "Prompt.h"
+#include "Hardware.h"
+#include "Shell.h"
 
 #include "Tasks.h"
-#include "Display.h"
-#include "Pins.h"
-
-static long readVcc() {
-#ifdef ARDUINO
-// Read 1.1V reference against AVcc
-// set the reference to Vcc and the measurement to the internal 1.1V reference
-#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
-ADMUX = _BV(REFS0) | _BV(MUX4) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
-#elif defined (__AVR_ATtiny24__) || defined(__AVR_ATtiny44__) || defined(__AVR_ATtiny84__)
-ADMUX = _BV(MUX5) | _BV(MUX0);
-#elif defined (__AVR_ATtiny25__) || defined(__AVR_ATtiny45__) || defined(__AVR_ATtiny85__)
-ADMUX = _BV(MUX3) | _BV(MUX2);
-#else
-ADMUX = _BV(REFS0) | _BV(MUX3) | _BV(MUX2) | _BV(MUX1);
-#endif  
-
-	delay(2); // Wait for Vref to settle
-	ADCSRA |= _BV(ADSC); // Start conversion
-	while (bit_is_set(ADCSRA,ADSC)); // measuring
-
-	uint8_t low  = ADCL; // must read ADCL first - it then locks ADCH  
-	uint8_t high = ADCH; // unlocks both
-
-	long result = (high<<8) | low;
-
-	result = 1125300L / result; // Calculate Vcc (in mV); 1125300 = 1.1*1023*1000
-	return result; // Vcc in millivolts
-#else
-	return 0;
-#endif
-}
+#include "GPIO.h"
 
 static char *concatch(char *s, char ch) {
 	s += strlen(s);
@@ -218,7 +189,7 @@ static char *formatVolts(char *buf) {
 	char *s = buf;
 	*s = 0;
 
-	s = concat(buf, "VCC", readVcc(), false);
+	s = concat(buf, "VCC", Hardware::getBattery(), false);
 
 	return buf;
 }
@@ -282,11 +253,11 @@ static uint32_t runDisplay(uint32_t now, void *data) {
 	return 0;
 }
 
-static void menucb0(Buffer &send, void *data) {
+static void menucb0(Buffer &send, ShellEvent &se, void *data) {
 	((Display *)data)->menuInput(send, 0);
 }
 
-static void menucb1(Buffer &send, void *data) {
+static void menucb1(Buffer &send, ShellEvent &se, void *data) {
 	((Display *)data)->menuInput(send, 1);
 }
 
@@ -302,14 +273,14 @@ uint16_t Display::init() {
 	lcd.setContrast(20);
 #endif
 
-	static PromptCallback callbacks[] = {
+	static ShellCallback callbacks[] = {
 		{ F("m0"), menucb0, this },
 		{ F("m1"), menucb1, this },
 	};
 
-	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+	shell.add(callbacks, ARRSIZE(callbacks));
 
-	TaskMgr::addTask(F("Display"), runDisplay, this, 500);
+	taskmgr.addTask(F("Display"), runDisplay, this, 500);
 
 	return sizeof(Display) + sizeof(callbacks);
 }

@@ -1,5 +1,10 @@
 // copyright to me, released under GPL V3
 
+#ifndef _Encoder_h_
+#define _Encoder_h_
+
+#include "Decoder.h"
+
 class Encoder {
 	uint32_t ratio;
 	pulse_t pulse;
@@ -56,3 +61,5 @@ public:
 };
 
 extern Encoder encoder;
+
+#endif

@@ -3,7 +3,7 @@
 #ifndef _Codes_h_
 #define _Codes_h_
 
-#include "Buffer.h"
+#include "Params.h"
 
 class Codes {
 	uint8_t codes[bitsize(MaxParam)];

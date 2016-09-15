@@ -1,20 +1,43 @@
-#include "System.h"
-#include "Buffer.h"
-#include "Metrics.h"
-#include "Prompt.h"
-#include "Params.h"
 #include "Decoder.h"
+#include "Metrics.h"
+#include "Shell.h"
 
-static void dstatus(Buffer &send, void *data) {
-	Decoder *d = (Decoder *)data;
-	d->sendStatus(send);
+void Decoder::sendStatus(Buffer &send) volatile {
+	send.p1(F("decoder"));
+	send.json(F("edges"), edges);
+	send.json(F("tdc"), tdc);
+	send.json(F("old"), old, false);
+	send.json(F("idx"), idx);
+	send.json(F("total"), getTicks());
+	send.json(F("rpm"), getRPM());
+	send.json(F("invalid"), !isValid(), false);
+	sendHist(send, hist, HistMax);
+	send.p2();
+
+	old = 0;
 }
 
-static void d0(Buffer &send, void *data) {
+void Decoder::sendList(Buffer &send) volatile {
+	for (uint8_t i = 0; i < edges; i++) {
+		uint8_t j = index(tdc + i);
+		send.p1(F("pulse"));
+		send.json(F("i"), i);
+		send.json(F("id"), j);
+		send.json(F("pw"), pulses[j]);
+		send.json(F("hi"), ishi(j));
+		send.p2();
+	}
+}
+
+static void dstatus(Buffer &send, ShellEvent &se, void *data) {
 	((Decoder *)data)->sendStatus(send);
 }
 
-static void d1(Buffer &send, void *data) {
+static void d0(Buffer &send, ShellEvent &se, void *data) {
+	((Decoder *)data)->sendStatus(send);
+}
+
+static void d1(Buffer &send, ShellEvent &se, void *data) {
 	((Decoder *)data)->sendList(send);
 }
 
@@ -36,13 +59,13 @@ uint16_t Decoder::init() volatile {
 
 	refresh(0);
 
-	static PromptCallback callbacks[] = {
+	static ShellCallback callbacks[] = {
 		{ F("dstatus"), dstatus, (Decoder *)this },
 		{ F("d0"), d0, (Decoder *)this },
 		{ F("d1"), d1, (Decoder *)this },
 	};
 
-	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+	shell.add(callbacks, ARRSIZE(callbacks));
 
 	return sizeof(Decoder) + sizeof(callbacks);
 }

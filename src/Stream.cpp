@@ -45,21 +45,6 @@ void Stream::p2() {
 
 #include <string.h>
 
-static void pgmstr(char *buf, uint16_t len, const channel_t *pgm) {
-#ifdef ARDUINO
-	char ch;
-	int i = 0;
-
-	//while((ch = pgm_read_byte(pgm + i)) && i < len - 1)
-	//buf[i++] = ch;
-
-	buf[i] = 0;
-#else
-	strcpy(buf, pgm);
-	assert(strlen(buf) < len);
-#endif
-}
-
 #if 0
 void Stream::_log(uint8_t level, const channel_t *file, int line, const channel_t *fmt, ...) {
 	if (level >= this->level) {

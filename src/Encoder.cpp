@@ -1,13 +1,8 @@
-#include "System.h"
-#include "Buffer.h"
-#include "Params.h"
-#include "Metrics.h"
-#include "Tasks.h"
-#include "Decoder.h"
 #include "Encoder.h"
-#include "Prompt.h"
+#include "Tasks.h"
+#include "Shell.h"
 
-static void enskip(Buffer &send, void *data) {
+static void enskip(Buffer &send, ShellEvent &se, void *data) {
 	((Encoder *)data)->skipEncoder();
 }
 
@@ -27,13 +22,13 @@ uint16_t Encoder::init() {
 	miss = 0;
 	pulse = MicrosToTicks(65535U);
 
-	TaskMgr::addTask(F("Encoder"), runEncoder, 0, MicrosToTicks(refresh()));
+	taskmgr.addTask(F("Encoder"), runEncoder, 0, MicrosToTicks(refresh()));
 
-	static PromptCallback callbacks[] = {
+	static ShellCallback callbacks[] = {
 		{ F("enskip"), enskip, this },
 	};
 
-	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+	shell.add(callbacks, ARRSIZE(callbacks));
 
 	return sizeof(Encoder) + sizeof(callbacks);
 }

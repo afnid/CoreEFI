@@ -5,13 +5,12 @@
 
 #include "System.h"
 #include "Buffer.h"
-#include "Prompt.h"
+#include "Shell.h"
 #include "Params.h"
 #include "Vehicle.h"
 #include "Tasks.h"
 #include "Display.h"
 #include "Codes.h"
-#include "Device.h"
 #include "GPIO.h"
 
 #ifndef CONFIG
@@ -145,7 +144,7 @@ static GPIO::Def pins[] = {
 
 #endif
 
-void Vehicle::prompt_cb(Buffer &send, void *data) {
+void Vehicle::prompt_cb(Buffer &send, ShellEvent &se, void *data) {
 	((Vehicle *)data)->sendStatus(send);
 }
 
@@ -184,14 +183,14 @@ static void setPins() {
 		GPIO::PinDef *pd = (GPIO::PinDef *)GPIO::getPinDef(id);
 
 		if (!pd->ext) {
-			if (pd->mode & GPIO::PinModeAnalog) {
+			if (pd->mode & PinModeAnalog) {
 				pd->ext = analog++ % 16;
-			} else if (pd->mode & GPIO::PinModeInput) {
+			} else if (pd->mode & PinModeInput) {
 				while (codes.isSet(input))
 					input++;
 
 				pd->ext = min(53, input);
-			} else if (pd->mode & GPIO::PinModeOutput) {
+			} else if (pd->mode & PinModeOutput) {
 				while (codes.isSet(output))
 					output++;
 
@@ -453,7 +452,7 @@ void Vehicle::serviceInput(uint32_t now) {
 
 	const GPIO::PinDef *pi = GPIO::getPinDef((GPIO::PinId)inpin);
 
-	if (pi && (pi->mode & GPIO::PinModeInput)) {
+	if (pi && (pi->mode & PinModeInput)) {
 		const uint16_t TESTLO = 400;
 		const uint16_t TESTHI = 700;
 		extern Buffer channel;
@@ -492,7 +491,7 @@ void Vehicle::serviceOutput(uint32_t now) {
 	static const GPIO::PinDef *bl = 0;
 	static const GPIO::PinDef *br = 0;
 
-	if (pi && (pi->mode & GPIO::PinModeOutput)) {
+	if (pi && (pi->mode & PinModeOutput)) {
 		switch (pi->getId()) {
 			case CalcFan1:
 			case CalcFan2:
@@ -621,13 +620,13 @@ uint16_t Vehicle::init() {
 
 	setPins();
 
-	TaskMgr::addTask(F("Vehicle"), runVehicle, this, 20);
+	taskmgr.addTask(F("Vehicle"), runVehicle, this, 20);
 
-	static PromptCallback callbacks[] = {
+	static ShellCallback callbacks[] = {
 		{ F("vehicle"), prompt_cb, this },
 	};
 
-	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+	shell.add(callbacks, ARRSIZE(callbacks));
 
 	return sizeof(Vehicle) + sizeof(callbacks);
 }

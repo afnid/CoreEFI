@@ -4,7 +4,7 @@
 #include "Buffer.h"
 #include "Metrics.h"
 #include "Params.h"
-#include "Prompt.h"
+#include "Shell.h"
 #include "Tasks.h"
 #include "Codes.h"
 
@@ -220,7 +220,7 @@ static inline uint16_t dblEncode(ParamTypeId id, ParamData *pd, float v) {
 
 static void clearCached(ParamTypeId id, ParamData *pd) {
 	if (pd->cat == CatConst) {
-		myzero(local.cached, sizeof(local.cached));
+		bzero(local.cached, sizeof(local.cached));
 	} else {
 		for (uint8_t i = local.minl; i <= local.maxl; i++) {
 			if (isset(local.cached, i)) {
@@ -386,7 +386,7 @@ void sendParam(Buffer &send, ParamTypeId id) {
 	sendParam(send, id, pd, false);
 }
 
-static void sendParamChanges(Buffer &send, void *) {
+static void sendParamChanges(Buffer &send, ShellEvent &se, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		if (isset(local.notify, id)) {
 			ParamData *pd = getParamData(id);
@@ -396,14 +396,14 @@ static void sendParamChanges(Buffer &send, void *) {
 	}
 }
 
-static void sendParamValues(Buffer &send, void *) {
+static void sendParamValues(Buffer &send, ShellEvent &se, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 		sendParam(send, (ParamTypeId)id, pd, true);
 	}
 }
 
-static void sendParamLookups(Buffer &send, void *) {
+static void sendParamLookups(Buffer &send, ShellEvent &se, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 
@@ -430,7 +430,7 @@ static void sendParamLookups(Buffer &send, void *) {
 	}
 }
 
-static void sendParamList(Buffer &send, void *) {
+static void sendParamList(Buffer &send, ShellEvent &se, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 
@@ -447,7 +447,7 @@ static void sendParamList(Buffer &send, void *) {
 	}
 }
 
-static void sendParamStats(Buffer &send, void *) {
+static void sendParamStats(Buffer &send, ShellEvent &se, void *) {
 	send.p1(F("params"));
 	send.json(F("params"), (uint16_t) sizeof(params));
 	send.json(F("lookups"), (uint16_t) sizeof(lookups));
@@ -466,7 +466,8 @@ static inline uint32_t runChanges(uint32_t t0, void *data) {
 
 	if (wait) {
 		extern Buffer channel;
-		sendParamChanges(channel, 0);
+		ShellEvent se(0, 0);
+		sendParamChanges(channel, se, 0);
 		wait = max(wait, 500);
 		wait = min(wait, 1000);
 		return wait;
@@ -475,8 +476,48 @@ static inline uint32_t runChanges(uint32_t t0, void *data) {
 	return 3000017UL;
 }
 
+static void handleQ(Buffer &send, ShellEvent &se, void *) {
+	const char *s = se.nextToken();
+	s = se.nextToken();
+
+	if (s) {
+		ParamTypeId id = (ParamTypeId) atoi(s);
+
+		if (id >= 0) {
+			send.p1(F("ack"));
+			send.json(id, getParamFloat(id));
+			send.p2();
+		}
+	}
+}
+
+static void handleS(Buffer &send, ShellEvent &se, void *) {
+	const char *s = se.nextToken();
+	s = se.nextToken();
+
+	if (s) {
+		const char *arg2 = se.nextToken();
+
+		if (arg2) {
+			ParamTypeId id = (ParamTypeId) atoi(s);
+			float val = atof(arg2);
+			setParamFloat(id, val);
+
+			//send.p1(F("id"));
+			//send.json(F("n"), id);
+			//send.json(F("v"), val);
+			//channel.p2();
+			//channel.nl();
+		}
+	}
+}
+
+static void handleM(Buffer &send, ShellEvent &se, void *) {
+	setParamUnsigned(FlagIsMonitoring, isParamSet(FlagIsMonitoring) ? 0 : 5000);
+}
+
 uint16_t initParams() {
-	myzero(&local, sizeof(local));
+	bzero(&local, sizeof(local));
 	local.minl = MaxParam;
 
 	for (uint8_t id = 0; id < MaxParam; id++) {
@@ -488,17 +529,20 @@ uint16_t initParams() {
 		}
 	}
 
-	TaskMgr::addTask(F("Params"), runChanges, 0, 3000);
+	taskmgr.addTask(F("Params"), runChanges, 0, 3000);
 
-	static PromptCallback callbacks[] = {
+	static ShellCallback callbacks[] = {
 		{ F("pv"), sendParamValues, 0, F("values") },
 		{ F("pt"), sendParamLookups, 0, F("tables") },
 		{ F("pl"), sendParamList, 0, F("list") },
 		{ F("ps"), sendParamStats, 0, F("stats") },
 		{ F("pc"), sendParamChanges, 0, F("changes") },
+		{ F("s"), handleS, 0, F("changes") },
+		{ F("q"), handleQ, 0, F("changes") },
+		{ F("m"), handleM, 0, F("changes") },
 	};
 
-	addPromptCallbacks(callbacks, ARRSIZE(callbacks));
+	shell.add(callbacks, ARRSIZE(callbacks));
 
 	return sizeof(local) + sizeof(params) + sizeof(lookups) + sizeof(callbacks);
 }

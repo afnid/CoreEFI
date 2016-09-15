@@ -42,7 +42,7 @@ uint8_t CanBus::init() {
 	status = CAN_OK == CAN.begin(CAN_500KBPS);
 #endif
 
-	TaskMgr::addTask(F("CanBus"), checkBus, this, 50);
+	taskmgr.addTask(F("CanBus"), checkBus, this, 50);
 
 	return sizeof(CanBus);
 }

@@ -1,6 +1,7 @@
 #include "System.h"
 #include "Buffer.h"
 
+#if 0
 #ifndef UNIX
 
 void delayTicks(uint32_t ticks) {
@@ -90,48 +91,10 @@ uint16_t initTicks(void) {
 
 #else
 
-#include <time.h>
-
-#define NanosToTicks(x) ((x) / (1000 / TICKTOUS))
-#define TicksToNanos(x) ((x) * (1000 / TICKTOUS))
-
-static const uint64_t nstos = (uint64_t)1000000000;
-
 #ifdef CLOCK_MONOTONIC
-uint32_t clockTicks() {
-	static uint32_t epoch = (1L << 32) - 5;
-	static uint32_t sec = 0;
-	static struct timespec ts;
-	clock_gettime(CLOCK_MONOTONIC, &ts);
-
-	if (sec == 0)
-		sec = ts.tv_sec;
-
-	ts.tv_sec -= sec;
-	ts.tv_sec += epoch;
-
-	return NanosToTicks(ts.tv_sec * nstos + ts.tv_nsec);
-}
-
 #elif defined(ARDUINO)
 uint32_t CycleCount::ticks(void) {
 	return micros();
-}
-
-#else
-uint32_t CycleCount::ticks(void) {
-	static uint32_t epoch = (1L << 32) - 5;
-	static uint32_t sec = 0;
-	static struct timeval tv;
-	gettimeofday(&tv, 0);
-
-	if (sec == 0)
-		sec = tv.tv_sec;
-
-	tv.tv_sec -= sec;
-	tv.tv_sec += epoch;
-
-	return MicrosToTicks(tv.tv_sec * nstos + tv.tv_usec);
 }
 
 #endif
@@ -149,21 +112,6 @@ uint32_t getCycleCount(void) {
 
 uint16_t initTicks(void) {
 	return 0;
-}
-
-void delayTicks(uint32_t ticks) {
-	static struct timespec req;
-	static struct timespec rem;
-
-	myzero(&req, sizeof(req));
-	myzero(&rem, sizeof(rem));
-	req.tv_nsec = TicksToNanos(ticks);
-	req.tv_sec = req.tv_nsec / nstos;
-	req.tv_nsec -= req.tv_sec * nstos;
-
-	do {
-		nanosleep(&req, &rem);
-	} while (rem.tv_sec > 0 || rem.tv_nsec > 0);
 }
 
 #endif
@@ -190,3 +138,5 @@ void sendTicks(Buffer &send) {
 	last2 = t2;
 #endif
 }
+
+#endif
