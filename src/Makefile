@@ -1,5 +1,5 @@
-SRCS:=$(shell echo *.cpp)
-HDRS:=$(shell echo *.h)
+SRCS:=$(shell echo *.cpp std/*.cpp)
+HDRS:=$(shell echo *.h std/*.h)
 
 CFLAGS=-g -O2 -Wall -Wpedantic -Wno-variadic-macros -Wdouble-promotion -pg -DDEBUG
 CFLAGS=-g -O4 -Wall -Wdouble-promotion -pg -DDEBUG

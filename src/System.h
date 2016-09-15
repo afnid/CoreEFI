@@ -4,30 +4,12 @@
 #define _System_h_
 
 #include "utils.h"
+#include "Buffer.h"
 
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef ARDUINO_AVR_UNO
-#define ARDUINO_UNO
-#endif
-
-#ifdef ARDUINO_AVR_MEGA2560
-#define ARDUINO_MEGA
-#endif
-
-#ifdef ARDUINO_ARCH_SAM
-#define ARDUINO_DUE
-#endif
-
-#ifdef ARDUINO
-#define NDEBUG
-#endif
-
-#if !defined(ARDUINO) && !defined(STM32)
-#define UNIX 1
-#endif
 
 // Utilities
 

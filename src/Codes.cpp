@@ -1,11 +1,11 @@
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Prompt.h"
 #include "Params.h"
 #include "Codes.h"
 
-static void codescb(void *data) {
-	((Codes *)data)->send();
+static void codescb(Buffer &send, void *data) {
+	((Codes *)data)->send(send);
 }
 
 uint16_t Codes::init() {

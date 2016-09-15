@@ -1,7 +1,7 @@
 // copyright to me, released under GPL V3
 
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Prompt.h"
 #include "Metrics.h"
 #include "Params.h"
@@ -44,14 +44,14 @@ typedef struct _Node {
 		verify();
 	}
 
-	void send(struct _Node *zero) {
+	void send(Buffer &send, struct _Node *zero) {
 		assert(this - zero >= 0);
 		assert(this - zero < TaskMax);
-		channel.p1(F("task"));
-		channel.send(F("i"), (uint16_t) (this - zero));
-		channel.send(F("n"), (uint16_t) (next - zero));
-		channel.send(F("p"), (uint16_t) (prev - zero));
-		channel.p2();
+		send.p1(F("task"));
+		send.json(F("i"), (uint16_t) (this - zero));
+		send.json(F("n"), (uint16_t) (next - zero));
+		send.json(F("p"), (uint16_t) (prev - zero));
+		send.p2();
 		verify();
 	}
 } Node;
@@ -134,24 +134,23 @@ static inline void runTest() {
 	//getParamFloat(CalcDutyCycle);
 }
 
-static void sendTasks(void *data) {
+static void sendTasks(Buffer &send, void *data) {
 	uint32_t now = clockTicks();
 	Node *n = tasks.head;
 
 	uint32_t since = tdiff32(now, tasks.slept);
 	float duty = !since ? 0 : 100.0f * tasks.busy / since;
 
-	channel.p1(F("tasks"));
-	channel.send(F("duty"), duty);
-	channel.send(F("ntasks"), tasks.ntasks);
-	channel.p2();
-	channel.nl();
+	send.p1(F("tasks"));
+	send.json(F("duty"), duty);
+	send.json(F("ntasks"), tasks.ntasks);
+	send.p2();
 
 	tasks.slept = now;
 	tasks.busy = 0;
 
 	do {
-		n->task.send(now);
+		n->task.send(send, now);
 		n = n->next;
 	} while (n != tasks.head);
 }

@@ -3,11 +3,12 @@
 #include <string.h>
 
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Metrics.h"
 #include "Params.h"
 #include "Prompt.h"
 #include "Tasks.h"
+#include "Bench.h"
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -24,17 +25,16 @@
 
 static PromptCallback *head = 0;
 
-static void get(const char *s) {
+static void get(Buffer &send, const char *s) {
 	while (*s == ' ')
 		s++;
 
 	ParamTypeId id = (ParamTypeId)atoi(s);
 
 	if (id >= 0) {
-		channel.p1(F("ack"));
-		channel.send(id, getParamFloat(id));
-		channel.p2();
-		channel.nl();
+		send.p1(F("ack"));
+		send.json(id, getParamFloat(id));
+		send.p2();
 	}
 }
 
@@ -54,9 +54,9 @@ static void set(char *s) {
 		float val = atof(a);
 		setParamFloat(id, val);
 
-		//channel.p1(F("id"));
-		//channel.send(F("n"), id);
-		//channel.send(F("v"), val);
+		//send.p1(F("id"));
+		//send.json(F("n"), id);
+		//send.json(F("v"), val);
 		//channel.p2();
 		//channel.nl();
 	}
@@ -84,13 +84,13 @@ static int dumbstrcmp(const char *s1, const channel_t *s2) {
 
 static char cmdbuf[20];
 
-void handleInput(char ch) {
+void handleInput(Buffer &send, char ch) {
 	if (ch == '\n' || ch == '\r') {
 		bool found = false;
 
 		for (PromptCallback *cb = head; cb; cb = cb->next) {
 			if (!dumbstrcmp(cmdbuf, cb->key)) {
-				cb->callback(cb->data);
+				cb->callback(send, cb->data);
 				found = true;
 				break;
 			}
@@ -100,7 +100,7 @@ void handleInput(char ch) {
 			for (char *s = cmdbuf; *s; s++) {
 				switch (*s) {
 					case 'q':
-						get(s + 1);
+						get(send, s + 1);
 						myzero(cmdbuf, sizeof(cmdbuf));
 						break;
 					case 'u':
@@ -109,12 +109,11 @@ void handleInput(char ch) {
 						break;
 
 					case 'b':
-						extern void sendBenchmarks();
-						sendBenchmarks();
+						sendBenchmarks(send);
 						break;
 
 					case 'k':
-						sendTicks();
+						sendTicks(send);
 						break;
 					case 'm':
 						setParamUnsigned(FlagIsMonitoring, isParamSet(FlagIsMonitoring) ? 0 : 5000);
@@ -126,28 +125,22 @@ void handleInput(char ch) {
 #endif
 						break;
 					case '?':
-						channel.send(F("Usage: u <id> <val>, q <id>, [cdehrstplvd]\n"));
-						channel.send(F("\tm - toggle monitoring\n"));
-						channel.send(F("\tu - updates a param, e.g. u 0 5000 sets the decoder rpm to 5k\n"));
-						channel.send(F("\tq - query a param\n"));
+						send.nl(F("Usage: u <id> <val>, q <id>, [cdehrstplvd]"));
+						send.nl(F("\tm - toggle monitoring"));
+						send.nl(F("\tu - updates a param, e.g. u 0 5000 sets the decoder rpm to 5k"));
+						send.nl(F("\tq - query a param"));
 
 						for (PromptCallback *cb = head; cb; cb = cb->next) {
-							channel.send(cb->key);
-
-							if (cb->desc) {
-								channel.send(F(" - "));
-								channel.send(cb->desc);
-							}
-
-							channel.nl();
+							send.json(cb->key, cb->desc ? cb->desc : "n/a");
+							send.nl();
 						}
 
-						channel.send(F("\tMost stats are reset every time they are displayed\n"));
+						send.nl(F("\tMost stats are reset every time they are displayed"));
 
 						break;
 					default:
-						channel.send(F("? for help, Received"), *s);
-						channel.nl();
+						send.json(F("? for help, Received"), *s);
+						send.nl();
 						break;
 				}
 			}
@@ -170,12 +163,13 @@ static uint32_t runInput(uint32_t now, void *data) {
 	for (int8_t i = 0; i < 20 && Serial.available(); i++)
 		handleInput(Serial.read());
 #else
+	extern Buffer channel;
 	bool available(int fd);
 	char readch(int fd);
 	char ch;
 
 	for (int8_t i = 0; i < 20 && (ch = available(0)); i++)
-		handleInput(readch(0));
+		handleInput(channel, readch(0));
 #endif
 
 	return 0;
@@ -196,16 +190,18 @@ void addPromptCallbacks(PromptCallback *callbacks, uint8_t ncallbacks) {
 
 #ifdef STM32
 
-#include "stm32_main.h"
+#include "st_main.h"
 
 bool available(int fd) {
-	extern bool VCP_avail();
-	return VCP_avail();
+	//extern bool VCP_avail();
+	//return VCP_avail();
+	return 0;
 }
 
 char readch(int fd) {
-	extern char VCP_getchar();
-	return VCP_getchar();
+	//extern char VCP_getchar();
+	//return VCP_getchar();
+	return 0;
 }
 
 #elif !defined(ARDUINO)

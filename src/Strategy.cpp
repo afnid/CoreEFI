@@ -2,7 +2,7 @@
 
 #include "GPIO.h"
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Params.h"
 #include "Metrics.h"
 

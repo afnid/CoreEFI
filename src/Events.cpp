@@ -1,7 +1,7 @@
 // copyright to me, released under GPL V3
 
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Prompt.h"
 #include "Metrics.h"
 #include "Params.h"
@@ -270,48 +270,47 @@ void refreshEvents() {
 		events.reset();
 }
 
-void sendEventStatus(void *data) {
-	channel.p1(F("events"));
+void sendEventStatus(Buffer &send, void *data) {
+	send.p1(F("events"));
 
-	channel.send(F("idx"), events.idx);
-	channel.send(F("on"), events.on);
-	channel.send(F("rpm"), getParamUnsigned(SensorRPM));
+	send.json(F("idx"), events.idx);
+	send.json(F("on"), events.on);
+	send.json(F("rpm"), getParamUnsigned(SensorRPM));
 
 	float minlate = TicksToMicrosf(events.minlate);
 	float maxlate = TicksToMicrosf(events.maxlate);
-	channel.send(F("-late"), minlate, false);
-	channel.send(F("+late"), maxlate);
+	send.json(F("-late"), minlate, false);
+	send.json(F("+late"), maxlate);
 
 	uint16_t us = TicksToMicros(decoder.getTicks() >> 1);
-	channel.send(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0f * minlate / us, false);
-	channel.send(F("+deg"), us == 0 || events.maxlate == 0 ? 0 : 360.0f * maxlate / us);
+	send.json(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0f * minlate / us, false);
+	send.json(F("+deg"), us == 0 || events.maxlate == 0 ? 0 : 360.0f * maxlate / us);
 
 	int16_t total = events.hist[CountEvents];
 
 	if (total && events.valid) {
 		int16_t lates = events.hist[CountLates];
-		channel.send(F("late%"), 100.0f * lates / total);
+		send.json(F("late%"), 100.0f * lates / total);
 		uint8_t bucket = BucketDivisor;
 
 		for (uint8_t i = CountLate0; i <= CountLate4; i++) {
 			lates -= events.hist[i];
 
 			if (lates)
-				channel.send(bucket, 100.0f * lates / total);
+				send.json(bucket, 100.0f * lates / total);
 
 			bucket += BucketDivisor;
 		}
 	}
 
-	sendHist(events.hist, HistMax);
+	sendHist(send, events.hist, HistMax);
 	events.minlate = 32768;
 	events.maxlate = -32767;
 
-	channel.p2();
-	channel.nl();
+	send.p2();
 }
 
-void sendEventList(void *data) {
+void sendEventList(Buffer &send, void *data) {
 	volatile BitSchedule *current = events.current;
 	uint32_t last = 0;
 
@@ -321,35 +320,34 @@ void sendEventList(void *data) {
 		volatile BitEvent *e = events.queue + i;
 		volatile BitPlan *p = current->getPlan(i);
 
-		channel.p1(F("evt"));
+		send.p1(F("evt"));
 
-		channel.send(F("i"), i);
-		channel.send(F("cyl"), p->getCyl());
-		channel.send(F("pin"), p->getPin());
-		channel.send(F("hi"), p->isHi());
-		channel.send(F("max"), p->getMax());
-		channel.send(F("pos"), p->getPos());
+		send.json(F("i"), i);
+		send.json(F("cyl"), p->getCyl());
+		send.json(F("pin"), p->getPin());
+		send.json(F("hi"), p->isHi());
+		send.json(F("max"), p->getMax());
+		send.json(F("pos"), p->getPos());
 
 		if (!monitoring) {
 			uint32_t rel = p->getPos() - last;
 
-			channel.send(F("rel"), rel);
-			channel.send(F("id"), p->getId());
-			channel.send(F("ang"), p->getAng());
-			channel.send(F("off"), p->getOff());
+			send.json(F("rel"), rel);
+			send.json(F("id"), p->getId());
+			send.json(F("ang"), p->getAng());
+			send.json(F("off"), p->getOff());
 
-			channel.send(F("calls"), e->calls);
-			channel.send(F("calcs"), e->calcs);
-			channel.send(F("drift"), e->drift);
-			channel.send(F("late"), e->late);
-			channel.send(F("act"), e->act);
-			channel.send(F("events"), events.hist[CountEvents]);
+			send.json(F("calls"), e->calls);
+			send.json(F("calcs"), e->calcs);
+			send.json(F("drift"), e->drift);
+			send.json(F("late"), e->late);
+			send.json(F("act"), e->act);
+			send.json(F("events"), events.hist[CountEvents]);
 
 			last = p->getPos();
 		}
 
-		channel.p2();
-		channel.nl();
+		send.p2();
 	}
 }
 

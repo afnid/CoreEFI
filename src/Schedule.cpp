@@ -1,7 +1,7 @@
 // copyright to me, released under GPL V3
 
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Prompt.h"
 #include "Metrics.h"
 #include "Params.h"
@@ -184,22 +184,20 @@ public:
 		}
 	}
 
-	inline void sendSchedule() {
-		channel.p1(F("schedule"));
-		channel.send(F("sparkAdvance"), sparkAdvance);
-		channel.send(F("pulseAdvance"), pulseAdvance);
-		channel.send(F("pulseWidth"), pulseWidth);
-		channel.send(F("sparkDuration"), sparkDuration);
-		Metric::send(metrics, MetricMax);
-		sendHist(hist, HistMax);
+	inline void sendSchedule(Buffer &send) {
+		send.p1(F("schedule"));
+		send.json(F("sparkAdvance"), sparkAdvance);
+		send.json(F("pulseAdvance"), pulseAdvance);
+		send.json(F("pulseWidth"), pulseWidth);
+		send.json(F("sparkDuration"), sparkDuration);
+		Metric::send(send, metrics, MetricMax);
+		sendHist(send, hist, HistMax);
 
-		//channel.p1(F("index"));
+		//send.p1(F("index"));
 		//for (uint8_t i = 0; i < EVENTS; i++)
-		//channel.send(i, (uint16_t)schedule.index[i]);
-		//channel.p2();
+		//send.json(i, (uint16_t)schedule.index[i]);
 
-		channel.p2();
-		channel.nl();
+		send.p2();
 	}
 } schedule;
 
@@ -218,7 +216,8 @@ static inline uint32_t runStatus(uint32_t t0, void *data) {
 		return MicrosToTicks(3000017UL);
 	}
 
-	decoder.sendList();
+	extern Buffer channel;
+	decoder.sendList(channel);
 	sendEventList(0);
 
 	wait = max(wait, 500);
@@ -233,8 +232,8 @@ static inline uint32_t runRefresh(uint32_t now, void *data) {
 	return 0;
 }
 
-static void sendSchedule(void *data) {
-	schedule.sendSchedule();
+static void sendSchedule(Buffer &send, void *data) {
+	schedule.sendSchedule(send);
 }
 
 uint16_t initSchedule() {

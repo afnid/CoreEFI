@@ -1,5 +1,5 @@
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Tasks.h"
 
 #include "Params.h"

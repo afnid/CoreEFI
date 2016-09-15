@@ -15,7 +15,7 @@ public:
 
 	void showDisplay(uint32_t now);
 
-	void menuInput(uint8_t i);
+	void menuInput(Buffer &send, uint8_t i);
 };
 
 extern Display display;

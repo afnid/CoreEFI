@@ -1,11 +1,12 @@
 // copyright to me, released under GPL V3
 
 #include "System.h"
-#include "Channel.h"
+#include "Stream.h"
 
 static const char SEP = '\t';
 
-void Channel::name(const channel_t *label) {
+#if 0
+void Stream::name(const channel_t *label) {
 	if (last != '{')
 		print(SEP);
 
@@ -18,7 +19,7 @@ void Channel::name(const channel_t *label) {
 	last = '=';
 }
 
-void Channel::name(uint8_t id) {
+void Stream::name(uint8_t id) {
 	if (last != '{')
 		print(SEP);
 	print((uint16_t)id);
@@ -26,7 +27,7 @@ void Channel::name(uint8_t id) {
 	last = '=';
 }
 
-void Channel::p1(const channel_t *label) {
+void Stream::p1(const channel_t *label) {
 	if (last)
 		print(SEP);
 
@@ -36,10 +37,11 @@ void Channel::p1(const channel_t *label) {
 	last = '{';
 }
 
-void Channel::p2() {
+void Stream::p2() {
 	print('}');
 	last = '}';
 }
+#endif
 
 #include <string.h>
 
@@ -58,7 +60,8 @@ static void pgmstr(char *buf, uint16_t len, const channel_t *pgm) {
 #endif
 }
 
-void Channel::_log(uint8_t level, const channel_t *file, int line, const channel_t *fmt, ...) {
+#if 0
+void Stream::_log(uint8_t level, const channel_t *file, int line, const channel_t *fmt, ...) {
 	if (level >= this->level) {
 		//showms();
 
@@ -104,8 +107,9 @@ void Channel::_log(uint8_t level, const channel_t *file, int line, const channel
 		eprintln(buf);
 	}
 }
+#endif
 
-uint8_t Channel::setLevel(uint8_t level) {
+uint8_t Stream::setLevel(uint8_t level) {
 	uint8_t old = this->level;
 	this->level = level;
 	this->level = max(this->level, LOG_FINE);

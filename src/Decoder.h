@@ -1,5 +1,10 @@
 // copyright to me, released under GPL V3
 
+#ifndef _Decoder_h_
+#define _Decoder_h_
+
+#include "Buffer.h"
+
 class Decoder {
 	enum {
 		CountCycles,
@@ -222,35 +227,34 @@ public:
 
 	uint16_t init() volatile;
 
-	void sendStatus() volatile {
-		channel.p1(F("decoder"));
-		channel.send(F("edges"), edges);
-		channel.send(F("tdc"), tdc);
-		channel.send(F("old"), old, false);
-		channel.send(F("idx"), idx);
-		channel.send(F("total"), getTicks());
-		channel.send(F("rpm"), getRPM());
-		channel.send(F("invalid"), !isValid(), false);
-		sendHist(hist, HistMax);
-
-		channel.p2();
-		channel.nl();
+	void sendStatus(Buffer &send) volatile {
+		send.p1(F("decoder"));
+		send.json(F("edges"), edges);
+		send.json(F("tdc"), tdc);
+		send.json(F("old"), old, false);
+		send.json(F("idx"), idx);
+		send.json(F("total"), getTicks());
+		send.json(F("rpm"), getRPM());
+		send.json(F("invalid"), !isValid(), false);
+		sendHist(send, hist, HistMax);
+		send.p2();
 
 		old = 0;
 	}
 
-	void sendList() volatile {
+	void sendList(Buffer &send) volatile {
 		for (uint8_t i = 0; i < edges; i++) {
 			uint8_t j = index(tdc + i);
-			channel.p1(F("pulse"));
-			channel.send(F("i"), i);
-			channel.send(F("id"), j);
-			channel.send(F("pw"), pulses[j]);
-			channel.send(F("hi"), ishi(j));
-			channel.p2();
-			channel.nl();
+			send.p1(F("pulse"));
+			send.json(F("i"), i);
+			send.json(F("id"), j);
+			send.json(F("pw"), pulses[j]);
+			send.json(F("hi"), ishi(j));
+			send.p2();
 		}
 	}
 };
 
 extern volatile Decoder decoder;
+
+#endif

@@ -1,5 +1,5 @@
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Params.h"
 #include "Metrics.h"
 #include "Tasks.h"
@@ -7,7 +7,7 @@
 #include "Encoder.h"
 #include "Prompt.h"
 
-static void enskip(void *data) {
+static void enskip(Buffer &send, void *data) {
 	((Encoder *)data)->skipEncoder();
 }
 
