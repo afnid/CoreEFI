@@ -7,7 +7,7 @@ CFLAGS=-g -O4 -Wall -pg -DDEBUG
 
 CFLAGS = -g -O2 -Wall -Wpedantic
 CFLAGS += -DDEBUG
-CFLAGS += -I.
+CFLAGS += -I. -Istd
 CFLAGS += -fsingle-precision-constant
 CFLAGS += -flto -ffunction-sections -fdata-sections -fno-builtin
 CFLAGS += -fno-rtti -fno-exceptions -ffast-math
