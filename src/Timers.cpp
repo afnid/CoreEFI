@@ -1,7 +1,7 @@
 // copyright to me, released under GPL V3
 
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Prompt.h"
 #include "Metrics.h"
 #include "Params.h"
@@ -10,6 +10,8 @@
 #include "Encoder.h"
 #include "Timers.h"
 #include "Events.h"
+
+static const char *PATH = __FILE__;
 
 #if defined(STM32) || defined(ARDUINO_DUE)
 //#define TIMER_TEST
@@ -44,7 +46,7 @@ static const uint16_t MAXSLOP = MicrosToTicks(5);
 static const uint16_t MAXJITTER = MicrosToTicks(10);
 static const uint8_t MAXLOOPS = 4;
 
-#include "stm32_main.h"
+#include "st_main.h"
 
 static int stprio = 0;
 
@@ -129,10 +131,10 @@ public:
 			handle.Init.CounterMode = TIM_COUNTERMODE_UP;
 
 			if (HAL_TIM_Base_Init(&handle) != HAL_OK)
-				ErrorHandler();
+				myerror();
 
 			if (HAL_TIM_Base_Start_IT(&handle) != HAL_OK)
-				ErrorHandler();
+				myerror();
 
 			addHist(CountInit);
 
@@ -150,7 +152,7 @@ public:
 		__HAL_TIM_SET_AUTORELOAD(&handle, ticks);
 
 		if (HAL_TIM_Base_Start_IT(&handle) != HAL_OK)
-			ErrorHandler();
+			myerror();
 
 		addHist(CountStart);
 		state = 2;
@@ -160,7 +162,7 @@ public:
 		// enbable/disable work, but can't write arr register without this..
 
 		if (HAL_TIM_Base_Stop_IT(&handle) != HAL_OK)
-			ErrorHandler();
+			myerror();
 
 		addHist(CountStop);
 		state = 3;
@@ -170,7 +172,7 @@ public:
 		if (handle.Instance)
 			HAL_TIM_IRQHandler(&handle);
 		else
-			ErrorHandler();
+			myerror();
 
 		addHist(CountNotify);
 		ints++;
@@ -188,24 +190,23 @@ public:
 		addHist(CountMsp);
 	}
 
-	void send(uint8_t i) {
-		channel.p1(F("tim"));
-		channel.send("i", i);
-		channel.send("state", state);
-		channel.send("id", ++i);
-		channel.send("bits", bits);
-		channel.send("clk", clock);
-		channel.send("apb", apb);
-		channel.send("en", (uint8_t) isEnabled());
-		channel.send("rq", irq);
-		channel.send("per", handle.Init.Period);
-		channel.send("arr", tim->ARR);
-		channel.send("psc", tim->PSC);
-		channel.send("cnt", tim->CNT);
-		channel.send("ticks", ticks);
-		sendHist(hist, HistMax);
-		channel.p2();
-		channel.nl();
+	void send(Buffer &send, uint8_t i) {
+		send.p1(F("tim"));
+		send.json("i", i);
+		send.json("state", state);
+		send.json("id", ++i);
+		send.json("bits", bits);
+		send.json("clk", clock);
+		send.json("apb", apb);
+		send.json("en", (uint8_t) isEnabled());
+		send.json("rq", irq);
+		send.json("per", handle.Init.Period);
+		send.json("arr", tim->ARR);
+		send.json("psc", tim->PSC);
+		send.json("cnt", tim->CNT);
+		send.json("ticks", ticks);
+		sendHist(send, hist, HistMax);
+		send.p2();
 	}
 };
 
@@ -293,7 +294,7 @@ volatile uint16_t *initTickTimer(TIM_TypeDef *tim, uint32_t us) {
 		return &t->ints;
 	}
 
-	ErrorHandler();
+	myerror();
 
 	return &stm32timers[0].ints;
 }
@@ -304,7 +305,7 @@ extern "C" void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *h) {
 	if (id >= 0)
 		stm32timers[id].mspinit();
 	else
-		ErrorHandler();
+		myerror();
 }
 
 void initTimers2() {
@@ -325,18 +326,17 @@ void stopTimers() {
 			stm32timers[i].stop();
 }
 
-static void printTimers() {
+static void printTimers(Buffer &send) {
 	float div = 1000 * 1000;
 
-	channel.p1("clocks");
-	channel.send("hclk", HAL_RCC_GetHCLKFreq() / div);
-	channel.send("pclk1", HAL_RCC_GetPCLK1Freq() / div);
-	channel.send("pclk2", HAL_RCC_GetPCLK2Freq() / div);
-	channel.p2();
-	channel.nl();
+	send.p1("clocks");
+	send.json("hclk", HAL_RCC_GetHCLKFreq() / div);
+	send.json("pclk1", HAL_RCC_GetPCLK1Freq() / div);
+	send.json("pclk2", HAL_RCC_GetPCLK2Freq() / div);
+	send.p2();
 
 	for (int i = 0; i < ntimers; i++)
-		stm32timers[i].send(i);
+		stm32timers[i].send(send, i);
 }
 
 #elif defined(ARDUINO_DUE)
@@ -385,13 +385,13 @@ typedef struct {
 	}
 
 	inline void send(uint8_t i) {
-		channel.p1(F("tim"));
-		channel.send(F("i"), i);
-		channel.send(F("chn"), chn);
-		channel.send(F("irq"), (uint32_t)irq);
-		channel.send(F("rc"), ticks);
-		//channel.send(F("status"), (uint32_t)TC_GetStatus(tc, chan));
-		channel.send(F("cv"), (uint32_t)TC_ReadCV(tc, chn));
+		send.p1(F("tim"));
+		send.json(F("i"), i);
+		send.json(F("chn"), chn);
+		send.json(F("irq"), (uint32_t)irq);
+		send.json(F("rc"), ticks);
+		//send.json(F("status"), (uint32_t)TC_GetStatus(tc, chan));
+		send.json(F("cv"), (uint32_t)TC_ReadCV(tc, chn));
 		channel.p2();
 		channel.nl();
 	}
@@ -457,8 +457,8 @@ void initTickTimer(uint8_t id, uint32_t us)
 static void printTimers() {
 	float div = 1000 * 1000;
 
-	channel.p1(F("clocks"));
-	channel.send(F("ratio"), dueratio);
+	send.p1(F("clocks"));
+	send.json(F("ratio"), dueratio);
 	channel.p2();
 	channel.nl();
 
@@ -689,7 +689,7 @@ static FastTimer *getFastTimer(uint8_t id) {
 	return &timer;
 }
 
-static void printTimers() {
+static void printTimers(Buffer &send) {
 }
 
 #endif
@@ -906,40 +906,38 @@ public:
 		return now;
 	}
 
-	void send() volatile {
-		channel.p1(F("timer"));
-		channel.send(F("id"), getId());
-		channel.send(F("idx"), idx);
-		channel.send(F("slop"), TicksToMicrosf(slop));
+	void send(Buffer &send) volatile {
+		send.p1(F("timer"));
+		send.json(F("id"), getId());
+		send.json(F("idx"), idx);
+		send.json(F("slop"), TicksToMicrosf(slop));
 
 		if (minawake != InvalidVal) {
-			channel.send(F("-cycles"), minawake, false);
-			channel.send(F("+cycles"), maxawake, false);
-			channel.send(F("-awake"), TicksToMicrosf(minawake), false);
-			channel.send(F("+awake"), TicksToMicrosf(maxawake), false);
+			send.json(F("-cycles"), minawake, false);
+			send.json(F("+cycles"), maxawake, false);
+			send.json(F("-awake"), TicksToMicrosf(minawake), false);
+			send.json(F("+awake"), TicksToMicrosf(maxawake), false);
 		}
 
 		if (minlate != InvalidVal) {
-			channel.send(F("-late"), TicksToMicrosf(minlate), false);
-			channel.send(F("+late"), TicksToMicrosf(maxlate), false);
+			send.json(F("-late"), TicksToMicrosf(minlate), false);
+			send.json(F("+late"), TicksToMicrosf(maxlate), false);
 		}
 
 		uint16_t count = hist[CountSleeps];
 		uint16_t lates = hist[CountLate];
 
 		if (lates && lates < count)
-			channel.send(F("late"), 100.0f * lates / count, false);
+			send.json(F("late"), 100.0f * lates / count, false);
 
-		channel.send(F("bits"), bits, false);
-		channel.send(F("jumping"), jump > 0, false);
+		send.json(F("bits"), bits, false);
+		send.json(F("jumping"), jump > 0, false);
 
-		channel.send(F("sleep"), TicksToMicrosf(tdiff32(next, last)), false);
-		channel.send(F("asleep"), TicksToMicrosf(asleep), false);
+		send.json(F("sleep"), TicksToMicrosf(tdiff32(next, last)), false);
+		send.json(F("asleep"), TicksToMicrosf(asleep), false);
 
-		sendHist(hist, HistMax);
-
-		channel.p2();
-		channel.nl();
+		sendHist(send, hist, HistMax);
+		send.p2();
 
 		reset();
 	}
@@ -967,11 +965,11 @@ public:
 			timers[i].init(i);
 	}
 
-	void send() volatile {
+	void send(Buffer &send) volatile {
 		for (uint8_t i = 0; i < MaxTimers; i++)
-			timers[i].send();
+			timers[i].send(send);
 
-		printTimers();
+		printTimers(send);
 	}
 } timers;
 
@@ -1020,8 +1018,8 @@ void simTimerEvents(uint32_t next) {
 	t->sleep(next);
 }
 
-static void sendTimers(void *data) {
-	timers.send();
+static void sendTimers(Buffer &send, void *data) {
+	timers.send(send);
 }
 
 uint16_t initTimers() {

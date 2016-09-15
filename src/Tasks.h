@@ -1,5 +1,10 @@
 // copyright to me, released under GPL V3
 
+#ifndef _Tasks_h_
+#define _Tasks_h_
+
+#include "Buffer.h"
+
 typedef uint32_t (*TaskCallback)(uint32_t t0, void *data);
 
 class Task {
@@ -100,33 +105,32 @@ public:
 		}
 	}
 
-	void send(uint32_t now) {
-		channel.p1(F("tsk"));
+	void send(Buffer &send, uint32_t now) {
+		send.p1(F("tsk"));
 
 		if (minticks != 65535)
-			channel.send(F("-ticks"), TicksToMicrosf(minticks));
+			send.json(F("-ticks"), TicksToMicrosf(minticks));
 		else
-			channel.send(F("-ticks"), TicksToMicrosf(maxticks));
+			send.json(F("-ticks"), TicksToMicrosf(maxticks));
 
-		channel.send(F("+ticks"), TicksToMicrosf(maxticks));
-		channel.send(F("loops"), loops);
-		channel.send(F("late"), TicksToMicrosf(late));
-		channel.send(F("next"), TicksToMicrosf(next));
+		send.json(F("+ticks"), TicksToMicrosf(maxticks));
+		send.json(F("loops"), loops);
+		send.json(F("late"), TicksToMicrosf(late));
+		send.json(F("next"), TicksToMicrosf(next));
 
 		//float n = tdiff32(next, now) / 1000.0;
-		channel.send(F("next"), TicksToMicrosf(tdiff32(next, now)));
-		//channel.send(F("next"), n);
+		send.json(F("next"), TicksToMicrosf(tdiff32(next, now)));
+		//send.json(F("next"), n);
 
 		uint32_t w = getWait();
 
 		if (w > 1000)
-			channel.send(F("kticks"), TicksToMicrosf(w / 1000.0f));
+			send.json(F("kticks"), TicksToMicrosf(w / 1000.0f));
 		else
-			channel.send(F("ticks"), TicksToMicrosf(w));
+			send.json(F("ticks"), TicksToMicrosf(w));
 
-		channel.send(name, id);
-		channel.p2();
-		channel.nl();
+		send.json(name, id);
+		send.p2();
 
 		reset();
 	}
@@ -143,3 +147,5 @@ public:
 };
 
 void runInput();
+
+#endif

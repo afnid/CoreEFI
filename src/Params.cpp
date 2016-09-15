@@ -1,7 +1,7 @@
 // copyright to me, released under GPL V3
 
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Metrics.h"
 #include "Params.h"
 #include "Prompt.h"
@@ -348,129 +348,125 @@ void setSensorParam(ParamTypeId id, uint16_t adc) {
 	//setEncoded(id, pd, dblEncode(id, pd, adc));
 }
 
-static void sendParam(ParamTypeId id, ParamData *pd, bool nl) {
+static void sendParam(Buffer &send, ParamTypeId id, ParamData *pd, bool nl) {
 	if (nl)
-		channel.p1(F("u"));
+		send.p1(F("u"));
 
 	if (false && isParamSet(FlagIsMonitoring)) {
 		if (pd->div)
-			channel.send(id, _dblDecode(pd, pd->value));
+			send.json(id, _dblDecode(pd, pd->value));
 		else if (pd->neg)
-			channel.send(id, int16Decode(pd, pd->value));
+			send.json(id, int16Decode(pd, pd->value));
 		else
-			channel.send(id, _uint16Decode(pd, pd->value));
+			send.json(id, _uint16Decode(pd, pd->value));
 	} else {
-		channel.send(F("cat"), pd->cat);
+		send.json(F("cat"), pd->cat);
 
 		if (pd->div)
-			channel.send(id, _dblDecode(pd, pd->value));
+			send.json(id, _dblDecode(pd, pd->value));
 		else if (pd->neg)
-			channel.send(id, int16Decode(pd, pd->value));
+			send.json(id, int16Decode(pd, pd->value));
 		else
-			channel.send(id, _uint16Decode(pd, pd->value));
+			send.json(id, _uint16Decode(pd, pd->value));
 
 		if (pd->div)
-			channel.send(getName(id), _dblDecode(pd, pd->value));
+			send.json(getName(id), _dblDecode(pd, pd->value));
 		else if (pd->neg)
-			channel.send(getName(id), int16Decode(pd, pd->value));
+			send.json(getName(id), int16Decode(pd, pd->value));
 		else
-			channel.send(getName(id), _uint16Decode(pd, pd->value));
+			send.json(getName(id), _uint16Decode(pd, pd->value));
 	}
 
-	if (nl) {
-		channel.p2();
-		channel.nl();
-	}
+	if (nl)
+		send.p2();
 }
 
-void sendParam(ParamTypeId id) {
+void sendParam(Buffer &send, ParamTypeId id) {
 	ParamData *pd = getParamData(id);
-	sendParam(id, pd, false);
+	sendParam(send, id, pd, false);
 }
 
-static void sendParamChanges(void *) {
+static void sendParamChanges(Buffer &send, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		if (isset(local.notify, id)) {
 			ParamData *pd = getParamData(id);
-			sendParam((ParamTypeId)id, pd, true);
+			sendParam(send, (ParamTypeId)id, pd, true);
 			bitclr(local.notify, id);
 		}
 	}
 }
 
-static void sendParamValues(void *) {
+static void sendParamValues(Buffer &send, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
-		sendParam((ParamTypeId)id, pd, true);
+		sendParam(send, (ParamTypeId)id, pd, true);
 	}
 }
 
-static void sendParamLookups(void *) {
+static void sendParamLookups(Buffer &send, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 
 		if (pd->hdr) {
 			LookupHeader *h = getLookupHeader(pd);
 
-			channel.p1(F("l"));
-			channel.send(F("hdr"), pd->hdr);
-			channel.send(F("cid"), h->cid);
-			channel.send(F("rid"), h->rid);
-			channel.send(F("r1"), h->r1);
-			channel.send(F("r2"), h->r2);
-			channel.send(F("c1"), h->c1);
-			channel.send(F("c2"), h->c2);
-			channel.send(F("rows"), h->rows);
-			channel.send(F("cols"), h->cols);
-			channel.send(F("len"), h->length);
-			channel.send(F("off"), h->offset);
-			channel.send(F("interp"), h->interp);
-			channel.send(F("last"), h->last);
-			channel.send(F("cached"), isset(local.cached, id));
-			channel.p2();
-			channel.nl();
+			send.p1(F("l"));
+			send.json(F("hdr"), pd->hdr);
+			send.json(F("cid"), h->cid);
+			send.json(F("rid"), h->rid);
+			send.json(F("r1"), h->r1);
+			send.json(F("r2"), h->r2);
+			send.json(F("c1"), h->c1);
+			send.json(F("c2"), h->c2);
+			send.json(F("rows"), h->rows);
+			send.json(F("cols"), h->cols);
+			send.json(F("len"), h->length);
+			send.json(F("off"), h->offset);
+			send.json(F("interp"), h->interp);
+			send.json(F("last"), h->last);
+			send.json(F("cached"), isset(local.cached, id));
+			send.p2();
 		}
 	}
 }
 
-static void sendParamList(void *) {
+static void sendParamList(Buffer &send, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 
-		channel.p1(F("p"));
-		channel.send(F("id"), id);
-		channel.send(F("cat"), pd->cat);
-		channel.send(F("div"), pd->div);
+		send.p1(F("p"));
+		send.json(F("id"), id);
+		send.json(F("cat"), pd->cat);
+		send.json(F("div"), pd->div);
 
-		channel.send(F("min"), pd->min);
-		channel.send(F("max"), pd->max);
-		channel.send(F("mind"), _dblDecode(pd, pd->min));
-		channel.send(F("maxd"), _dblDecode(pd, pd->max));
-		channel.p2();
-		channel.nl();
+		send.json(F("min"), pd->min);
+		send.json(F("max"), pd->max);
+		send.json(F("mind"), dblDecode(pd, pd->min));
+		send.json(F("maxd"), dblDecode(pd, pd->max));
+		send.p2();
 	}
 }
 
-static void sendParamStats(void *) {
-	channel.p1(F("params"));
-	channel.send(F("params"), (uint16_t) sizeof(params));
-	channel.send(F("lookups"), (uint16_t) sizeof(lookups));
-	channel.send(F("names"), (uint16_t) sizeof(names));
-	channel.send(F("nameidx"), (uint16_t) sizeof(nameidx));
-	channel.send(F("data"), (uint16_t) sizeof(data));
-	channel.send(F("total"), (uint16_t)(sizeof(params) + sizeof(lookups) + sizeof(names) + sizeof(nameidx) + sizeof(data)));
-	channel.send(F("ParamData"), (uint16_t) sizeof(ParamData));
-	channel.p2();
-	sendHist(local.hist, HistMax);
+static void sendParamStats(Buffer &send, void *) {
+	send.p1(F("params"));
+	send.json(F("params"), (uint16_t) sizeof(params));
+	send.json(F("lookups"), (uint16_t) sizeof(lookups));
+	send.json(F("names"), (uint16_t) sizeof(names));
+	send.json(F("nameidx"), (uint16_t) sizeof(nameidx));
+	send.json(F("data"), (uint16_t) sizeof(data));
+	send.json(F("total"), (uint16_t)(sizeof(params) + sizeof(lookups) + sizeof(names) + sizeof(nameidx) + sizeof(data)));
+	send.json(F("ParamData"), (uint16_t) sizeof(ParamData));
+	sendHist(send, local.hist, HistMax);
 	//Metrics::send(local.metrics, MaxParam);
-	channel.nl();
+	send.p2();
 }
 
 static inline uint32_t runChanges(uint32_t t0, void *data) {
 	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
 
 	if (wait) {
-		sendParamChanges(0);
+		extern Buffer channel;
+		sendParamChanges(channel, 0);
 		wait = max(wait, 500);
 		wait = min(wait, 1000);
 		return wait;

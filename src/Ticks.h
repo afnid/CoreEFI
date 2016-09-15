@@ -2,34 +2,7 @@
 #define _Ticks_h_
 
 uint16_t initTicks(void);
-void sendTicks(void);
-
-#ifdef ARDUINO_MEGA
-extern "C" uint32_t micros(void);
-#define clockTicks() micros()
-#elif defined(UNIX)
-#define TICKTOUS 200
-#define clockTicks() cycle.ticks()
-#else
-#define TICKTOUS (F_CPU / 1000 / 1000)
-#define clockTicks() cycle.ticks()
-#endif
-
-#define tdiff32(a, b)		((int32_t)((uint32_t)(a) - (uint32_t)(b)))
-
-#ifndef TICKTOUS
-#define TICKTOUS 1L
-#endif
-
-#if (TICKTOUS == 1)
-#define MicrosToTicks(x) (x)
-#define TicksToMicros(x) (x)
-#define TicksToMicrosf(x) ((float)(x))
-#else
-#define MicrosToTicks(x) ((x) * (TICKTOUS))
-#define TicksToMicros(x) ((x) / (TICKTOUS))
-#define TicksToMicrosf(x) ((float)(x) / (TICKTOUS))
-#endif
+void sendTicks(Buffer &send);
 
 class CycleCount {
 #if defined(STM32) || defined(ARDUINO_DUE)

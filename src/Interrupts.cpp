@@ -2,7 +2,7 @@
 
 #include "GPIO.h"
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Metrics.h"
 #include "Params.h"
 
@@ -40,12 +40,11 @@ public:
 		return GPIO::isPinSet(pid);
 	}
 
-	void send() volatile {
-		channel.p1(F("isr"));
-		channel.send(F("id"), id);
-		channel.send(F("pin"), (uint8_t)pid);
-		channel.p2();
-		channel.nl();
+	void send(Buffer &send) volatile {
+		send.p1(F("isr"));
+		send.json(F("id"), id);
+		send.json(F("pin"), (uint8_t)pid);
+		send.p2();
 	}
 };
 
@@ -65,9 +64,9 @@ public:
 		interrupts[id].init(pin);
 	}
 
-	void send() volatile {
+	void send(Buffer &send) volatile {
 		for (uint8_t i = 0; i < MaxInterrupts; i++)
-			interrupts[i].send();
+			interrupts[i].send(send);
 	}
 } interrupts;
 
@@ -93,6 +92,6 @@ uint16_t initInterrupts() {
 	return sizeof(interrupts);
 }
 
-void sendInterrupts() {
-	interrupts.send();
+void sendInterrupts(Buffer &send) {
+	interrupts.send(send);
 }

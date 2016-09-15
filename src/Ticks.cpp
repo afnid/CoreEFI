@@ -1,5 +1,5 @@
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 
 #ifndef UNIX
 
@@ -16,7 +16,7 @@ void delayTicks(uint32_t ticks) {
 
 #ifdef STM32
 
-#include "stm32_main.h"
+#include "st_main.h"
 
 static const uint8_t timebits = 16;
 static const uint32_t timemask = (1L << timebits) - 1;
@@ -98,8 +98,8 @@ uint16_t initTicks(void) {
 static const uint64_t nstos = (uint64_t)1000000000;
 
 #ifdef CLOCK_MONOTONIC
-uint32_t CycleCount::ticks(void) {
-	static uint32_t offset = (1L << 32) - 5;
+uint32_t clockTicks() {
+	static uint32_t epoch = (1L << 32) - 5;
 	static uint32_t sec = 0;
 	static struct timespec ts;
 	clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -108,7 +108,7 @@ uint32_t CycleCount::ticks(void) {
 		sec = ts.tv_sec;
 
 	ts.tv_sec -= sec;
-	ts.tv_sec += offset;
+	ts.tv_sec += epoch;
 
 	return NanosToTicks(ts.tv_sec * nstos + ts.tv_nsec);
 }
@@ -120,7 +120,7 @@ uint32_t CycleCount::ticks(void) {
 
 #else
 uint32_t CycleCount::ticks(void) {
-	static uint32_t offset = (1L << 32) - 5;
+	static uint32_t epoch = (1L << 32) - 5;
 	static uint32_t sec = 0;
 	static struct timeval tv;
 	gettimeofday(&tv, 0);
@@ -129,7 +129,7 @@ uint32_t CycleCount::ticks(void) {
 		sec = tv.tv_sec;
 
 	tv.tv_sec -= sec;
-	tv.tv_sec += offset;
+	tv.tv_sec += epoch;
 
 	return MicrosToTicks(tv.tv_sec * nstos + tv.tv_usec);
 }
@@ -168,7 +168,7 @@ void delayTicks(uint32_t ticks) {
 
 #endif
 
-void sendTicks() {
+void sendTicks(Buffer &send) {
 #if defined(ARDUINO_DUE) || defined(STM32)
 	static uint32_t last1 = 0;
 	static uint32_t last2 = 0;
@@ -179,11 +179,11 @@ void sendTicks() {
 	if (t1 && t2) {
 		int32_t d1 = tdiff32(t1, last1);
 		int32_t d2 = tdiff32(t2, last2);
-		channel.p1(F("ticks"));
-		channel.send(F("t1"), t1);
-		channel.send(F("t2"), t2);
-		channel.send(F("drift"), d2 - d1, false);
-		channel.p2();
+		send.p1(F("ticks"));
+		send.json(F("t1"), t1);
+		send.json(F("t2"), t2);
+		send.json(F("drift"), d2 - d1, false);
+		send.p2();
 	}
 
 	last1 = t1;

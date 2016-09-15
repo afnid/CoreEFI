@@ -4,7 +4,7 @@
 #endif
 
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Prompt.h"
 #include "Params.h"
 #include "Vehicle.h"
@@ -145,16 +145,15 @@ static GPIO::Def pins[] = {
 
 #endif
 
-void Vehicle::prompt_cb(void *data) {
-	((Vehicle *)data)->sendStatus();
+void Vehicle::prompt_cb(Buffer &send, void *data) {
+	((Vehicle *)data)->sendStatus(send);
 }
 
-void Vehicle::sendStatus() const {
-	channel.p1(F("vehicle"));
-	channel.send(F("fan1duty"), fan1.duty);
-	channel.send(F("fan2duty"), fan2.duty);
-	channel.p2();
-	channel.nl();
+void Vehicle::sendStatus(Buffer &send) const {
+	send.p1(F("vehicle"));
+	send.json(F("fan1duty"), fan1.duty);
+	send.json(F("fan2duty"), fan2.duty);
+	send.p2();
 }
 
 static void setPins() {
@@ -457,6 +456,7 @@ void Vehicle::serviceInput(uint32_t now) {
 	if (pi && (pi->mode & GPIO::PinModeInput)) {
 		const uint16_t TESTLO = 400;
 		const uint16_t TESTHI = 700;
+		extern Buffer channel;
 
 		switch (pi->getId()) {
 			case GPIO::RadiatorTemp:
@@ -468,11 +468,11 @@ void Vehicle::serviceInput(uint32_t now) {
 				break;
 			case GPIO::IsMenuButton1:
 				if (!pi->getLast())
-					display.menuInput(0);
+					display.menuInput(channel, 0);
 				break;
 			case GPIO::IsMenuButton2:
 				if (!pi->getLast())
-					display.menuInput(1);
+					display.menuInput(channel, 1);
 				break;
 			case VehicleFuelSender:
 				setFuelGauge();

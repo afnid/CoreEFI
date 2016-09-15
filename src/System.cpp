@@ -3,11 +3,12 @@
 #define EXTERN
 
 #include "System.h"
-#include "Channel.h"
+#include "Stream.h"
 #include "Metrics.h"
 #include "Params.h"
 #include "Free.h"
 
+#include "Hardware.h"
 #include "Tasks.h"
 #include "Epoch.h"
 
@@ -29,13 +30,12 @@
 #include <HardwareSerial.h>
 //#include <SoftSerial.h>
 #include <Arduino.h>
-#else
-Print Serial;
 #endif
 
 #if 1
 
-Channel channel(Serial);
+Buffer channel;
+//Stream channel(Serial);
 Display display;
 CanBus bus;
 
@@ -52,48 +52,46 @@ static uint16_t add(uint16_t &total, uint16_t mem) {
 	return mem;
 }
 
-void initSystem(bool doefi) {
+void initSystem(Buffer &send, bool doefi) {
 	uint16_t total = 0;
-	Serial.begin(115200);
-	Serial.println("CoreEFI v007a");
 
-	channel.p1(F("mem"));
-	channel.send(F("ticks"), add(total, initTicks()));
-	channel.send(F("cycle"), add(total, cycle.init()));
-	channel.send(F("tasks"), add(total, TaskMgr::initTasks()));
-	channel.send(F("clock"), add(total, Epoch::init()));
-	channel.send(F("prompt"), add(total, initPrompt()));
-	channel.send(F("codes"), add(total, codes.init()));
-	channel.send(F("params"), add(total, initParams()));
+	send.p1(F("mem"));
+	send.json(F("ticks"), add(total, initTicks()));
+	send.json(F("cycle"), add(total, cycle.init()));
+	send.json(F("tasks"), add(total, TaskMgr::initTasks()));
+	send.json(F("clock"), add(total, Epoch::init()));
+	send.json(F("prompt"), add(total, initPrompt()));
+	send.json(F("codes"), add(total, codes.init()));
+	send.json(F("params"), add(total, initParams()));
 
-	channel.send(F("display"), add(total, display.init()));
-	channel.send(F("vehicle"), add(total, vehicle.init()));
+	send.json(F("display"), add(total, display.init()));
+	send.json(F("vehicle"), add(total, vehicle.init()));
 
 	if (doefi) {
-		channel.send(F("strategy"), add(total, initStrategy()));
-		channel.send(F("encoder"), add(total, encoder.init()));
-		channel.send(F("decoder"), add(total, decoder.init()));
-		channel.send(F("schedule"), add(total, initSchedule()));
-		channel.send(F("events"), add(total, initEvents()));
-		channel.send(F("timers"), add(total, initTimers()));
+		send.json(F("strategy"), add(total, initStrategy()));
+		send.json(F("encoder"), add(total, encoder.init()));
+		send.json(F("decoder"), add(total, decoder.init()));
+		send.json(F("schedule"), add(total, initSchedule()));
+		send.json(F("events"), add(total, initEvents()));
+		send.json(F("timers"), add(total, initTimers()));
 	}
 
-	channel.send(F("bytes"), total);
+	send.json(F("bytes"), total);
 	channel.p2();
 	channel.nl();
 
-	channel.p1(F("max"));
-	channel.send(F("cyls"), MaxCylinders);
-	channel.send(F("coils"), MaxCoils);
-	channel.send(F("teeth"), MaxEncoderTeeth);
-	channel.send(F("cyls"), getParamUnsigned(ConstCylinders));
-	channel.send(F("coils"), getParamUnsigned(ConstCoils));
-	channel.send(F("teeth"), getParamUnsigned(ConstEncoderTeeth));
-	channel.send(F("int"), (uint16_t) sizeof(int));
-	channel.send(F("long_int"), (uint16_t) sizeof(long int));
-	channel.send(F("long_long_int"), (uint16_t) sizeof(long long int));
-	channel.send(F("pulse"), (uint16_t) sizeof(pulse_t));
-	channel.send(F("ustoticks"), (uint16_t) MicrosToTicks(1u));
+	send.p1(F("max"));
+	send.json(F("cyls"), MaxCylinders);
+	send.json(F("coils"), MaxCoils);
+	send.json(F("teeth"), MaxEncoderTeeth);
+	send.json(F("cyls"), getParamUnsigned(ConstCylinders));
+	send.json(F("coils"), getParamUnsigned(ConstCoils));
+	send.json(F("teeth"), getParamUnsigned(ConstEncoderTeeth));
+	send.json(F("int"), (uint16_t) sizeof(int));
+	send.json(F("long_int"), (uint16_t) sizeof(long int));
+	send.json(F("long_long_int"), (uint16_t) sizeof(long long int));
+	send.json(F("pulse"), (uint16_t) sizeof(pulse_t));
+	send.json(F("ustoticks"), (uint16_t) MicrosToTicks(1u));
 	channel.p2();
 	channel.nl();
 
@@ -131,7 +129,7 @@ void myzero(void *p, uint16_t len) {
 
 #ifdef STM32
 
-#include "stm32_main.h"
+#include "st_main.h"
 
 void toggleled(uint8_t id) {
 #ifdef __STM32F4_DISCOVERY_H
@@ -144,6 +142,14 @@ void toggleled(uint8_t id) {
 
 	BSP_LED_Toggle(leds[id & 0x3]);
 #endif
+}
+
+int main(int argc, char **argv) {
+	global.init();
+
+	initSystem(channel, false);
+
+	TaskMgr::runTasks();
 }
 
 #else
@@ -161,6 +167,8 @@ static void stabilize(uint16_t ms) {
 	while (clockTicks() - start < ms * 1000)
 		runSchedule();
 }
+
+#include <stdio.h>
 
 static void runDecoderTest() {
 	BitPlan bp;
@@ -210,7 +218,7 @@ int main(int argc, char **argv) {
 	//assert(uelapsed32(2, (1L << 32) - 6) == 8);
 	//assert(uelapsed16(2, (1 << 16) - 3) == 5);
 
-	initSystem(false);
+	initSystem(channel, false);
 
 	if (false)
 		for (int i = 0; i < 0; i++) {

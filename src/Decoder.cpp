@@ -1,21 +1,21 @@
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Metrics.h"
 #include "Prompt.h"
 #include "Params.h"
 #include "Decoder.h"
 
-static void dstatus(void *data) {
+static void dstatus(Buffer &send, void *data) {
 	Decoder *d = (Decoder *)data;
-	d->sendStatus();
+	d->sendStatus(send);
 }
 
-static void d0(void *data) {
-	((Decoder *)data)->sendStatus();
+static void d0(Buffer &send, void *data) {
+	((Decoder *)data)->sendStatus(send);
 }
 
-static void d1(void *data) {
-	((Decoder *)data)->sendList();
+static void d1(Buffer &send, void *data) {
+	((Decoder *)data)->sendList(send);
 }
 
 uint16_t Decoder::init() volatile {

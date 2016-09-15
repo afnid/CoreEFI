@@ -1,5 +1,5 @@
-SRCS:=$(shell echo *.cpp)
-HDRS:=$(shell echo *.h)
+SRCS:=$(shell echo *.cpp std/*.cpp)
+HDRS:=$(shell echo *.h std/*.h)
 
 CFLAGS=-g -O2 -Wall -Wpedantic -Wno-variadic-macros -Wdouble-promotion -pg -DDEBUG
 CFLAGS=-g -O4 -Wall -Wdouble-promotion -pg -DDEBUG
@@ -7,7 +7,7 @@ CFLAGS=-g -O4 -Wall -pg -DDEBUG
 
 CFLAGS = -g -O2 -Wall -Wpedantic
 CFLAGS += -DDEBUG
-CFLAGS += -I.
+CFLAGS += -I. -Istd
 CFLAGS += -fsingle-precision-constant
 CFLAGS += -flto -ffunction-sections -fdata-sections -fno-builtin
 CFLAGS += -fno-rtti -fno-exceptions -ffast-math

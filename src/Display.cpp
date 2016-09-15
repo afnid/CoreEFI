@@ -9,7 +9,7 @@ LiquidCrystal_I2C lcd(LCD_ADDR, 20, 4); // a4, a5
 #endif
 
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Params.h"
 #include "Prompt.h"
 
@@ -71,7 +71,7 @@ static int getdiv(int v) {
 
 static char *itoa(char *s, int v) {
 	s += strlen(s);
-	sprintf(s, "%d", v);
+	mysprintf(s, "%d", v);
 	return s + strlen(s);
 
 	int div = 0;
@@ -270,7 +270,7 @@ void Display::showDisplay(uint32_t now) {
 	row &= 3;
 }
 
-void Display::menuInput(uint8_t i) {
+void Display::menuInput(Buffer &send, uint8_t i) {
 	if (i && menu < 2)
 		menu++;
 	if (!i && menu > 0)
@@ -282,12 +282,12 @@ static uint32_t runDisplay(uint32_t now, void *data) {
 	return 0;
 }
 
-static void menucb0(void *data) {
-	((Display *)data)->menuInput(0);
+static void menucb0(Buffer &send, void *data) {
+	((Display *)data)->menuInput(send, 0);
 }
 
-static void menucb1(void *data) {
-	((Display *)data)->menuInput(1);
+static void menucb1(Buffer &send, void *data) {
+	((Display *)data)->menuInput(send, 1);
 }
 
 uint16_t Display::init() {

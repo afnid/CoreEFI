@@ -1,5 +1,10 @@
 // copyright to me, released under GPL V3
 
+#ifndef _Codes_h_
+#define _Codes_h_
+
+#include "Buffer.h"
+
 class Codes {
 	uint8_t codes[bitsize(MaxParam)];
 
@@ -27,18 +32,19 @@ public:
 		return isset(codes, id);
 	}
 
-	inline void send() {
-		channel.p1(F("codes"));
+	inline void send(Buffer &send) {
+		send.p1(F("codes"));
 
 		for (uint8_t i = 0; i < MaxParam; i++)
 			if (isset(codes, i)) {
-				channel.send(i, (uint16_t) 1);
+				send.json(i, (uint16_t) 1);
 				bitclr(codes, i);
 			}
 
-		channel.p2();
-		channel.nl();
+		send.p2();
 	}
 };
 
 EXTERN Codes codes;
+
+#endif

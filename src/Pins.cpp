@@ -5,7 +5,7 @@
 
 #if 0
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Prompt.h"
 #include "Params.h"
 
@@ -241,13 +241,13 @@ public:
 } local;
 
 static void sendPins(void *data) {
-	channel.p1(F("pins"));
-	channel.send(F("valid"), local.valid);
-	channel.send(F("input"), local.input);
-	channel.send(F("output"), local.output);
-	channel.send(F("data"), (uint16_t) sizeof(Local));
-	channel.send(F("max"), Local::MAX_PINS);
-	channel.send(F("used"), local.valid);
+	send.p1(F("pins"));
+	send.json(F("valid"), local.valid);
+	send.json(F("input"), local.input);
+	send.json(F("output"), local.output);
+	send.json(F("data"), (uint16_t) sizeof(Local));
+	send.json(F("max"), Local::MAX_PINS);
+	send.json(F("used"), local.valid);
 
 	channel.p2();
 	channel.nl();
@@ -310,17 +310,17 @@ void PinInfo::writePin(uint16_t v) {
 }
 
 void PinInfo::sendPin(uint8_t i) const {
-	channel.p1(F("pin"));
-	channel.send(F("i"), i);
-	channel.send(F("pin"), getPin());
-	channel.send(F("id"), getId());
-	channel.send(F("mode"), def->mode);
-	channel.send(F("val"), getVal());
-	channel.send(F("hyst"), def->hyst);
-	channel.send(F("mask"), getMask());
-	channel.send(F("port"), getPort() != 0);
-	channel.send(F("ms"), ms());
-	channel.send(getParamName(getId()), getPin());
+	send.p1(F("pin"));
+	send.json(F("i"), i);
+	send.json(F("pin"), getPin());
+	send.json(F("id"), getId());
+	send.json(F("mode"), def->mode);
+	send.json(F("val"), getVal());
+	send.json(F("hyst"), def->hyst);
+	send.json(F("mask"), getMask());
+	send.json(F("port"), getPort() != 0);
+	send.json(F("ms"), ms());
+	send.json(getParamName(getId()), getPin());
 	channel.p2();
 	channel.nl();
 }

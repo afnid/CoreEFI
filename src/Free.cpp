@@ -1,5 +1,5 @@
 #include "System.h"
-#include "Channel.h"
+#include "Buffer.h"
 #include "Free.h"
 
 #ifdef ARDUINO_MEGA
@@ -67,11 +67,11 @@ void sendMemory() {
 	struct mallinfo mi = mallinfo();
 	uint32_t total = stack_ptr - heapend + mi.fordblks;
 
-	channel.p1(F("due"));
-	channel.send(F("dynamic_ram"), (uint32_t)(mi.uordblks), false);
-	channel.send(F("program_static_ram"), (uint32_t)(&_end - ramstart), false);
-	channel.send(F("stack_ram"), (uint32_t)(ramend - stack_ptr), false);
-	channel.send(F("free mem?"), total, false);
+	send.p1(F("due"));
+	send.json(F("dynamic_ram"), (uint32_t)(mi.uordblks), false);
+	send.json(F("program_static_ram"), (uint32_t)(&_end - ramstart), false);
+	send.json(F("stack_ram"), (uint32_t)(ramend - stack_ptr), false);
+	send.json(F("free mem?"), total, false);
 	channel.p2();
 	channel.nl();
 }
