@@ -59,13 +59,9 @@ uint16_t Decoder::init() volatile {
 
 	refresh(0);
 
-	static ShellCallback callbacks[] = {
-		{ F("dstatus"), dstatus, (Decoder *)this },
-		{ F("d0"), d0, (Decoder *)this },
-		{ F("d1"), d1, (Decoder *)this },
-	};
+	shell.add(dstatus, (void *)this, F("dstatus"), F(""));
+	shell.add(d0, (void *)this, F("d0"), F(""));
+	shell.add(d1, (void *)this, F("d1"), F(""));
 
-	shell.add(callbacks, ARRSIZE(callbacks));
-
-	return sizeof(Decoder) + sizeof(callbacks);
+	return sizeof(Decoder);
 }

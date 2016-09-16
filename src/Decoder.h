@@ -3,6 +3,8 @@
 #ifndef _Decoder_h_
 #define _Decoder_h_
 
+#define PATH __FILE__
+
 #include "System.h"
 #include "Params.h"
 
@@ -232,6 +234,8 @@ public:
 
 	void sendList(Buffer &send) volatile;
 };
+
+#undef PATH
 
 extern volatile Decoder decoder;
 

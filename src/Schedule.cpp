@@ -238,11 +238,7 @@ uint16_t initSchedule() {
 	taskmgr.addTask(F("Refresh"), runRefresh, 0, 2000);
 	taskmgr.addTask(F("Status"), runStatus, 0, 3000);
 
-	static ShellCallback callbacks[] = {
-		{ F("s"), sendSchedule },
-	};
+	shell.add(sendSchedule, 0, F("s"), 0);
 
-	shell.add(callbacks, ARRSIZE(callbacks));
-
-	return sizeof(schedule) + sizeof(callbacks);
+	return sizeof(schedule);
 }

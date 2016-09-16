@@ -156,22 +156,24 @@ void Vehicle::sendStatus(Buffer &send) const {
 }
 
 static void setPins() {
-	codes.clear();
-	codes.set(20);
-	codes.set(21);
-	codes.set(50);
-	codes.set(51);
-	codes.set(52);
-	codes.set(53);
-	codes.set(DATA_PIN);
-	codes.set(CLOCK_PIN);
+	uint8_t bits[bitsize(GPIO::MaxPins)];
+	bzero(bits, sizeof(bits));
+
+	bitset(bits, 20);
+	bitset(bits, 21);
+	bitset(bits, 50);
+	bitset(bits, 51);
+	bitset(bits, 52);
+	bitset(bits, 53);
+	bitset(bits, DATA_PIN);
+	bitset(bits, CLOCK_PIN);
 
 	for (uint8_t i = 0; GPIO::MaxPins; i++) {
 		GPIO::PinId id = ( GPIO::PinId)i;
 		const GPIO::PinDef *pd = GPIO::getPinDef(id);
 
 		if (pd->ext)
-			codes.set(pd->ext);
+			bitset(bits, pd->ext);
 	}
 
 	int input = 24;
@@ -186,18 +188,18 @@ static void setPins() {
 			if (pd->mode & PinModeAnalog) {
 				pd->ext = analog++ % 16;
 			} else if (pd->mode & PinModeInput) {
-				while (codes.isSet(input))
+				while (isset(bits, input))
 					input++;
 
 				pd->ext = min(53, input);
 			} else if (pd->mode & PinModeOutput) {
-				while (codes.isSet(output))
+				while (isset(bits, output))
 					output++;
 
 				pd->ext = min(53, output);
 			}
 
-			codes.set(pd->ext);
+			bitset(bits, pd->ext);
 
 			if (input >= 49)
 				input = 8;
@@ -621,12 +623,7 @@ uint16_t Vehicle::init() {
 	setPins();
 
 	taskmgr.addTask(F("Vehicle"), runVehicle, this, 20);
+	shell.add(prompt_cb, this, F("vehicle"), 0);
 
-	static ShellCallback callbacks[] = {
-		{ F("vehicle"), prompt_cb, this },
-	};
-
-	shell.add(callbacks, ARRSIZE(callbacks));
-
-	return sizeof(Vehicle) + sizeof(callbacks);
+	return sizeof(Vehicle);
 }

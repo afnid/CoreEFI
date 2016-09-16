@@ -466,7 +466,7 @@ static inline uint32_t runChanges(uint32_t t0, void *data) {
 
 	if (wait) {
 		extern Buffer channel;
-		ShellEvent se(0, 0);
+		ShellEvent se(channel);
 		sendParamChanges(channel, se, 0);
 		wait = max(wait, 500);
 		wait = min(wait, 1000);
@@ -477,8 +477,8 @@ static inline uint32_t runChanges(uint32_t t0, void *data) {
 }
 
 static void handleQ(Buffer &send, ShellEvent &se, void *) {
-	const char *s = se.nextToken();
-	s = se.nextToken();
+	const char *s = se.next();
+	s = se.next();
 
 	if (s) {
 		ParamTypeId id = (ParamTypeId) atoi(s);
@@ -492,11 +492,11 @@ static void handleQ(Buffer &send, ShellEvent &se, void *) {
 }
 
 static void handleS(Buffer &send, ShellEvent &se, void *) {
-	const char *s = se.nextToken();
-	s = se.nextToken();
+	const char *s = se.next();
+	s = se.next();
 
 	if (s) {
-		const char *arg2 = se.nextToken();
+		const char *arg2 = se.next();
 
 		if (arg2) {
 			ParamTypeId id = (ParamTypeId) atoi(s);
@@ -531,20 +531,16 @@ uint16_t initParams() {
 
 	taskmgr.addTask(F("Params"), runChanges, 0, 3000);
 
-	static ShellCallback callbacks[] = {
-		{ F("pv"), sendParamValues, 0, F("values") },
-		{ F("pt"), sendParamLookups, 0, F("tables") },
-		{ F("pl"), sendParamList, 0, F("list") },
-		{ F("ps"), sendParamStats, 0, F("stats") },
-		{ F("pc"), sendParamChanges, 0, F("changes") },
-		{ F("s"), handleS, 0, F("changes") },
-		{ F("q"), handleQ, 0, F("changes") },
-		{ F("m"), handleM, 0, F("changes") },
-	};
+	shell.add(sendParamValues, 0, F("pv"), F("values"));
+	shell.add(sendParamLookups, 0, F("pv"), F("tables"));
+	shell.add(sendParamList, 0, F("pl"), F("list"));
+	shell.add(sendParamStats, 0, F("pl"), F("stats"));
+	shell.add(sendParamChanges, 0, F("pl"), F("changes"));
+	shell.add(handleS, 0, F("s"), F("param"));
+	shell.add(handleQ, 0, F("q"), F("param"));
+	shell.add(handleM, 0, F("u"), F("param"));
 
-	shell.add(callbacks, ARRSIZE(callbacks));
-
-	return sizeof(local) + sizeof(params) + sizeof(lookups) + sizeof(callbacks);
+	return sizeof(local) + sizeof(params) + sizeof(lookups);
 }
 
 float lookupParam(ParamTypeId id, ParamData *pd) {

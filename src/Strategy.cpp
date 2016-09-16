@@ -1,5 +1,6 @@
 // copyright to me, released under GPL V3
 
+#include "Strategy.h"
 #include "GPIO.h"
 #include "System.h"
 #include "Buffer.h"
@@ -7,11 +8,12 @@
 #include "Metrics.h"
 
 #include "Codes.h"
-#include "Strategy.h"
 #include "Decoder.h"
 #include "Events.h"
 #include "Schedule.h"
 #include "efi_types.h"
+
+static const char *PATH = __FILE__;
 
 static const int TimesMax = TimeMovingSeconds - TimeRunSeconds + 1;
 

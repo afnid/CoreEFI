@@ -5,6 +5,8 @@
 
 #include "Params.h"
 
+#define PATH __FILE__
+
 class Codes {
 	uint8_t codes[bitsize(MaxParam)];
 
@@ -12,12 +14,12 @@ public:
 
 	uint16_t init();
 
-	inline void set(uint8_t id) {
+	inline void set(ParamTypeId id) {
 		assert(id < MaxParam);
 		bitset(codes, id);
 	}
 
-	inline void clear(uint8_t id) {
+	inline void clear(ParamTypeId id) {
 		assert(id < MaxParam);
 		bitclr(codes, id);
 	}
@@ -27,7 +29,7 @@ public:
 			codes[i] = 0;
 	}
 
-	inline bool isSet(uint8_t id) {
+	inline bool isSet(ParamTypeId id) {
 		assert(id < MaxParam);
 		return isset(codes, id);
 	}

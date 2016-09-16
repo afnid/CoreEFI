@@ -273,14 +273,10 @@ uint16_t Display::init() {
 	lcd.setContrast(20);
 #endif
 
-	static ShellCallback callbacks[] = {
-		{ F("m0"), menucb0, this },
-		{ F("m1"), menucb1, this },
-	};
-
-	shell.add(callbacks, ARRSIZE(callbacks));
+	shell.add(menucb0, this, F("m0"), F(""));
+	shell.add(menucb1, this, F("m1"), F(""));
 
 	taskmgr.addTask(F("Display"), runDisplay, this, 500);
 
-	return sizeof(Display) + sizeof(callbacks);
+	return sizeof(Display);
 }

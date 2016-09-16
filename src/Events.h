@@ -3,6 +3,8 @@
 #ifndef _Events_h_
 #define _Events_h_
 
+#define PATH __FILE__
+
 #include "utils.h"
 
 class BitPlan {
@@ -128,6 +130,8 @@ public:
 		return ticks;
 	}
 };
+
+#undef PATH
 
 uint16_t initEvents();
 void refreshEvents();

@@ -1028,13 +1028,9 @@ uint16_t initTimers() {
 	if (0)
 		handleTimer(TimerId1); // get rid of warning
 
-	static ShellCallback callbacks[] = {
-		{ F("timers"), sendTimers },
-	};
+	shell.add(sendTimers, 0, F("timers"), 0);
 
-	shell.add(callbacks, ARRSIZE(callbacks));
-
-	return sizeof(timers) + sizeof(callbacks);
+	return sizeof(timers);
 }
 
 void idleSleep(uint32_t us) {

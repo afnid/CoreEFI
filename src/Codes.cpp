@@ -8,11 +8,7 @@ static void codescb(Buffer &send, ShellEvent &se, void *data) {
 uint16_t Codes::init() {
 	bzero(codes, sizeof(codes));
 
-	static ShellCallback callbacks[] = {
-		{ F("codes"), codescb, this },
-	};
-
-	shell.add(callbacks, ARRSIZE(callbacks));
+	shell.add(codescb, this, F("codes"), 0);
 
 	return sizeof(Codes);
 }

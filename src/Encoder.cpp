@@ -24,13 +24,9 @@ uint16_t Encoder::init() {
 
 	taskmgr.addTask(F("Encoder"), runEncoder, 0, MicrosToTicks(refresh()));
 
-	static ShellCallback callbacks[] = {
-		{ F("enskip"), enskip, this },
-	};
+	shell.add(enskip, this, F("enskip"), F(""));
 
-	shell.add(callbacks, ARRSIZE(callbacks));
-
-	return sizeof(Encoder) + sizeof(callbacks);
+	return sizeof(Encoder);
 }
 
 

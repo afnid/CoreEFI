@@ -367,12 +367,8 @@ uint16_t initEvents() {
 
 	taskmgr.addTask(F("Events"), runEvents, 0, 1000);
 
-	static ShellCallback callbacks[] = {
-		{ F("e0"), sendEventStatus },
-		{ F("e1"), sendEventList },
-	};
+	shell.add(sendEventStatus, 0, F("e0"), F(""));
+	shell.add(sendEventList, 0, F("e1"), F(""));
 
-	shell.add(callbacks, ARRSIZE(callbacks));
-
-	return sizeof(events) + sizeof(callbacks);
+	return sizeof(events);
 }

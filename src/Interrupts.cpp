@@ -16,6 +16,8 @@
 
 #endif
 
+static const char *PATH = __FILE__;
+
 enum {
 	Interrupt2,
 	MaxInterrupts,
