@@ -3,6 +3,7 @@
 #include "Schedule.h"
 #include "Events.h"
 #include "Stream.h"
+#include "Hardware.h"
 
 DEBUGINIT();
 
@@ -41,6 +42,22 @@ void toggleled(uint8_t id) {
 #include <stdio.h>
 #include <time.h>
 #include <unistd.h>
+
+void Hardware::flush() {
+	char buf[32];
+	size_t n = 0;
+
+	extern int available(int fd);
+
+	while (available(0) > 0)
+		if ((n = read(0, buf, 1)) > 0)
+			hardware.recv(0).write(buf, n);
+
+	while ((n = hardware.send(0).read(buf, sizeof(buf))) > 0) {
+		n = fwrite(buf, 1, n, stdout);
+		fflush(stdout);
+	}
+}
 
 static void stabilize(uint16_t ms) {
 	uint32_t start = clockTicks();
