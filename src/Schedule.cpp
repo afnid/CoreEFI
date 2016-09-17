@@ -7,6 +7,7 @@
 #include "Metrics.h"
 #include "Broker.h"
 #include "Tasks.h"
+#include "Hardware.h"
 
 class Schedule {
 	enum {
@@ -100,7 +101,7 @@ class Schedule {
 	}
 
 	void schedule() {
-		volatile BitSchedule *schedule = getSchedule();
+		volatile BitSchedule *schedule = BitSchedule::getSchedule();
 
 		if (schedule) {
 			initMetric(MetricEvents);
@@ -135,7 +136,7 @@ class Schedule {
 			calcMetric(MetricOrder);
 			initMetric(MetricMerge);
 
-			swapSchedule();
+			BitSchedule::swapSchedule();
 
 			calcMetric(MetricMerge);
 		}
@@ -196,24 +197,18 @@ public:
 	}
 } schedule;
 
-static inline uint32_t runSchedule(uint32_t t0, void *data) {
-	schedule.runSchedule();
-	return decoder.getTicks() / 2;
-}
-
 static inline uint32_t runStatus(uint32_t t0, void *data) {
 	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
 
 	toggleled(0);
 
 	if (!wait) {
-		sendEventStatus(0);
+		//BitSchedule::sendEventStatus(0);
 		return MicrosToTicks(3000017UL);
 	}
 
-	extern Buffer channel;
-	decoder.sendList(channel);
-	sendEventList(0);
+	decoder.sendList(hardware.send());
+	//BitSchedule::sendEventList(0);
 
 	wait = max(wait, 500);
 
@@ -221,24 +216,31 @@ static inline uint32_t runStatus(uint32_t t0, void *data) {
 }
 
 static inline uint32_t runRefresh(uint32_t now, void *data) {
-	refreshEvents();
+	BitPlan::refreshEvents();
 	encoder.refresh();
 	decoder.refresh(now);
 	return 0;
 }
 
-static void sendSchedule(Buffer &send, BrokerEvent &be, void *data) {
+uint32_t BitSchedule::runSchedule(uint32_t t0, void *data) {
+	schedule.runSchedule();
+	return decoder.getTicks() / 2;
+}
+
+static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
 	schedule.sendSchedule(send);
 }
 
-uint16_t initSchedule() {
+void BitSchedule::init() {
 	bzero(&schedule, sizeof(schedule));
 
 	taskmgr.addTask(F("Schedule"), runSchedule, 0, 25);
 	taskmgr.addTask(F("Refresh"), runRefresh, 0, 2000);
 	taskmgr.addTask(F("Status"), runStatus, 0, 3000);
 
-	broker.add(sendSchedule, 0, F("s"));
+	broker.add(brokercb, 0, F("s"));
+}
 
+uint16_t BitSchedule::mem(bool alloced) {
 	return sizeof(schedule);
 }

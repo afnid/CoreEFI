@@ -48,8 +48,8 @@ static inline float safediv(float v1, float v2) {
  */
 
 static inline float calcMPH() {
-	static const float PI = 3.14159265358979323846;
-	static const float ratio = PI * 60 / (5280 * 12);
+	static const float PIf = 3.14159265358979323846;
+	static const float ratio = PIf * 60 / (5280 * 12);
 
 	int gear = getParamUnsigned(SensorGEAR);
 
@@ -74,7 +74,7 @@ static inline uint16_t getTimer(uint8_t id) {
 	return tdiff32(pd->changed, strategy.times[idx]);
 }
 
-void setTimer(ParamTypeId id, bool enable) {
+void Strategy::setTimer(ParamTypeId id, bool enable) {
 	int idx = id - TimeRunSeconds;
 	assert(idx >= 0);
 	assert(idx < TimesMax);
@@ -302,12 +302,14 @@ float getStrategyDouble(ParamTypeId id, ParamData *pd) {
 	return pd->value;
 }
 
-uint16_t initStrategy() {
+void Strategy::init() {
 	bzero(&strategy, sizeof(strategy));
 
 	setParamUnsigned(ConstCoils, min(MaxCoils, getParamUnsigned(ConstCoils)));
 	setParamUnsigned(ConstCylinders, min(MaxCylinders, getParamUnsigned(ConstCylinders)));
 	setParamUnsigned(ConstEncoderTeeth, min(MaxEncoderTeeth, getParamUnsigned(ConstEncoderTeeth)));
+}
 
-	return sizeof(strategy);
+uint16_t Strategy::mem(bool alloced) {
+	return alloced ? 0 : sizeof(strategy);
 }

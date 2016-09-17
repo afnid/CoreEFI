@@ -19,12 +19,19 @@ bool isParamSet(ParamTypeId i);
 void clearParamChanges();
 void clearParamCache();
 
-uint16_t initParams();
 void sendParam(ParamTypeId id);
 
 void setSensorParam(ParamTypeId id, uint16_t adc);
 
 const char *getParamName(ParamTypeId id, char *buf, int maxlen);
 const flash_t *getParamName(ParamTypeId id);
+
+class Params {
+public:
+
+	static void init();
+
+	static uint16_t mem(bool alloced);
+};
 
 #endif

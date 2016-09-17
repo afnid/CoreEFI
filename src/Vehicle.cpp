@@ -1,17 +1,13 @@
+#include "Vehicle.h"
+#include "GPIO.h"
+#include "Hardware.h"
+#include "Display.h"
+#include "Params.h"
+#include "Tasks.h"
+
 #ifdef ARDUINO
-#include "Arduino.h"
 #include "FastLED.h"
 #endif
-
-#include "System.h"
-#include "Buffer.h"
-#include "Broker.h"
-#include "Params.h"
-#include "Vehicle.h"
-#include "Tasks.h"
-#include "Display.h"
-#include "Codes.h"
-#include "GPIO.h"
 
 #ifndef CONFIG
 #define CONFIG 10
@@ -21,131 +17,115 @@
 #define CLOCK_PIN 13
 
 enum {
-	PanelOil,
-	PanelGen,
-	PanelHiBeam,
-	PanelLeft,
-	PanelRight,
-	PanelBacklight1,
-	PanelBacklight2,
-	PanelBacklight3,
-	PanelBacklight4,
-	NUM_LEDS,
+	PanelOil, PanelGen, PanelHiBeam, PanelLeft, PanelRight, PanelBacklight1, PanelBacklight2, PanelBacklight3, PanelBacklight4, NUM_LEDS,
 };
 
 #ifdef ARDUINO
 CRGB leds[NUM_LEDS];
 #endif
 
+static const GPIO::PinId config[1] = {
 #if CONFIG == 1
 
-static GPIO::Def pins[] = {
-    { GPIO::ModeInputAnalog, VehicleRadiatorTemp },
-    { GPIO::ModeOutput, VehicleIsTurningLeft },
-    { GPIO::ModeOutput, VehicleIsTurningRight },
-    { GPIO::ModeOutput, VehicleIsLoBeamOn },
-    { GPIO::ModeOutput, VehicleIsHiBeamOn },
-    { GPIO::ModeOutput, VehicleIsParkingOn },
-    { GPIO::ModeOutput, VehicleIsHornOn },
-    { GPIO::ModeOutput, VehicleIsAirOn },
-    { GPIO::ModeOutput, CalcFan1 },
-    { GPIO::ModeOutput, CalcFan2 },
-	{ 0 },
-};
+		VehicleRadiatorTemp
+		VehicleIsTurningLeft
+		VehicleIsTurningRight
+		VehicleIsLoBeamOn
+		VehicleIsHiBeamOn
+		VehicleIsParkingOn
+		VehicleIsHornOn
+		VehicleIsAirOn
+		CalcFan1
+		CalcFan2
 
 #elif CONFIG == 2
 
-static GPIO::Def pins[] = {
-    { 0, GPIO::ModeOutputPWM, CalcFan1 },
-    { 0, GPIO::ModeOutputPWM, CalcFan2 },
+		CalcFan1
+		CalcFan2
 
-	{ 0, GPIO::ModeOutputPWM, CalcEPAS1 },
-	{ 0, GPIO::ModeOutputPWM, CalcEPAS2 },
+		CalcEPAS1
+		CalcEPAS2
 
-	{ 0, GPIO::ModeOutputPWM, VehicleGauge1 },
-	{ 0, GPIO::ModeOutputPWM, VehicleGauge2 },
+		VehicleGauge1
+		VehicleGauge2
 
-    { 1, GPIO::ModeOutput, VehicleIsTurningLeft, 27 },
-    { 1, GPIO::ModeOutput, VehicleIsTurningRight, 25 },
-    { 1, GPIO::ModeOutput, VehicleIsParkingOn, 23 },
-    { 1, GPIO::ModeOutput, VehicleIsTransReverse, 29 },
+		VehicleIsTurningLeft, 27
+		VehicleIsTurningRight, 25
+		VehicleIsParkingOn, 23
+		VehicleIsTransReverse, 29
 
-    { 1, GPIO::ModeOutput, VehicleIsLoBeamOn, 31 },
-    { 1, GPIO::ModeOutput, VehicleIsHiBeamOn },
+		VehicleIsLoBeamOn, 31
+		VehicleIsHiBeamOn
 
-    { 1, GPIO::ModeOutput, VehicleIsBrakeLeft, 33 },
-    { 1, GPIO::ModeOutput, VehicleIsBrakeRight, 35 },
+		VehicleIsBrakeLeft, 33
+		VehicleIsBrakeRight, 35
 
-	{ 1, GPIO::ModeOutput, SensorIsKeyAcc },
-	{ 1, GPIO::ModeOutput, SensorIsKeyOn },
-	{ 1, GPIO::ModeOutput, SensorIsCranking },
+		SensorIsKeyAcc
+		SensorIsKeyOn
+		SensorIsCranking
 
-    { 1, GPIO::ModeOutput, VehicleIsAirOn },
-    { 1, GPIO::ModeOutput, VehicleIsHornOn },
+		VehicleIsAirOn
+		VehicleIsHornOn
 
-    { 1, GPIO::ModeOutput, VehicleIsGenAlert },
-    { 1, GPIO::ModeOutput, VehicleIsOilAlert },
+		VehicleIsGenAlert
+		VehicleIsOilAlert
 
-    { 1, GPIO::ModeInputPullup, SensorIsKeyAcc, 44 },
-    { 1, GPIO::ModeInputPullup, SensorIsKeyOn, 46 },
-    { 1, GPIO::ModeInputPullup, SensorIsCranking, 48 },
+		SensorIsKeyAcc, 44
+		SensorIsKeyOn, 46
+		SensorIsCranking, 48
 
-    { 1, GPIO::ModeInputPullup, VehicleIsParkingOn, 32 },
-    { 1, GPIO::ModeInputPullup, VehicleIsLoBeamOn, 40 },
-    { 1, GPIO::ModeInputPullup, VehicleIsHiBeamOn },
-    { 1, GPIO::ModeInputPullup, VehicleIsClusterBright },
+		VehicleIsParkingOn, 32
+		VehicleIsLoBeamOn, 40
+		VehicleIsHiBeamOn
+		VehicleIsClusterBright
 
-    { 1, GPIO::ModeInputPullup, VehicleIsBrakeOn, 41 },
-	{ 1, GPIO::ModeInputPullup, VehicleIsAirOn, 43 },
-    { 1, GPIO::ModeInputPullup, VehicleIsTransNeutral, 37 },
-    { 1, GPIO::ModeInputPullup, VehicleIsTransReverse, 39 },
+		VehicleIsBrakeOn, 41
+		VehicleIsAirOn, 43
+		VehicleIsTransNeutral, 37
+		VehicleIsTransReverse, 39
 
-    { 1, GPIO::ModeInputPullup, VehicleIsHornOn, 45 },
-    { 0, GPIO::ModeInputPullup, VehicleIsTurningLeft, 47 },
-    { 0, GPIO::ModeInputPullup, VehicleIsTurningRight, 49 },
+		VehicleIsHornOn, 45
+		VehicleIsTurningLeft, 47
+		VehicleIsTurningRight, 49
 
-    { 1, GPIO::ModeInputPullup, VehicleIsFanSwitch1 },
-    { 1, GPIO::ModeInputPullup, VehicleIsFanSwitch2 },
-    { 1, GPIO::ModeInputPullup, VehicleIsHazardsOn },
-    { 1, GPIO::ModeInputPullup, VehicleIsInteriorOn },
+		VehicleIsFanSwitch1
+		VehicleIsFanSwitch2
+		VehicleIsHazardsOn
+		VehicleIsInteriorOn
 
-    { 1, GPIO::ModeInputPullup, VehicleIsMenuButton1, 8 },
-    { 1, GPIO::ModeInputPullup, VehicleIsMenuButton2, 9 },
+		VehicleIsMenuButton1, 8
+		VehicleIsMenuButton2, 9
 
-    { 0, GPIO::ModeInputAnalog, VehicleRadiatorTemp },
-	{ 0, GPIO::ModeInputAnalog, SensorAMPS1 },
-	{ 0, GPIO::ModeInputAnalog, SensorHEGO1 },
-	{ 0, GPIO::ModeInputAnalog, SensorHEGO2 },
-	{ 0, GPIO::ModeInputAnalog, SensorBAR },
-	{ 0, GPIO::ModeInputAnalog, SensorEGR },
-	{ 0, GPIO::ModeInputAnalog, SensorVCC },
-	{ 0, GPIO::ModeInputAnalog, SensorDEC },
-	{ 0, GPIO::ModeInputAnalog, SensorTPS },
-	{ 0, GPIO::ModeInputAnalog, SensorVSS },
-	{ 0, GPIO::ModeInputAnalog, SensorECT },
-	{ 0, GPIO::ModeInputAnalog, SensorMAF },
-	{ 0, GPIO::ModeInputAnalog, SensorACT },
-	{ 0, GPIO::ModeInputAnalog, VehicleFuelSender },
-	{ 0 },
-};
+		VehicleRadiatorTemp
+		SensorAMPS1
+		SensorHEGO1
+		SensorHEGO2
+		SensorBAR
+		SensorEGR
+		SensorVCC
+		SensorDEC
+		SensorTPS
+		SensorVSS
+		SensorECT
+		SensorMAF
+		SensorACT
+		VehicleFuelSender
 
 #elif CONFIG == 3
 
-static GPIO::Def pins[] = {
-    { 0, GPIO::ModeInputAnalog, VehicleFuelSender },
-    { 0, GPIO::ModeOutput, VehicleIsTurningLeft },
-    { 0, GPIO::ModeOutput, VehicleIsTurningRight },
-    { 0, GPIO::ModeOutput, VehicleIsParkingOn },
-    { 0, GPIO::ModeOutput, VehicleIsTransReverse },
-	{ 0, GPIO::ModeOutput, SensorIsKeyOn },
-    { 0, GPIO::ModeOutputPWM, CalcFuelPump },
-	{ 0 },
-};
+		VehicleFuelSender
+		VehicleIsTurningLeft
+		VehicleIsTurningRight
+		VehicleIsParkingOn
+		VehicleIsTransReverse
+		SensorIsKeyOn
+		CalcFuelPump
 
 #endif
+	};
 
 void Vehicle::prompt_cb(Buffer &send, BrokerEvent &be, void *data) {
-	((Vehicle *)data)->sendStatus(send);
+	((Vehicle *) data)->sendStatus(send);
 }
 
 void Vehicle::sendStatus(Buffer &send) const {
@@ -154,6 +134,8 @@ void Vehicle::sendStatus(Buffer &send) const {
 	send.json(F("fan2duty"), fan2.duty);
 	send.p2();
 }
+
+#include <stdio.h>
 
 static void setPins() {
 	uint8_t bits[bitsize(GPIO::MaxPins)];
@@ -168,8 +150,10 @@ static void setPins() {
 	bitset(bits, DATA_PIN);
 	bitset(bits, CLOCK_PIN);
 
-	for (uint8_t i = 0; GPIO::MaxPins; i++) {
-		GPIO::PinId id = ( GPIO::PinId)i;
+	printf("bits %d %d\n", sizeof(bits), GPIO::MaxPins);
+
+	for (uint8_t i = 0; i < GPIO::MaxPins; i++) {
+		GPIO::PinId id = (GPIO::PinId) i;
 		const GPIO::PinDef *pd = GPIO::getPinDef(id);
 
 		if (pd->ext)
@@ -180,9 +164,9 @@ static void setPins() {
 	int output = 2;
 	int analog = 5;
 
-	for (uint8_t i = 0; GPIO::MaxPins; i++) {
-		GPIO::PinId id = ( GPIO::PinId)i;
-		GPIO::PinDef *pd = (GPIO::PinDef *)GPIO::getPinDef(id);
+	for (uint8_t i = 0; i < GPIO::MaxPins; i++) {
+		GPIO::PinId id = (GPIO::PinId) i;
+		GPIO::PinDef *pd = (GPIO::PinDef *) GPIO::getPinDef(id);
 
 		if (!pd->ext) {
 			if (pd->mode & PinModeAnalog) {
@@ -213,7 +197,7 @@ static float scaleLinear(uint16_t v, uint16_t v1, uint16_t v2, float o1, float o
 	if (clamp && v >= v2)
 		return o2;
 
-	float pct = (v - v1) / (float)(v2 - v1);
+	float pct = (v - v1) / (float) (v2 - v1);
 	return o1 + (o2 - o1) * pct;
 }
 
@@ -243,7 +227,7 @@ void Coded::service(uint32_t now) {
 
 		if (!state && count) {
 			long ms = tdiff32(now, edge_lo);
-			
+
 			if (ms > 2000) {
 				value *= 10;
 				value += count;
@@ -274,8 +258,8 @@ int Pulsed::ramp(uint32_t now, uint16_t duty, uint16_t delay) {
 		else if (duty - this->duty > 8)
 			add = 3;
 
-			add = 1;
-			
+		add = 1;
+
 		return set(now, duty + add);
 	}
 
@@ -380,7 +364,7 @@ void Vehicle::calcFanSpeed(uint32_t now) {
 
 	if (fan1.ramp(now, duty, 4000) <= 5)
 		fan2.ramp(now, duty, 4000);
-	
+
 	setParamUnsigned(CalcFan1, fan1.duty);
 	setParamUnsigned(CalcFan2, fan2.duty);
 }
@@ -395,24 +379,24 @@ void updateClusterWhites(int v) {
 #endif
 }
 
-void updateCluster(uint8_t id, int v) {
+void updateCluster(GPIO::PinId id, int v) {
 #ifdef ARDUINO
 	switch (id) {
-		case VehicleIsTurningLeft:
-			leds[PanelLeft] = v ? CRGB::Green : CRGB::Black;
-			break;
-		case VehicleIsTurningRight:
-			leds[PanelRight] = v ? CRGB::Green : CRGB::Black;
-			break;
-		case VehicleIsHiBeamOn:
-			leds[PanelHiBeam] = v ? CRGB::Blue : CRGB::Black;
-			break;
-		case VehicleIsGenAlert:
-			leds[PanelGen] = v ? CRGB::Red : CRGB::Black;
-			break;
-		case VehicleIsOilAlert:
-			leds[PanelOil] = v ? CRGB::Red : CRGB::Black;
-			break;
+		case GPIO::IsSignalLeft:
+		leds[PanelLeft] = v ? CRGB::Green : CRGB::Black;
+		break;
+		case GPIO::IsSignalRight:
+		leds[PanelRight] = v ? CRGB::Green : CRGB::Black;
+		break;
+		case GPIO::IsHiBeamOn:
+		leds[PanelHiBeam] = v ? CRGB::Blue : CRGB::Black;
+		break;
+		case GPIO::IsBrakeOn: //IsGenAlert:
+		leds[PanelGen] = v ? CRGB::Red : CRGB::Black;
+		break;
+		case GPIO::IsParkingOn://IsOilAlert:
+		leds[PanelOil] = v ? CRGB::Red : CRGB::Black;
+		break;
 	}
 
 	FastLED.show();
@@ -452,34 +436,33 @@ void Vehicle::serviceInput(uint32_t now) {
 	if (++inpin > GPIO::MaxPins)
 		inpin = 0;
 
-	const GPIO::PinDef *pi = GPIO::getPinDef((GPIO::PinId)inpin);
+	const GPIO::PinDef *pi = GPIO::getPinDef((GPIO::PinId) inpin);
 
 	if (pi && (pi->mode & PinModeInput)) {
 		const uint16_t TESTLO = 400;
 		const uint16_t TESTHI = 700;
-		extern Buffer channel;
 
 		switch (pi->getId()) {
-			case GPIO::RadiatorTemp:
-				setParamFloat(VehicleRadiatorTemp, scaleLinear(pi->getLast(), TESTLO, TESTHI, 150, 210, false));
-				setTempGauge();
-				break;
-			case GPIO::AMPS1:
-				setParamFloat(SensorAMPS1, scaleLinear(pi->getLast(), 512, 610, 500, 4000, false));
-				break;
-			case GPIO::IsMenuButton1:
-				if (!pi->getLast())
-					display.menuInput(channel, 0);
-				break;
-			case GPIO::IsMenuButton2:
-				if (!pi->getLast())
-					display.menuInput(channel, 1);
-				break;
-			case VehicleFuelSender:
-				setFuelGauge();
-				break;
-			default:
-				break;
+		case GPIO::AnalogRadiatorTemp:
+			setParamFloat(VehicleRadiatorTemp, scaleLinear(pi->getLast(), TESTLO, TESTHI, 150, 210, false));
+			setTempGauge();
+			break;
+		case GPIO::AnalogAMPS1:
+			setParamFloat(SensorAMPS1, scaleLinear(pi->getLast(), 512, 610, 500, 4000, false));
+			break;
+		case GPIO::IsMenuButton1:
+			if (!pi->getLast())
+				display.menuInput(hardware.send(), 0);
+			break;
+		case GPIO::IsMenuButton2:
+			if (!pi->getLast())
+				display.menuInput(hardware.send(), 1);
+			break;
+		case GPIO::AnalogFuel:
+			setFuelGauge();
+			break;
+		default:
+			break;
 		}
 	}
 }
@@ -488,95 +471,95 @@ void Vehicle::serviceOutput(uint32_t now) {
 	if (++outpin > GPIO::MaxPins)
 		outpin = 0;
 
-	const GPIO::PinDef *pi = GPIO::getPinDef((GPIO::PinId)outpin);
+	const GPIO::PinDef *pi = GPIO::getPinDef((GPIO::PinId) outpin);
 
 	static const GPIO::PinDef *bl = 0;
 	static const GPIO::PinDef *br = 0;
 
 	if (pi && (pi->mode & PinModeOutput)) {
 		switch (pi->getId()) {
-			case CalcFan1:
-			case CalcFan2:
-				calcFanSpeed(now);
-				break;
-			case CalcEPAS1:
-			case CalcEPAS2:
-				calcSteeringAssist(now);
-				break;
-			case GPIO::IsParkingOn:
-				setParking();
-				break;
-			case GPIO::RelayBrakeLightLeft:
-				if (turning)
-					return;
-				setBrakeLights();
-				bl = pi;
-				break;
-			case GPIO::RelayBrakeLightRight:
-				if (turning)
-					return;
-				setBrakeLights();
-				br = pi;
-				break;
-			default:
-				break;
+		case GPIO::RelayFan1:
+		case GPIO::RelayFan2:
+			calcFanSpeed(now);
+			break;
+		case GPIO::RelayEPAS1:
+		case GPIO::RelayEPAS2:
+			calcSteeringAssist(now);
+			break;
+		case GPIO::IsParkingOn:
+			setParking();
+			break;
+		case GPIO::RelayBrakeLightLeft:
+			if (turning)
+				return;
+			setBrakeLights();
+			bl = pi;
+			break;
+		case GPIO::RelayBrakeLightRight:
+			if (turning)
+				return;
+			setBrakeLights();
+			br = pi;
+			break;
+		default:
+			break;
 		}
 
 		uint16_t v = GPIO::isPinSet(pi->getId());
 
 		switch (pi->getId()) {
-			case VehicleGauge1:
-				v = scaleLinear(v, 0, 100, 0, 100, true);
-				break;
-			case CalcFan1:
-			case CalcFan2:
-				v = v <= 0 ? 0 : scaleLinear(v, 0, 100, 80, 255, true);
-				break;
-			case CalcEPAS2:
-				v = scaleLinear(v, 0, 100, 0, 100, true);
-				break;
-			case GPIO::IsSignalLeft:
-			case GPIO::IsSignalRight:
-				turning = v != 0;
+		case GPIO::RelayGauge1:
+			v = scaleLinear(v, 0, 100, 0, 100, true);
+			break;
+		case GPIO::RelayFan1:
+		case GPIO::RelayFan2:
+			v = v <= 0 ? 0 : scaleLinear(v, 0, 100, 80, 255, true);
+			break;
+		case CalcEPAS2:
+			v = scaleLinear(v, 0, 100, 0, 100, true);
+			break;
+		case GPIO::IsSignalLeft:
+		case GPIO::IsSignalRight:
+			turning = v != 0;
 
-				setBrakeLights();
+			setBrakeLights();
 
-				if (v) {
-					if (pi->getLast() && pi->ms() >= 600)
-						v = 0;
-					else if (!pi->getLast() && pi->ms() >= 1200)
-						v = 1;
-					else
+			if (v) {
+				if (pi->getLast() && pi->ms() >= 600)
+					v = 0;
+				else if (!pi->getLast() && pi->ms() >= 1200)
+					v = 1;
+				else
+					v = pi->getLast();
+
+				if (bl && pi->getId() == GPIO::IsSignalLeft)
+					GPIO::setPin(bl->getId(), v);
+				//if (br && pi->getId() == VehicleIsTurningRight)
+				//br->writePin(v);
+			}
+
+			updateCluster(pi->getId(), v);
+			break;
+		case GPIO::RelayBrakeLightLeft:
+		case GPIO::RelayBrakeLightRight:
+			if (GPIO::isPinSet(GPIO::IsBrakeOn)) {
+				if (brakeFlash < 6) {
+					if (pi->ms() >= 50) {
+						v = !pi->getLast();
+						brakeFlash++;
+					} else
 						v = pi->getLast();
-
-					if (bl && pi->getId() == GPIO::IsSignalLeft)
-						GPIO::setPin(bl->getId(), v);
-					//if (br && pi->getId() == VehicleIsTurningRight)
-						//br->writePin(v);
 				}
 
-				updateCluster(pi->getId(), v);
-				break;
-			case GPIO::RelayBrakeLightLeft:
-			case GPIO::RelayBrakeLightRight:
-				if (GPIO::isPinSet(GPIO::IsBrakeOn)) {
-					if (brakeFlash < 6) {
-						if (pi->ms() >= 50) {
-							v = !pi->getLast();
-							brakeFlash++;
-						} else
-							v = pi->getLast();
-					}
-
-					if (bl)
-						GPIO::setPin(bl->getId(), v);
-					if (br)
-						GPIO::setPin(br->getId(), v);
-				} else
-					brakeFlash = 0;
-				break;
-			default:
-				break;
+				if (bl)
+					GPIO::setPin(bl->getId(), v);
+				if (br)
+					GPIO::setPin(br->getId(), v);
+			} else
+				brakeFlash = 0;
+			break;
+		default:
+			break;
 		}
 
 		GPIO::setPin(pi->getId(), v);
@@ -602,17 +585,17 @@ void Vehicle::checkVehicle(uint32_t now) {
 	for (int i = 0; i < 10; i++)
 		serviceOutput(now);
 
-/*
-	odb1.service(now);
-*/
+	/*
+	 odb1.service(now);
+	 */
 }
 
 static uint32_t runVehicle(uint32_t now, void *data) {
-	((Vehicle *)data)->checkVehicle(now);
+	((Vehicle *) data)->checkVehicle(now);
 	return 0;
 }
 
-uint16_t Vehicle::init() {
+void Vehicle::init() {
 	brakeFlash = 0;
 
 #ifdef ARDUINO
@@ -624,6 +607,8 @@ uint16_t Vehicle::init() {
 
 	taskmgr.addTask(F("Vehicle"), runVehicle, this, 20);
 	broker.add(prompt_cb, this, F("vehicle"));
+}
 
-	return sizeof(Vehicle);
+uint16_t Vehicle::mem(bool alloced) {
+	return alloced ? 0 : sizeof(config);
 }

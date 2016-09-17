@@ -41,7 +41,7 @@ static void d1(Buffer &send, BrokerEvent &be, void *data) {
 	((Decoder *)data)->sendList(send);
 }
 
-uint16_t Decoder::init() volatile {
+void Decoder::init() volatile {
 	valid = 0;
 	total = 0;
 	tdcts = 0;
@@ -62,6 +62,8 @@ uint16_t Decoder::init() volatile {
 	broker.add(dstatus, (void *)this, F("dstatus"));
 	broker.add(d0, (void *)this, F("d0"));
 	broker.add(d1, (void *)this, F("d1"));
+}
 
-	return sizeof(Decoder);
+uint16_t Decoder::mem(bool alloced) volatile {
+	return 0;
 }

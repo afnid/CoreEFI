@@ -129,15 +129,15 @@ public:
 
 		return ticks;
 	}
+
+	static void init();
+	static uint16_t mem(bool alloced);
+
+	static void refreshEvents();
+	static uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint16_t jitter);
+	static void checkEvents();
 };
 
 #undef PATH
-
-uint16_t initEvents();
-void refreshEvents();
-uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint16_t jitter);
-void checkEvents();
-void sendEventStatus(void *data);
-void sendEventList(void *data);
 
 #endif

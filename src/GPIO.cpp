@@ -1,9 +1,9 @@
 #include "GPIO.h"
 
 #ifndef NDEBUG
-#define MYNAME(x)	x, #x
+#define MYNAME(x)	x, F(#x)
 #else
-#define MYNAME(mode, x, pin)	x, 0, 0
+#define MYNAME(x)	x, 0
 #endif
 
 #include "efi_pins.h"
@@ -39,7 +39,7 @@ bool GPIO::isPinSet(PinId id) {
 #ifdef STM32
 	uint16_t last = ::HAL_GPIO_ReadPin(getPort(pins + id), getPin(pins + id));
 #elif ARDUINO
-	uint16_t last = ::digitalRead(pins[id].pin);
+	uint16_t last = ::digitalRead(pins[id].ext);
 #else
 	uint16_t last = pins[id].last;
 #endif
@@ -61,13 +61,13 @@ void GPIO::setPin(PinId id, bool v) {
 #ifdef STM32
 	::HAL_GPIO_WritePin(getPort(pins + id), getPin(pins + id), v ? GPIO_PIN_SET : GPIO_PIN_RESET);
 #elif ARDUINO
-	::digitalWrite(pins[id].pin, v);
+	::digitalWrite(pins[id].ext, v);
 #endif
 }
 
 uint16_t GPIO::analogRead(PinId id) {
 #ifdef ARDUINO
-	uint16_t last = ::analogRead(pins[id].pin);
+	uint16_t last = ::analogRead(pins[id].ext);
 #else
 	uint16_t last = pins[id].last;
 #endif
@@ -87,7 +87,7 @@ void GPIO::analogWrite(PinId id, uint16_t v) {
 	}
 
 #ifdef ARDUINO
-	::analogWrite(pins[id].pin, v);
+	::analogWrite(pins[id].ext, v);
 #endif
 }
 
@@ -131,9 +131,9 @@ void GPIO::init() {
 			STGPIO::init(pd->ext, &gpio);
 #elif ARDUINO
 			if (pd->mode & PinModeOutput)
-				pinMode(def.pin, OUTPUT);
+				pinMode(pd->ext, OUTPUT);
 			else if (pd->mode & PinModeInput)
-				pinMode(def.pin, INPUT_PULLUP);
+				pinMode(pd->ext, INPUT_PULLUP);
 #endif
 		}
 	}

@@ -13,7 +13,7 @@ static uint32_t runEncoder(uint32_t t0, void *data) {
 	return ticks;
 }
 
-uint16_t Encoder::init() {
+void Encoder::init() {
 	ratio = 0;
 	rpm = 0;
 	edges = 0;
@@ -25,8 +25,10 @@ uint16_t Encoder::init() {
 	taskmgr.addTask(F("Encoder"), runEncoder, 0, MicrosToTicks(refresh()));
 
 	broker.add(enskip, this, F("enskip"));
+}
 
-	return sizeof(Encoder);
+uint16_t Encoder::mem(bool alloced) {
+	return 0;
 }
 
 

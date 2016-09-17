@@ -6,9 +6,14 @@ class CanBus {
 
 public:
 
-	uint8_t init();
+	void init();
+
+	uint16_t mem(bool alloced);
+
 	bool send(uint32_t id, uint8_t *buf, uint8_t len);
 	bool recv(uint32_t *id, uint8_t *buf, uint8_t *len);
 };
+
+EXTERN CanBus canbus;
 
 #endif

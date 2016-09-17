@@ -58,7 +58,8 @@ void _log(uint8_t level, const flash_t *file, int line, const flash_t *fmt, ...)
 
 
 
-#ifdef ARDUINO
+#if 0
+#if 0
 
 #include <Print.h>
 
@@ -75,10 +76,11 @@ void _log(uint8_t level, const flash_t *file, int line, const flash_t *fmt, ...)
 #define sendIdVal(t) void send(uint8_t id, t v, bool verbose = true) { if (verbose || v) { name(id); print(v); }}
 
 #endif
+#endif
 
 
 
-class Stream {
+class Streamx {
 	uint8_t level;
 
 public:
@@ -86,7 +88,5 @@ public:
 	uint8_t getLevel();
 	uint8_t setLevel(uint8_t level);
 };
-
-extern Buffer channel;
 
 #endif

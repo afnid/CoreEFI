@@ -6,7 +6,9 @@ public:
 
 	static void tick(uint32_t now);
 
-	static uint16_t init();
+	static void init();
+
+	static uint16_t mem(bool alloced);
 
 	static uint32_t seconds();
 

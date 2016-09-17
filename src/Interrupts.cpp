@@ -32,7 +32,7 @@ public:
 
 	inline void init(const GPIO::PinDef *pd) volatile {
 #ifdef ARDUINO
-		this->id = digitalPinToInterrupt(pin->getPin());
+		this->id = digitalPinToInterrupt(pd->getId());
 #endif
 		this->pid = pd->getId();
 	}

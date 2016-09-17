@@ -30,7 +30,7 @@
         <units>bit</units>
         <value>1.0</value>
         <last>0.0</last>
-        <time>1473670302641</time>
+        <time>1474129826671</time>
         <min>0.0</min>
         <max>1.0</max>
         <bits>0</bits>
@@ -197,7 +197,7 @@
         <units>rpm</units>
         <value>500.0</value>
         <last>0.0</last>
-        <time>1473670302641</time>
+        <time>1474129826672</time>
         <min>0.0</min>
         <max>7000.0</max>
         <bits>0</bits>
@@ -238,7 +238,7 @@
         <units>scalar</units>
         <value>5.0</value>
         <last>0.0</last>
-        <time>1473670302641</time>
+        <time>1474129826672</time>
         <min>0.0</min>
         <max>5.0</max>
         <bits>0</bits>

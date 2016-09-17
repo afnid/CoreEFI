@@ -87,13 +87,14 @@ public:
 	inline uint8_t size() volatile {
 		return count;
 	}
+
+	static void init();
+
+	static uint16_t mem(bool alloced);
+
+	static volatile BitSchedule *getSchedule();
+	static uint32_t runSchedule(uint32_t t0, void *data);
+	static void swapSchedule();
 };
-
-volatile BitSchedule *getSchedule();
-void swapSchedule();
-
-uint16_t initSchedule();
-void runSchedule();
-void sendSchedule();
 
 #endif

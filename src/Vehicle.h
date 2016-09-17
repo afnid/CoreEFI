@@ -60,7 +60,10 @@ class Vehicle {
 
 public:
 
-	uint16_t init();
+	void init();
+
+	uint16_t mem(bool alloced);
+
 	void checkVehicle(uint32_t now);
 };
 

@@ -454,7 +454,7 @@ void initTickTimer(uint8_t id, uint32_t us)
 	duetimers[id].start(us);
 }
 
-static void printTimers() {
+static void printTimers(Buffer &send) {
 	float div = 1000 * 1000;
 
 	send.p1(F("clocks"));
@@ -664,7 +664,7 @@ static FastTimer *getFastTimer(uint8_t id) {
 	}
 }
 
-static void printTimers() {
+static void printTimers(Buffer &send) {
 }
 
 #else
@@ -990,7 +990,7 @@ static void handleTimer(uint8_t id) {
 					break;
 				case 1:
 					for (uint8_t i = 0; i < MAXLOOPS; i++) {
-						next = runEvents(now, 0, MAXJITTER);
+						next = BitPlan::runEvents(now, 0, MAXJITTER);
 						now = clockTicks();
 
 						if (tdiff32(next, now) > MAXJITTER)
@@ -1018,22 +1018,24 @@ void simTimerEvents(uint32_t next) {
 	t->sleep(next);
 }
 
-static void sendTimers(Buffer &send, BrokerEvent &be, void *data) {
+static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
 	timers.send(send);
 }
 
-uint16_t initTimers() {
+void Timers::init() {
 	timers.initTimers();
 
 	if (0)
 		handleTimer(TimerId1); // get rid of warning
 
-	broker.add(sendTimers, 0, F("timers"));
-
-	return sizeof(timers);
+	broker.add(brokercb, 0, F("timers"));
 }
 
-void idleSleep(uint32_t us) {
+uint16_t Timers::mem(bool alloced) {
+	return alloced ? 0 : sizeof(timers);
+}
+
+void Timers::sleep(uint32_t us) {
 	/* no good without idle timers!  maybe wdt, more contention?
 	 set_sleep_mode(SLEEP_MODE_IDLE);
 	 PRR = PRR | 0b00100000;

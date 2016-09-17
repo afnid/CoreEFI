@@ -17,7 +17,9 @@ class Encoder {
 
 public:
 
-	uint16_t init();
+	void init();
+
+	uint16_t mem(bool alloced);
 
 	void skipEncoder() {
 		skip = true;
@@ -60,6 +62,6 @@ public:
 	}
 };
 
-extern Encoder encoder;
+EXTERN Encoder encoder;
 
 #endif

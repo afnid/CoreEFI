@@ -94,7 +94,7 @@ void Stream::_log(uint8_t level, const flash_t *file, int line, const flash_t *f
 }
 #endif
 
-uint8_t Stream::setLevel(uint8_t level) {
+uint8_t Streamx::setLevel(uint8_t level) {
 	uint8_t old = this->level;
 	this->level = level;
 	this->level = max(this->level, LOG_FINE);

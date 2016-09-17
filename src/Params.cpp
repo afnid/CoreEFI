@@ -1,14 +1,15 @@
 // copyright to me, released under GPL V3
 
+#include "Params.h"
 #include "System.h"
 #include "Buffer.h"
 #include "Metrics.h"
-#include "Params.h"
 #include "Broker.h"
 #include "Tasks.h"
 #include "Codes.h"
+#include "Hardware.h"
 
-#if defined(ARDUINO_UNO)
+#if defined(ARDUINO_UNO) || defined(ARDUINO_MEGA)
 #define LOOKUPPROGMEM 1
 #define DATAPROGMEM 1
 #define NAMEPROGMEM 1
@@ -89,9 +90,9 @@ static inline LookupHeader *getLookupHeader(const ParamData *pd) {
 	static LookupHeader h;
 
 	if (pd && pd->hdr)
-		mymemcpy_PF((char *)h, (char *)(lookups + pd->hdr - 1), sizeof(LookupHeader));
+		mymemcpy_PF((char *)&h, (char *)(lookups + pd->hdr - 1), sizeof(LookupHeader));
 	else
-		myzero(h, sizeof(LookupHeader));
+		bzero(&h, sizeof(LookupHeader));
 #else
 	return lookups + pd->hdr - 1;
 #endif
@@ -461,13 +462,13 @@ static void sendParamStats(Buffer &send, BrokerEvent &be, void *) {
 	send.p2();
 }
 
-static inline uint32_t runChanges(uint32_t t0, void *data) {
+static inline uint32_t taskcb(uint32_t t0, void *data) {
 	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
 
 	if (wait) {
-		extern Buffer channel;
-		BrokerEvent be(channel);
-		sendParamChanges(channel, be, 0);
+		Buffer &send = hardware.send();
+		BrokerEvent be(0);
+		sendParamChanges(send, be, 0);
 		wait = max(wait, 500);
 		wait = min(wait, 1000);
 		return wait;
@@ -516,7 +517,7 @@ static void handleM(Buffer &send, BrokerEvent &be, void *) {
 	setParamUnsigned(FlagIsMonitoring, isParamSet(FlagIsMonitoring) ? 0 : 5000);
 }
 
-uint16_t initParams() {
+void Params::init() {
 	bzero(&local, sizeof(local));
 	local.minl = MaxParam;
 
@@ -529,7 +530,7 @@ uint16_t initParams() {
 		}
 	}
 
-	taskmgr.addTask(F("Params"), runChanges, 0, 3000);
+	taskmgr.addTask(F("Params"), taskcb, 0, 3000);
 
 	broker.add(sendParamValues, 0, F("pv"));
 	broker.add(sendParamLookups, 0, F("pv"));
@@ -539,8 +540,10 @@ uint16_t initParams() {
 	broker.add(handleS, 0, F("s"));
 	broker.add(handleQ, 0, F("q"));
 	broker.add(handleM, 0, F("u"));
+}
 
-	return sizeof(local) + sizeof(params) + sizeof(lookups);
+uint16_t Params::mem(bool alloced) {
+	return alloced ? 0 : sizeof(local) + sizeof(params) + sizeof(lookups);
 }
 
 float lookupParam(ParamTypeId id, ParamData *pd) {

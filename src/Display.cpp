@@ -127,7 +127,7 @@ static char *formatLast(char *buf, GPIO::PinId id) {
 		strcat(s, " ");
 
 		if (p->name)
-			strcat(s, p->name);
+			fstrcpy(s + strlen(s), p->name);
 	}
 
 	return buf;
@@ -141,7 +141,7 @@ static char *formatTemp(char *buf) {
 	s = itoa(s, getParamFloat(VehicleRadiatorTemp));
 	s = concatch(s, (char)223);
 	s = concatch(s, '/');
-	s = itoa(s, getParamUnsigned(SensorAMPS1));
+	s = itoa(s, getParamFloat(SensorAMPS1));
 	//s = itoa(s, getParamFloat(SensorECT));
 	s = concatch(s, (char)223);
 
@@ -261,7 +261,7 @@ static void menucb1(Buffer &send, BrokerEvent &be, void *data) {
 	((Display *)data)->menuInput(send, 1);
 }
 
-uint16_t Display::init() {
+void Display::init() {
 	memset(display, 0, sizeof(display));
 
 	menu = 0;
@@ -277,6 +277,8 @@ uint16_t Display::init() {
 	broker.add(menucb1, this, F("m1"));
 
 	taskmgr.addTask(F("Display"), runDisplay, this, 500);
+}
 
-	return sizeof(Display);
+uint16_t Display::mem(bool alloced) {
+	return 0;
 }

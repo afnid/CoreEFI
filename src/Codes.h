@@ -12,7 +12,9 @@ class Codes {
 
 public:
 
-	uint16_t init();
+	void init();
+
+	uint16_t mem(bool alloced);
 
 	inline void set(ParamTypeId id) {
 		assert(id < MaxParam);

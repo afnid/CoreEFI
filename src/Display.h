@@ -13,13 +13,15 @@ class Display {
 
 public:
 
-	uint16_t init();
+	void init();
+
+	uint16_t mem(bool alloced);
 
 	void showDisplay(uint32_t now);
 
 	void menuInput(Buffer &send, uint8_t i);
 };
 
-extern Display display;
+EXTERN Display display;
 
 #endif

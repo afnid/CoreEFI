@@ -224,13 +224,13 @@ static volatile struct {
 	}
 } events;
 
-volatile BitSchedule *getSchedule() {
+volatile BitSchedule *BitSchedule::getSchedule() {
 	if (events.swap)
 		return 0;
 	return events.current == &events.schedule2 ? &events.schedule1 : &events.schedule2;
 }
 
-void swapSchedule() {
+void BitSchedule::swapSchedule() {
 	events.swap = true;
 
 	if (!events.current->size())
@@ -253,7 +253,7 @@ void setEventTDC(uint32_t tdc) {
 	events.sync = true;
 }
 
-uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint16_t jitter) {
+uint32_t BitPlan::runEvents(uint32_t now, uint8_t maxdelay, uint16_t jitter) {
 	if (events.valid)
 		return events.runEvent(now, maxdelay, jitter);
 
@@ -262,7 +262,7 @@ uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint16_t jitter) {
 	return now + MicrosToTicks(10000);
 }
 
-void refreshEvents() {
+void BitPlan::refreshEvents() {
 	if (events.valid && getParamUnsigned(SensorRPM) <= 0)
 		events.reset();
 }
@@ -348,13 +348,13 @@ void sendEventList(Buffer &send, BrokerEvent &be, void *data) {
 	}
 }
 
-static uint32_t runEvents(uint32_t now, void *data) {
-	int32_t ticks = runEvents(now, 0, 5);
+static uint32_t taskcb(uint32_t now, void *data) {
+	int32_t ticks = BitPlan::runEvents(now, 0, 5);
 	ticks = tdiff32(ticks, clockTicks());
 	return max(ticks, 1);
 }
 
-uint16_t initEvents() {
+void BitPlan::init() {
 	events.reset();
 
 	events.schedule1.reset();
@@ -365,10 +365,12 @@ uint16_t initEvents() {
 
 	refreshEvents();
 
-	taskmgr.addTask(F("Events"), runEvents, 0, 1000);
+	taskmgr.addTask(F("Events"), taskcb, 0, 1000);
 
 	broker.add(sendEventStatus, 0, F("e0"));
 	broker.add(sendEventList, 0, F("e1"));
+}
 
-	return sizeof(events);
+uint16_t BitPlan::mem(bool alloced) {
+	return alloced ? 0 : sizeof(events);
 }

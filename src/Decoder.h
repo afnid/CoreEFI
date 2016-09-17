@@ -228,7 +228,9 @@ public:
 		}
 	}
 
-	uint16_t init() volatile;
+	void init() volatile;
+
+	uint16_t mem(bool alloced) volatile;
 
 	void sendStatus(Buffer &send) volatile;
 
@@ -237,6 +239,6 @@ public:
 
 #undef PATH
 
-extern volatile Decoder decoder;
+EXTERN volatile Decoder decoder;
 
 #endif

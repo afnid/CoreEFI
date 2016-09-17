@@ -23,18 +23,20 @@ void Epoch::tick(uint32_t t0) {
 
 		uint16_t rpm = getParamUnsigned(SensorRPM);
 		uint16_t cranking = getParamUnsigned(ConstCrankingRPM);
-		setTimer(TimeRunSeconds, rpm >= cranking);
-		setTimer(TimeIdleSeconds, getParamFloat(SensorTPS) <= 20);
+		Strategy::setTimer(TimeRunSeconds, rpm >= cranking);
+		Strategy::setTimer(TimeIdleSeconds, getParamFloat(SensorTPS) <= 20);
 	}
 }
 
-uint16_t Epoch::init() {
+void Epoch::init() {
 	last = 0;
 	counter = 0;
 
 	taskmgr.addTask(F("Clock"), runClock, 0, 1000);
+}
 
-	return sizeof(Epoch);
+uint16_t Epoch::mem(bool alloced) {
+	return alloced ? 0 : sizeof(last) + sizeof(counter);
 }
 
 uint32_t Epoch::seconds() {

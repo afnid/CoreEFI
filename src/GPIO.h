@@ -13,13 +13,13 @@ public:
 	typedef struct {
 		uint8_t ext;
 		uint8_t id;
-		const char *name;
+		const flash_t *name;
 		uint16_t mode;
+		uint8_t def;
+		uint8_t invert;
 		uint16_t hyst;
 		uint16_t last;
 		uint32_t changed;
-		uint8_t def;
-		uint8_t invert;
 		char info[6];
 
 		PinId getId() const {
