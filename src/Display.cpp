@@ -1,3 +1,4 @@
+
 #ifdef ARDUINO
 #include <Arduino.h>
 #include <Wire.h>
@@ -112,11 +113,11 @@ static char *concat(char *s, const char *label, uint32_t val, uint32_t now)
 }
 #endif
 
-static char *formatLast(char *buf, GPIO::PinId id) {
+static char *formatLast(char *buf, PinId id) {
 	char *s = buf;
 	*s = 0;
 
-	const GPIO::PinDef *p = GPIO::getPinDef(id);
+	const GPIO::PinDef *p = gpio.getPinDef(id);
 
 	if (p && p->ms() < 5000) {
 		itoa(s, p->ext);
@@ -216,7 +217,7 @@ void Display::showDisplay(uint32_t now) {
 	char buf[40];
 
 	if (row <= 0) {
-		showLine(row & 1, formatLast(buf, (GPIO::PinId)(row & 1)));
+		showLine(row & 1, formatLast(buf, (PinId)(row & 1)));
 	} else {
 		switch (menu) {
 			case 0:

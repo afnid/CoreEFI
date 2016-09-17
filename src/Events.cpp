@@ -5,9 +5,9 @@
 #include "Broker.h"
 #include "Metrics.h"
 #include "Params.h"
+#include "GPIO.h"
 #include "Schedule.h"
 #include "Tasks.h"
-#include "GPIO.h"
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -200,17 +200,17 @@ static volatile struct {
 				}
 			}
 
-			GPIO::PinId id = (GPIO::PinId)(p->getPin() + 1);
-			bool isSet = GPIO::isPinSet(id);
+			PinId id = (PinId)(p->getPin() + 1);
+			bool isSet = gpio.isPinSet(id);
 
 			if (p->isHi() == isSet)
 				addHist(CountPins);
 
 			if (p->isHi()) {
-				GPIO::setPin(id, true);
+				gpio.setPin(id, true);
 				on++;
 			} else {
-				GPIO::setPin(id, false);
+				gpio.setPin(id, false);
 				on--;
 			}
 

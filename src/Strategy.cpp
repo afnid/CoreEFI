@@ -1,7 +1,6 @@
 // copyright to me, released under GPL V3
 
 #include "Strategy.h"
-#include "GPIO.h"
 #include "System.h"
 #include "Buffer.h"
 #include "Params.h"
@@ -12,6 +11,7 @@
 #include "Events.h"
 #include "Schedule.h"
 #include "efi_types.h"
+#include "GPIO.h"
 
 static const char *PATH = __FILE__;
 
@@ -70,7 +70,7 @@ static inline uint16_t getTimer(uint8_t id) {
 	if (!strategy.times[idx])
 		return 0;
 
-	const GPIO::PinDef *pd = GPIO::getPinDef(GPIO::IsKeyOn);
+	const GPIO::PinDef *pd = gpio.getPinDef(IsKeyOn);
 	return tdiff32(pd->changed, strategy.times[idx]);
 }
 
@@ -82,7 +82,7 @@ void Strategy::setTimer(ParamTypeId id, bool enable) {
 	bool isset = strategy.times[idx] != 0;
 
 	if (enable != isset) {
-		const GPIO::PinDef *pd = GPIO::getPinDef(GPIO::IsKeyOn);
+		const GPIO::PinDef *pd = gpio.getPinDef(IsKeyOn);
 		uint16_t epoch = !enable ? 0 : pd->changed;
 		strategy.times[idx] = epoch;
 		setParamUnsigned(id, epoch);
@@ -178,7 +178,7 @@ void expireCached(ParamTypeId id) {
 			break;
 	}
 
-	if (GPIO::isPinSet(GPIO::IsCranking)) {
+	if (gpio.isPinSet(IsCranking)) {
 		clearCached(FuncCrankFuelPulseWidthMultiplier);
 		clearCached(FuncCrankingFuelPulseWidthVsEct);
 	}
@@ -212,7 +212,7 @@ float getStrategyDouble(ParamTypeId id, ParamData *pd) {
 				break;
 			case FuncCrankFuelPulseWidthMultiplier:
 			case FuncCrankingFuelPulseWidthVsEct:
-				if (!GPIO::isPinSet(GPIO::IsCranking))
+				if (!gpio.isPinSet(IsCranking))
 					return 0;
 				break;
 			case FuncOpenLoopFuelMultiplierVsAct:

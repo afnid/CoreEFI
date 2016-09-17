@@ -4,6 +4,7 @@
 
 #include "Tasks.h"
 #include "Hardware.h"
+#include "GPIO.h"
 
 #include "Schedule.h"
 #include "Strategy.h"
@@ -17,6 +18,14 @@
 #include "Display.h"
 #include "Vehicle.h"
 #include "Bus.h"
+
+#ifndef NDEBUG
+#define MYNAME(x)	x, F(#x)
+#else
+#define MYNAME(x)	x, 0
+#endif
+
+#include "efi_pins.h"
 
 static uint16_t add(uint16_t &total, uint16_t mem) {
 	total += mem;
@@ -39,7 +48,7 @@ static void setDefaults() {
 	setParamFloat(SensorTPS, 20);
 	setParamFloat(SensorVCC, 14);
 	setParamUnsigned(SensorGEAR, 5);
-	GPIO::setPin(GPIO::IsKeyOn, 1);
+	gpio.setPin(IsKeyOn, 1);
 }
 
 static void mem(Buffer &send, bool alloced) {
@@ -110,6 +119,7 @@ static uint32_t brokertask(uint32_t now, void *data) {
 
 void initSystem(bool doefi) {
 	hardware.init();
+	gpio.init(pins, MaxPins);
 
 	Epoch::init();
 	Params::init();

@@ -1,12 +1,12 @@
 #ifndef _Vehicle_h_
 #define _Vehicle_h_
 
-#include "GPIO.h"
 #include "Broker.h"
+#include "Pins.h"
 
 class Coded {
 public:
-	GPIO::PinId id;
+	PinId id;
 	uint16_t value;
 	uint16_t state;
 	uint16_t count;

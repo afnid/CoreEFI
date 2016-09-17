@@ -2,12 +2,12 @@
 
 #include "Interrupts.h"
 #include "Params.h"
-#include "GPIO.h"
 #include "System.h"
 #include "Metrics.h"
 
-#include "Pins.h"
+#include "GPIO.h"
 #include "Decoder.h"
+#include "Pins.h"
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -24,7 +24,7 @@ enum {
 };
 
 class Interrupt {
-	GPIO::PinId pid;
+	PinId pid;
 
 public:
 
@@ -38,7 +38,7 @@ public:
 	}
 
 	uint16_t digitalRead() volatile {
-		return GPIO::isPinSet(pid);
+		return gpio.isPinSet(pid);
 	}
 
 	void send(Buffer &send) volatile {

@@ -3,11 +3,11 @@
 #include "Schedule.h"
 
 #include "Encoder.h"
-#include "GPIO.h"
 #include "Metrics.h"
 #include "Broker.h"
 #include "Tasks.h"
 #include "Hardware.h"
+#include "GPIO.h"
 
 class Schedule {
 	enum {
@@ -117,8 +117,8 @@ class Schedule {
 				uint16_t pulse1 = tdc - pulseAdvance;
 				uint16_t spark1 = tdc - sparkAdvance;
 
-				uint8_t pulsepin = GPIO::Injector1 + cyl;
-				uint8_t sparkpin = GPIO::Spark1 + cyl;
+				uint8_t pulsepin = Injector1 + cyl;
+				uint8_t sparkpin = Spark1 + cyl;
 
 				p++->setEvent(n++, cyl, pulsepin, pulse1, 0, true);
 				p++->setEvent(n++, cyl, pulsepin, pulse1, pulseWidth, false);
