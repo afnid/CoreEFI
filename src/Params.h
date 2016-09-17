@@ -25,6 +25,6 @@ void sendParam(ParamTypeId id);
 void setSensorParam(ParamTypeId id, uint16_t adc);
 
 const char *getParamName(ParamTypeId id, char *buf, int maxlen);
-const channel_t *getParamName(ParamTypeId id);
+const flash_t *getParamName(ParamTypeId id);
 
 #endif

@@ -7,7 +7,7 @@
 
 #ifndef ARDUINO
 
-typedef char channel_t;
+typedef char flash_t;
 
 #endif
 
@@ -26,7 +26,7 @@ enum {
 #define LOG_LEVEL LOG_FINE
 #endif
 
-void _log(uint8_t level, const channel_t *file, int line, const channel_t *fmt, ...);
+void _log(uint8_t level, const flash_t *file, int line, const flash_t *fmt, ...);
 
 #define LOG_CALL(level, fmt, ...) _log(level, F(__FILE__), __LINE__, F(fmt), ## __VA_ARGS__);
 #define TLOG_CALL(truth, level, fmt, ...) if (!(truth)) LOG_CALL(level, fmt, ## __VA_ARGS__)
@@ -62,7 +62,7 @@ void _log(uint8_t level, const channel_t *file, int line, const channel_t *fmt, 
 
 #include <Print.h>
 
-#define channel_t __FlashStringHelper
+#define flash_t __FlashStringHelper
 #define _printOverload(fmt, type) int print(type v) { return out->print(v); }
 #define sendNameVal(t) void send(const __FlashStringHelper *label, t v, bool verbose = true) { if (verbose || v) { name(label); out->print(v); }}
 #define sendIdVal(t) void send(uint8_t id, t v, bool verbose = true) { if (verbose || v) { name(id); out->print(v); }}
@@ -71,7 +71,7 @@ void _log(uint8_t level, const channel_t *file, int line, const channel_t *fmt, 
 
 #define _printOverloadf(f, t) int print(t v) { return printf(f, (double)v); }
 #define _printOverload(f, t) int print(t v) { return printf(f, v); }
-#define sendNameVal(t) void send(const channel_t *label, t v, bool verbose = true) { if (verbose || v) { name(label); print(v); }}
+#define sendNameVal(t) void send(const flash_t *label, t v, bool verbose = true) { if (verbose || v) { name(label); print(v); }}
 #define sendIdVal(t) void send(uint8_t id, t v, bool verbose = true) { if (verbose || v) { name(id); print(v); }}
 
 #endif

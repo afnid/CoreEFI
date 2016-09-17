@@ -13,7 +13,7 @@ LiquidCrystal_I2C lcd(LCD_ADDR, 20, 4); // a4, a5
 #include "Buffer.h"
 #include "Params.h"
 #include "Hardware.h"
-#include "Shell.h"
+#include "Broker.h"
 
 #include "Tasks.h"
 #include "GPIO.h"
@@ -253,11 +253,11 @@ static uint32_t runDisplay(uint32_t now, void *data) {
 	return 0;
 }
 
-static void menucb0(Buffer &send, ShellEvent &se, void *data) {
+static void menucb0(Buffer &send, BrokerEvent &be, void *data) {
 	((Display *)data)->menuInput(send, 0);
 }
 
-static void menucb1(Buffer &send, ShellEvent &se, void *data) {
+static void menucb1(Buffer &send, BrokerEvent &be, void *data) {
 	((Display *)data)->menuInput(send, 1);
 }
 
@@ -273,8 +273,8 @@ uint16_t Display::init() {
 	lcd.setContrast(20);
 #endif
 
-	shell.add(menucb0, this, F("m0"), F(""));
-	shell.add(menucb1, this, F("m1"), F(""));
+	broker.add(menucb0, this, F("m0"));
+	broker.add(menucb1, this, F("m1"));
 
 	taskmgr.addTask(F("Display"), runDisplay, this, 500);
 

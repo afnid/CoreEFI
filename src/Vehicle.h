@@ -2,7 +2,7 @@
 #define _Vehicle_h_
 
 #include "GPIO.h"
-#include "Shell.h"
+#include "Broker.h"
 
 class Coded {
 public:
@@ -42,7 +42,7 @@ class Vehicle {
 
 	Pulsed epas2;
 
-	static void prompt_cb(Buffer &send, ShellEvent &se, void *data);
+	static void prompt_cb(Buffer &send, BrokerEvent &be, void *data);
 
 	bool isRunning();
 	void fans_pwm(uint32_t now);

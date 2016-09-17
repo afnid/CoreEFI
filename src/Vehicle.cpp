@@ -5,7 +5,7 @@
 
 #include "System.h"
 #include "Buffer.h"
-#include "Shell.h"
+#include "Broker.h"
 #include "Params.h"
 #include "Vehicle.h"
 #include "Tasks.h"
@@ -144,7 +144,7 @@ static GPIO::Def pins[] = {
 
 #endif
 
-void Vehicle::prompt_cb(Buffer &send, ShellEvent &se, void *data) {
+void Vehicle::prompt_cb(Buffer &send, BrokerEvent &be, void *data) {
 	((Vehicle *)data)->sendStatus(send);
 }
 
@@ -623,7 +623,7 @@ uint16_t Vehicle::init() {
 	setPins();
 
 	taskmgr.addTask(F("Vehicle"), runVehicle, this, 20);
-	shell.add(prompt_cb, this, F("vehicle"), 0);
+	broker.add(prompt_cb, this, F("vehicle"));
 
 	return sizeof(Vehicle);
 }

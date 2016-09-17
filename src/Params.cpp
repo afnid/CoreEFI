@@ -4,7 +4,7 @@
 #include "Buffer.h"
 #include "Metrics.h"
 #include "Params.h"
-#include "Shell.h"
+#include "Broker.h"
 #include "Tasks.h"
 #include "Codes.h"
 
@@ -97,15 +97,15 @@ static inline LookupHeader *getLookupHeader(const ParamData *pd) {
 #endif
 }
 
-static inline const channel_t *getName(ParamTypeId id) {
+static inline const flash_t *getName(ParamTypeId id) {
 #if NAMEPROGMEM
-	return (channel_t *)(names + pgm_read_word_near(nameidx + id));
+	return (flash_t *)(names + pgm_read_word_near(nameidx + id));
 #else
 	return names + nameidx[id];
 #endif
 }
 
-const channel_t *getParamName(ParamTypeId id) {
+const flash_t *getParamName(ParamTypeId id) {
 	return getName(id);
 }
 
@@ -386,7 +386,7 @@ void sendParam(Buffer &send, ParamTypeId id) {
 	sendParam(send, id, pd, false);
 }
 
-static void sendParamChanges(Buffer &send, ShellEvent &se, void *) {
+static void sendParamChanges(Buffer &send, BrokerEvent &be, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		if (isset(local.notify, id)) {
 			ParamData *pd = getParamData(id);
@@ -396,14 +396,14 @@ static void sendParamChanges(Buffer &send, ShellEvent &se, void *) {
 	}
 }
 
-static void sendParamValues(Buffer &send, ShellEvent &se, void *) {
+static void sendParamValues(Buffer &send, BrokerEvent &be, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 		sendParam(send, (ParamTypeId)id, pd, true);
 	}
 }
 
-static void sendParamLookups(Buffer &send, ShellEvent &se, void *) {
+static void sendParamLookups(Buffer &send, BrokerEvent &be, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 
@@ -430,7 +430,7 @@ static void sendParamLookups(Buffer &send, ShellEvent &se, void *) {
 	}
 }
 
-static void sendParamList(Buffer &send, ShellEvent &se, void *) {
+static void sendParamList(Buffer &send, BrokerEvent &be, void *) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 
@@ -447,7 +447,7 @@ static void sendParamList(Buffer &send, ShellEvent &se, void *) {
 	}
 }
 
-static void sendParamStats(Buffer &send, ShellEvent &se, void *) {
+static void sendParamStats(Buffer &send, BrokerEvent &be, void *) {
 	send.p1(F("params"));
 	send.json(F("params"), (uint16_t) sizeof(params));
 	send.json(F("lookups"), (uint16_t) sizeof(lookups));
@@ -466,8 +466,8 @@ static inline uint32_t runChanges(uint32_t t0, void *data) {
 
 	if (wait) {
 		extern Buffer channel;
-		ShellEvent se(channel);
-		sendParamChanges(channel, se, 0);
+		BrokerEvent be(channel);
+		sendParamChanges(channel, be, 0);
 		wait = max(wait, 500);
 		wait = min(wait, 1000);
 		return wait;
@@ -476,9 +476,9 @@ static inline uint32_t runChanges(uint32_t t0, void *data) {
 	return 3000017UL;
 }
 
-static void handleQ(Buffer &send, ShellEvent &se, void *) {
-	const char *s = se.next();
-	s = se.next();
+static void handleQ(Buffer &send, BrokerEvent &be, void *) {
+	const char *s = be.next();
+	s = be.next();
 
 	if (s) {
 		ParamTypeId id = (ParamTypeId) atoi(s);
@@ -491,12 +491,12 @@ static void handleQ(Buffer &send, ShellEvent &se, void *) {
 	}
 }
 
-static void handleS(Buffer &send, ShellEvent &se, void *) {
-	const char *s = se.next();
-	s = se.next();
+static void handleS(Buffer &send, BrokerEvent &be, void *) {
+	const char *s = be.next();
+	s = be.next();
 
 	if (s) {
-		const char *arg2 = se.next();
+		const char *arg2 = be.next();
 
 		if (arg2) {
 			ParamTypeId id = (ParamTypeId) atoi(s);
@@ -512,7 +512,7 @@ static void handleS(Buffer &send, ShellEvent &se, void *) {
 	}
 }
 
-static void handleM(Buffer &send, ShellEvent &se, void *) {
+static void handleM(Buffer &send, BrokerEvent &be, void *) {
 	setParamUnsigned(FlagIsMonitoring, isParamSet(FlagIsMonitoring) ? 0 : 5000);
 }
 
@@ -531,14 +531,14 @@ uint16_t initParams() {
 
 	taskmgr.addTask(F("Params"), runChanges, 0, 3000);
 
-	shell.add(sendParamValues, 0, F("pv"), F("values"));
-	shell.add(sendParamLookups, 0, F("pv"), F("tables"));
-	shell.add(sendParamList, 0, F("pl"), F("list"));
-	shell.add(sendParamStats, 0, F("pl"), F("stats"));
-	shell.add(sendParamChanges, 0, F("pl"), F("changes"));
-	shell.add(handleS, 0, F("s"), F("param"));
-	shell.add(handleQ, 0, F("q"), F("param"));
-	shell.add(handleM, 0, F("u"), F("param"));
+	broker.add(sendParamValues, 0, F("pv"));
+	broker.add(sendParamLookups, 0, F("pv"));
+	broker.add(sendParamList, 0, F("pl"));
+	broker.add(sendParamStats, 0, F("pl"));
+	broker.add(sendParamChanges, 0, F("pl"));
+	broker.add(handleS, 0, F("s"));
+	broker.add(handleQ, 0, F("q"));
+	broker.add(handleM, 0, F("u"));
 
 	return sizeof(local) + sizeof(params) + sizeof(lookups);
 }

@@ -1,14 +1,14 @@
 #include "Codes.h"
-#include "Shell.h"
+#include "Broker.h"
 
-static void codescb(Buffer &send, ShellEvent &se, void *data) {
+static void codescb(Buffer &send, BrokerEvent &be, void *data) {
 	((Codes *)data)->send(send);
 }
 
 uint16_t Codes::init() {
 	bzero(codes, sizeof(codes));
 
-	shell.add(codescb, this, F("codes"), 0);
+	broker.add(codescb, this, F("codes"));
 
 	return sizeof(Codes);
 }

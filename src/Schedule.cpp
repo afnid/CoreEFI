@@ -5,7 +5,7 @@
 #include "Encoder.h"
 #include "GPIO.h"
 #include "Metrics.h"
-#include "Shell.h"
+#include "Broker.h"
 #include "Tasks.h"
 
 class Schedule {
@@ -227,7 +227,7 @@ static inline uint32_t runRefresh(uint32_t now, void *data) {
 	return 0;
 }
 
-static void sendSchedule(Buffer &send, ShellEvent &se, void *data) {
+static void sendSchedule(Buffer &send, BrokerEvent &be, void *data) {
 	schedule.sendSchedule(send);
 }
 
@@ -238,7 +238,7 @@ uint16_t initSchedule() {
 	taskmgr.addTask(F("Refresh"), runRefresh, 0, 2000);
 	taskmgr.addTask(F("Status"), runStatus, 0, 3000);
 
-	shell.add(sendSchedule, 0, F("s"), 0);
+	broker.add(sendSchedule, 0, F("s"));
 
 	return sizeof(schedule);
 }

@@ -1,16 +1,16 @@
 #include "Decoder.h"
 #include "Metrics.h"
-#include "Shell.h"
+#include "Broker.h"
 
 void Decoder::sendStatus(Buffer &send) volatile {
 	send.p1(F("decoder"));
 	send.json(F("edges"), edges);
 	send.json(F("tdc"), tdc);
-	send.json(F("old"), old, false);
+	send.json(F("old"), old);
 	send.json(F("idx"), idx);
 	send.json(F("total"), getTicks());
 	send.json(F("rpm"), getRPM());
-	send.json(F("invalid"), !isValid(), false);
+	send.json(F("invalid"), !isValid());
 	sendHist(send, hist, HistMax);
 	send.p2();
 
@@ -29,15 +29,15 @@ void Decoder::sendList(Buffer &send) volatile {
 	}
 }
 
-static void dstatus(Buffer &send, ShellEvent &se, void *data) {
+static void dstatus(Buffer &send, BrokerEvent &be, void *data) {
 	((Decoder *)data)->sendStatus(send);
 }
 
-static void d0(Buffer &send, ShellEvent &se, void *data) {
+static void d0(Buffer &send, BrokerEvent &be, void *data) {
 	((Decoder *)data)->sendStatus(send);
 }
 
-static void d1(Buffer &send, ShellEvent &se, void *data) {
+static void d1(Buffer &send, BrokerEvent &be, void *data) {
 	((Decoder *)data)->sendList(send);
 }
 
@@ -59,9 +59,9 @@ uint16_t Decoder::init() volatile {
 
 	refresh(0);
 
-	shell.add(dstatus, (void *)this, F("dstatus"), F(""));
-	shell.add(d0, (void *)this, F("d0"), F(""));
-	shell.add(d1, (void *)this, F("d1"), F(""));
+	broker.add(dstatus, (void *)this, F("dstatus"));
+	broker.add(d0, (void *)this, F("d0"));
+	broker.add(d1, (void *)this, F("d1"));
 
 	return sizeof(Decoder);
 }

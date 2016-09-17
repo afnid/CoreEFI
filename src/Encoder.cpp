@@ -1,8 +1,8 @@
 #include "Encoder.h"
 #include "Tasks.h"
-#include "Shell.h"
+#include "Broker.h"
 
-static void enskip(Buffer &send, ShellEvent &se, void *data) {
+static void enskip(Buffer &send, BrokerEvent &be, void *data) {
 	((Encoder *)data)->skipEncoder();
 }
 
@@ -24,7 +24,7 @@ uint16_t Encoder::init() {
 
 	taskmgr.addTask(F("Encoder"), runEncoder, 0, MicrosToTicks(refresh()));
 
-	shell.add(enskip, this, F("enskip"), F(""));
+	broker.add(enskip, this, F("enskip"));
 
 	return sizeof(Encoder);
 }

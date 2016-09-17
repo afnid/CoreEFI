@@ -6,7 +6,7 @@
 static const char SEP = '\t';
 
 #if 0
-void Stream::name(const channel_t *label) {
+void Stream::name(const flash_t *label) {
 	if (last != '{')
 		print(SEP);
 
@@ -27,7 +27,7 @@ void Stream::name(uint8_t id) {
 	last = '=';
 }
 
-void Stream::p1(const channel_t *label) {
+void Stream::p1(const flash_t *label) {
 	if (last)
 		print(SEP);
 
@@ -46,7 +46,7 @@ void Stream::p2() {
 #include <string.h>
 
 #if 0
-void Stream::_log(uint8_t level, const channel_t *file, int line, const channel_t *fmt, ...) {
+void Stream::_log(uint8_t level, const flash_t *file, int line, const flash_t *fmt, ...) {
 	if (level >= this->level) {
 		//showms();
 

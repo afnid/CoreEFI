@@ -10,7 +10,7 @@
 
 #include "Hardware.h"
 #include "Tasks.h"
-#include "Shell.h"
+#include "Broker.h"
 
 #include "Epoch.h"
 #include "Stream.h"
@@ -31,19 +31,19 @@ static uint16_t add(uint16_t &total, uint16_t mem) {
 }
 
 static uint32_t shellcb(uint32_t now, void *data) {
-	((Shell *) data)->run(hardware.channels[0]);
+	((Broker *) data)->run(hardware.channels[0]);
 	return 0;
 }
 
 void initSystem(Buffer &send, bool doefi) {
 	uint16_t total = 0;
 
-	taskmgr.addTask(F("Shell"), shellcb, &shell, 400);
+	taskmgr.addTask(F("Broker"), shellcb, &broker, 400);
 
 	send.p1(F("mem"));
 	send.json(F("tasks"), add(total, taskmgr.init()));
 	send.json(F("clock"), add(total, Epoch::init()));
-	send.json(F("prompt"), add(total, shell.init()));
+	send.json(F("prompt"), add(total, broker.init()));
 	send.json(F("codes"), add(total, codes.init()));
 	send.json(F("params"), add(total, initParams()));
 
