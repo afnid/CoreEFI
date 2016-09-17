@@ -7,6 +7,22 @@
 
 DEBUGINIT();
 
+#ifdef ARDUINO
+void Hardware::flush() {
+	Buffer &send = hardware.send();
+	Buffer &recv = hardware.recv();
+
+	while (Serial.available())
+	recv.putb(Serial.read());
+
+	char *buf[32];
+	size_t n = 0;
+
+	if ((n = send.read(buf, sizeof(buf))) > 0)
+	send.write(buf, n);
+}
+#endif
+
 #ifdef STM32
 
 #include "st_main.h"
@@ -90,9 +106,26 @@ static void runDecoderTest() {
 	}
 }
 
+static void runTimeTest() {
+	assert(tdiff32(1, (1L << 32) - 1) == 2);
+	assert(tdiff32(10, (1L << 32) - 10) == 20);
+	assert(tdiff32(10, 2) == 8);
+	assert(tdiff32(2, 10) == -8);
+
+	//assert(uelapsed32(1, (1L << 32) - 1) == 2);
+	//assert(uelapsed32(10, (1L << 32) - 10) == 20);
+	//assert(uelapsed16(10, (1L << 16) - 10) == 20);
+	//assert(uelapsed32(10, 2) == 8);
+	//assert(uelapsed16(10, 2) == 8);
+	//assert(uelapsed32(2, (1L << 32) - 6) == 8);
+	//assert(uelapsed16(2, (1 << 16) - 3) == 5);
+
+	printf("%10u %10u\n", TicksToMicros(clockTicks()), clockTicks());
+	delayTicks(MicrosToTicks(500 * 1000));
+}
+
 int main(int argc, char **argv) {
 	bool doperfect = true;
-	bool dodecoder = false;
 	bool efi = true;
 	int opt;
 
@@ -102,7 +135,10 @@ int main(int argc, char **argv) {
 			doperfect = !doperfect;
 			break;
 		case 'd':
-			dodecoder = !dodecoder;
+			runDecoderTest();
+			break;
+		case 't':
+			runTimeTest();
 			break;
 		case 'e':
 			efi = !efi;
@@ -114,40 +150,6 @@ int main(int argc, char **argv) {
 	}
 
 	initSystem(efi);
-
-	assert(tdiff32(1, (1L << 32) - 1) == 2);
-	assert(tdiff32(10, (1L << 32) - 10) == 20);
-	assert(tdiff32(10, 2) == 8);
-	assert(tdiff32(2, 10) == -8);
-
-	while (true) {
-		printf("%10u %10u\n", TicksToMicros(clockTicks()), clockTicks());
-		delayTicks(MicrosToTicks(500 * 1000));
-		break;
-	}
-
-	runDecoderTest();
-
-	Buffer b;
-
-	for (int i = 0; i < 7; i++) {
-		b.ftoa(3.1415927f, i);
-		printf("%d %s\n", i, b.getstr());
-		b.clear();
-
-		b.ftoa(0.1415927f, i);
-		printf("%d %s\n", i, b.getstr());
-		b.clear();
-	}
-
-
-	//assert(uelapsed32(1, (1L << 32) - 1) == 2);
-	//assert(uelapsed32(10, (1L << 32) - 10) == 20);
-	//assert(uelapsed16(10, (1L << 16) - 10) == 20);
-	//assert(uelapsed32(10, 2) == 8);
-	//assert(uelapsed16(10, 2) == 8);
-	//assert(uelapsed32(2, (1L << 32) - 6) == 8);
-	//assert(uelapsed16(2, (1 << 16) - 3) == 5);
 
 	if (false)
 		for (int i = 0; i < 0; i++) {
@@ -176,9 +178,8 @@ int main(int argc, char **argv) {
 		printf("Running perfect time!\n");
 		extern uint32_t perfectus;
 		perfectus = 1000;
-	}
-
-	printf("Running..\n");
+	} else
+		printf("Running..\n");
 
 	while (true) {
 		uint32_t us = taskmgr.check();

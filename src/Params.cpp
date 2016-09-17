@@ -397,14 +397,14 @@ static void sendParamChanges(Buffer &send, BrokerEvent &be, void *) {
 	}
 }
 
-static void sendParamValues(Buffer &send, BrokerEvent &be, void *) {
+static void sendParamValues(Buffer &send) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 		sendParam(send, (ParamTypeId)id, pd, true);
 	}
 }
 
-static void sendParamLookups(Buffer &send, BrokerEvent &be, void *) {
+static void sendParamLookups(Buffer &send) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 
@@ -431,7 +431,7 @@ static void sendParamLookups(Buffer &send, BrokerEvent &be, void *) {
 	}
 }
 
-static void sendParamList(Buffer &send, BrokerEvent &be, void *) {
+static void sendParamList(Buffer &send) {
 	for (uint8_t id = 0; id < MaxParam; id++) {
 		ParamData *pd = getParamData(id);
 
@@ -448,7 +448,7 @@ static void sendParamList(Buffer &send, BrokerEvent &be, void *) {
 	}
 }
 
-static void sendParamStats(Buffer &send, BrokerEvent &be, void *) {
+static void sendParamStats(Buffer &send) {
 	send.p1(F("params"));
 	send.json(F("params"), (uint16_t) sizeof(params));
 	send.json(F("lookups"), (uint16_t) sizeof(lookups));
@@ -460,6 +460,56 @@ static void sendParamStats(Buffer &send, BrokerEvent &be, void *) {
 	sendHist(send, local.hist, HistMax);
 	//Metrics::send(local.metrics, MaxParam);
 	send.p2();
+}
+
+static void handleQ(Buffer &send, BrokerEvent &be) {
+	ParamTypeId id = (ParamTypeId)be.nextInt();
+
+	if (id >= 0) {
+		send.p1(F("ack"));
+		send.json(id, getParamFloat(id));
+		send.p2();
+	}
+}
+
+static void handleS(Buffer &send, BrokerEvent &be) {
+	ParamTypeId id = (ParamTypeId)be.nextInt();
+
+	if (id >= 0 && be.size()) {
+		const char *arg2 = be.next();
+
+		if (arg2) {
+			float val = atof(arg2);
+			setParamFloat(id, val);
+
+			//send.p1(F("id"));
+			//send.json(F("n"), id);
+			//send.json(F("v"), val);
+			//channel.p2();
+			//channel.nl();
+		}
+	}
+}
+
+static void brokercb(Buffer &send, BrokerEvent &be, void *) {
+	if (be.isMatch("v"))
+		sendParamValues(send);
+	else if (be.isMatch("lookups"))
+		sendParamLookups(send);
+	else if (be.isMatch("list"))
+		sendParamList(send);
+	else if (be.isMatch("stats"))
+		sendParamStats(send);
+	else if (be.isMatch("c"))
+		sendParamChanges(send, be, 0);
+	else if (be.isMatch("set"))
+		handleS(send, be);
+	else if (be.isMatch("q"))
+		handleQ(send, be);
+	else if (be.isMatch("monitor"))
+		setParamUnsigned(FlagIsMonitoring, isParamSet(FlagIsMonitoring) ? 0 : 5000);
+	else
+		send.nl("v|lookups|list|stats|c|set|q|monitor");
 }
 
 static inline uint32_t taskcb(uint32_t t0, void *data) {
@@ -477,46 +527,6 @@ static inline uint32_t taskcb(uint32_t t0, void *data) {
 	return 3000017UL;
 }
 
-static void handleQ(Buffer &send, BrokerEvent &be, void *) {
-	const char *s = be.next();
-	s = be.next();
-
-	if (s) {
-		ParamTypeId id = (ParamTypeId) atoi(s);
-
-		if (id >= 0) {
-			send.p1(F("ack"));
-			send.json(id, getParamFloat(id));
-			send.p2();
-		}
-	}
-}
-
-static void handleS(Buffer &send, BrokerEvent &be, void *) {
-	const char *s = be.next();
-	s = be.next();
-
-	if (s) {
-		const char *arg2 = be.next();
-
-		if (arg2) {
-			ParamTypeId id = (ParamTypeId) atoi(s);
-			float val = atof(arg2);
-			setParamFloat(id, val);
-
-			//send.p1(F("id"));
-			//send.json(F("n"), id);
-			//send.json(F("v"), val);
-			//channel.p2();
-			//channel.nl();
-		}
-	}
-}
-
-static void handleM(Buffer &send, BrokerEvent &be, void *) {
-	setParamUnsigned(FlagIsMonitoring, isParamSet(FlagIsMonitoring) ? 0 : 5000);
-}
-
 void Params::init() {
 	bzero(&local, sizeof(local));
 	local.minl = MaxParam;
@@ -531,15 +541,7 @@ void Params::init() {
 	}
 
 	taskmgr.addTask(F("Params"), taskcb, 0, 3000);
-
-	broker.add(sendParamValues, 0, F("pv"));
-	broker.add(sendParamLookups, 0, F("pv"));
-	broker.add(sendParamList, 0, F("pl"));
-	broker.add(sendParamStats, 0, F("pl"));
-	broker.add(sendParamChanges, 0, F("pl"));
-	broker.add(handleS, 0, F("s"));
-	broker.add(handleQ, 0, F("q"));
-	broker.add(handleM, 0, F("u"));
+	broker.add(brokercb, 0, F("p"));
 }
 
 uint16_t Params::mem(bool alloced) {

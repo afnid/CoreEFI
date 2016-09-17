@@ -242,7 +242,7 @@ void Display::showDisplay(uint32_t now) {
 	row &= 3;
 }
 
-void Display::menuInput(Buffer &send, uint8_t i) {
+void Display::menuInput(uint8_t i) {
 	if (i && menu < 2)
 		menu++;
 	if (!i && menu > 0)
@@ -254,12 +254,13 @@ static uint32_t runDisplay(uint32_t now, void *data) {
 	return 0;
 }
 
-static void menucb0(Buffer &send, BrokerEvent &be, void *data) {
-	((Display *)data)->menuInput(send, 0);
+void Display::sendBroker(Buffer &send, BrokerEvent &be) {
+	int i = be.nextInt();
+	menuInput(i);
 }
 
-static void menucb1(Buffer &send, BrokerEvent &be, void *data) {
-	((Display *)data)->menuInput(send, 1);
+void Display::brokercb(Buffer &send, BrokerEvent &be, void *data) {
+	((Display *)data)->sendBroker(send, be);
 }
 
 void Display::init() {
@@ -274,10 +275,9 @@ void Display::init() {
 	lcd.setContrast(20);
 #endif
 
-	broker.add(menucb0, this, F("m0"));
-	broker.add(menucb1, this, F("m1"));
-
 	taskmgr.addTask(F("Display"), runDisplay, this, 500);
+
+	broker.add(brokercb, this, F("lcd"));
 }
 
 uint16_t Display::mem(bool alloced) {

@@ -124,15 +124,14 @@ static const PinId config[1] = {
 #endif
 	};
 
-void Vehicle::prompt_cb(Buffer &send, BrokerEvent &be, void *data) {
-	((Vehicle *) data)->sendStatus(send);
-}
-
-void Vehicle::sendStatus(Buffer &send) const {
-	send.p1(F("vehicle"));
-	send.json(F("fan1duty"), fan1.duty);
-	send.json(F("fan2duty"), fan2.duty);
-	send.p2();
+void Vehicle::sendStatus(Buffer &send, BrokerEvent &be) const {
+	if (be.isMatch(send, F("fans"))) {
+		send.p1(F("vehicle"));
+		send.json(F("fan1duty"), fan1.duty);
+		send.json(F("fan2duty"), fan2.duty);
+		send.p2();
+	} else
+		send.nl("fans");
 }
 
 #include <stdio.h>
@@ -209,10 +208,10 @@ void Coded::init() {
 }
 
 void Coded::service(uint32_t now) {
-	const GPIO::PinDef *pi = gpio.getPinDef(id);
+	const GPIO::PinDef *pd = gpio.getPinDef(id);
 
-	if (pi) {
-		int n = pi->getLast();
+	if (pd) {
+		int n = pd->getLast();
 
 		if (state != n) {
 			if (n)
@@ -433,30 +432,30 @@ static void setFuelGauge() {
 }
 
 void Vehicle::serviceInput(uint32_t now) {
-	if (++inpin > MaxPins)
+	if (++inpin >= MaxPins)
 		inpin = 0;
 
-	const GPIO::PinDef *pi = gpio.getPinDef((PinId) inpin);
+	const GPIO::PinDef *pd = gpio.getPinDef((PinId) inpin);
 
-	if (pi && (pi->mode & PinModeInput)) {
+	if (pd && (pd->mode & PinModeInput)) {
 		const uint16_t TESTLO = 400;
 		const uint16_t TESTHI = 700;
 
-		switch (pi->getId()) {
+		switch (pd->getId()) {
 		case AnalogRadiatorTemp:
-			setParamFloat(VehicleRadiatorTemp, scaleLinear(pi->getLast(), TESTLO, TESTHI, 150, 210, false));
+			setParamFloat(VehicleRadiatorTemp, scaleLinear(pd->getLast(), TESTLO, TESTHI, 150, 210, false));
 			setTempGauge();
 			break;
 		case AnalogAMPS1:
-			setParamFloat(SensorAMPS1, scaleLinear(pi->getLast(), 512, 610, 500, 4000, false));
+			setParamFloat(SensorAMPS1, scaleLinear(pd->getLast(), 512, 610, 500, 4000, false));
 			break;
 		case IsMenuButton1:
-			if (!pi->getLast())
-				display.menuInput(hardware.send(), 0);
+			if (pd->getLast())
+				display.menuInput(0);
 			break;
 		case IsMenuButton2:
-			if (!pi->getLast())
-				display.menuInput(hardware.send(), 1);
+			if (!pd->getLast())
+				display.menuInput(1);
 			break;
 		case AnalogFuel:
 			setFuelGauge();
@@ -468,16 +467,16 @@ void Vehicle::serviceInput(uint32_t now) {
 }
 
 void Vehicle::serviceOutput(uint32_t now) {
-	if (++outpin > MaxPins)
+	if (++outpin >= MaxPins)
 		outpin = 0;
 
-	const GPIO::PinDef *pi = gpio.getPinDef((PinId) outpin);
+	const GPIO::PinDef *pd = gpio.getPinDef((PinId) outpin);
 
 	static const GPIO::PinDef *bl = 0;
 	static const GPIO::PinDef *br = 0;
 
-	if (pi && (pi->mode & PinModeOutput)) {
-		switch (pi->getId()) {
+	if (pd && (pd->mode & PinModeOutput)) {
+		switch (pd->getId()) {
 		case RelayFan1:
 		case RelayFan2:
 			calcFanSpeed(now);
@@ -493,21 +492,21 @@ void Vehicle::serviceOutput(uint32_t now) {
 			if (turning)
 				return;
 			setBrakeLights();
-			bl = pi;
+			bl = pd;
 			break;
 		case RelayBrakeLightRight:
 			if (turning)
 				return;
 			setBrakeLights();
-			br = pi;
+			br = pd;
 			break;
 		default:
 			break;
 		}
 
-		uint16_t v = gpio.isPinSet(pi->getId());
+		uint16_t v = gpio.isPinSet(pd->getId());
 
-		switch (pi->getId()) {
+		switch (pd->getId()) {
 		case RelayGauge1:
 			v = scaleLinear(v, 0, 100, 0, 100, true);
 			break;
@@ -525,30 +524,30 @@ void Vehicle::serviceOutput(uint32_t now) {
 			setBrakeLights();
 
 			if (v) {
-				if (pi->getLast() && pi->ms() >= 600)
+				if (pd->getLast() && pd->ms() >= 600)
 					v = 0;
-				else if (!pi->getLast() && pi->ms() >= 1200)
+				else if (!pd->getLast() && pd->ms() >= 1200)
 					v = 1;
 				else
-					v = pi->getLast();
+					v = pd->getLast();
 
-				if (bl && pi->getId() == IsSignalLeft)
+				if (bl && pd->getId() == IsSignalLeft)
 					gpio.setPin(bl->getId(), v);
-				//if (br && pi->getId() == VehicleIsTurningRight)
+				//if (br && pd->getId() == VehicleIsTurningRight)
 				//br->writePin(v);
 			}
 
-			updateCluster(pi->getId(), v);
+			updateCluster(pd->getId(), v);
 			break;
 		case RelayBrakeLightLeft:
 		case RelayBrakeLightRight:
 			if (gpio.isPinSet(IsBrakeOn)) {
 				if (brakeFlash < 6) {
-					if (pi->ms() >= 50) {
-						v = !pi->getLast();
+					if (pd->ms() >= 50) {
+						v = !pd->getLast();
 						brakeFlash++;
 					} else
-						v = pi->getLast();
+						v = pd->getLast();
 				}
 
 				if (bl)
@@ -562,7 +561,7 @@ void Vehicle::serviceOutput(uint32_t now) {
 			break;
 		}
 
-		gpio.setPin(pi->getId(), v);
+		gpio.setPin(pd->getId(), v);
 	}
 }
 
@@ -590,9 +589,13 @@ void Vehicle::checkVehicle(uint32_t now) {
 	 */
 }
 
-static uint32_t runVehicle(uint32_t now, void *data) {
+static uint32_t taskcb(uint32_t now, void *data) {
 	((Vehicle *) data)->checkVehicle(now);
 	return 0;
+}
+
+void Vehicle::brokercb(Buffer &send, BrokerEvent &be, void *data) {
+	((Vehicle *) data)->sendStatus(send, be);
 }
 
 void Vehicle::init() {
@@ -605,8 +608,8 @@ void Vehicle::init() {
 
 	setPins();
 
-	taskmgr.addTask(F("Vehicle"), runVehicle, this, 20);
-	broker.add(prompt_cb, this, F("vehicle"));
+	taskmgr.addTask(F("Vehicle"), taskcb, this, 20);
+	broker.add(brokercb, this, F("c"));
 }
 
 uint16_t Vehicle::mem(bool alloced) {

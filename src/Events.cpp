@@ -267,7 +267,7 @@ void BitPlan::refreshEvents() {
 		events.reset();
 }
 
-void sendEventStatus(Buffer &send, BrokerEvent &be, void *data) {
+void sendEventStatus(Buffer &send) {
 	send.p1(F("events"));
 
 	send.json(F("idx"), events.idx);
@@ -307,7 +307,7 @@ void sendEventStatus(Buffer &send, BrokerEvent &be, void *data) {
 	send.p2();
 }
 
-void sendEventList(Buffer &send, BrokerEvent &be, void *data) {
+void sendEventList(Buffer &send) {
 	volatile BitSchedule *current = events.current;
 	uint32_t last = 0;
 
@@ -348,6 +348,16 @@ void sendEventList(Buffer &send, BrokerEvent &be, void *data) {
 	}
 }
 
+static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
+	if (be.isMatch("status"))
+		sendEventStatus(send);
+	else if (be.isMatch("list"))
+		sendEventList(send);
+	else
+		send.nl("status|list");
+
+}
+
 static uint32_t taskcb(uint32_t now, void *data) {
 	int32_t ticks = BitPlan::runEvents(now, 0, 5);
 	ticks = tdiff32(ticks, clockTicks());
@@ -367,8 +377,7 @@ void BitPlan::init() {
 
 	taskmgr.addTask(F("Events"), taskcb, 0, 1000);
 
-	broker.add(sendEventStatus, 0, F("e0"));
-	broker.add(sendEventList, 0, F("e1"));
+	broker.add(brokercb, 0, F("e"));
 }
 
 uint16_t BitPlan::mem(bool alloced) {

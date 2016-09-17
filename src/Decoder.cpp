@@ -29,16 +29,13 @@ void Decoder::sendList(Buffer &send) volatile {
 	}
 }
 
-static void dstatus(Buffer &send, BrokerEvent &be, void *data) {
-	((Decoder *)data)->sendStatus(send);
-}
+static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
+	Decoder *d = (Decoder *)data;
 
-static void d0(Buffer &send, BrokerEvent &be, void *data) {
-	((Decoder *)data)->sendStatus(send);
-}
-
-static void d1(Buffer &send, BrokerEvent &be, void *data) {
-	((Decoder *)data)->sendList(send);
+	if (be.isMatch("list"))
+		d->sendList(send);
+	else if (be.isMatch("status"))
+		d->sendStatus(send);
 }
 
 void Decoder::init() volatile {
@@ -59,9 +56,7 @@ void Decoder::init() volatile {
 
 	refresh(0);
 
-	broker.add(dstatus, (void *)this, F("dstatus"));
-	broker.add(d0, (void *)this, F("d0"));
-	broker.add(d1, (void *)this, F("d1"));
+	broker.add(brokercb, (void *)this, F("d"));
 }
 
 uint16_t Decoder::mem(bool alloced) volatile {

@@ -42,7 +42,7 @@ class Vehicle {
 
 	Pulsed epas2;
 
-	static void prompt_cb(Buffer &send, BrokerEvent &be, void *data);
+	static void brokercb(Buffer &send, BrokerEvent &be, void *data);
 
 	bool isRunning();
 	void fans_pwm(uint32_t now);
@@ -53,7 +53,7 @@ class Vehicle {
 
 	void calcSteeringAssist(uint32_t now);
 	void calcFanSpeed(uint32_t now);
-	void sendStatus(Buffer &send) const;
+	void sendStatus(Buffer &send, BrokerEvent &be) const;
 
 	uint32_t getOnSeconds() const;
 	uint32_t getOffSeconds() const;

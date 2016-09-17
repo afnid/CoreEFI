@@ -6,7 +6,7 @@ CFLAGS=-g -O4 -Wall -Wdouble-promotion -pg -DDEBUG
 CFLAGS=-g -O4 -Wall -pg -DDEBUG
 
 CFLAGS = -g -Wall -Wpedantic
-CFLAGS += -DDEBUG -DDEBUG
+CFLAGS += -DDEBUG -DDDEBUG
 CFLAGS += -I. -Istd
 CFLAGS += -fsingle-precision-constant
 CFLAGS += -flto -ffunction-sections -fdata-sections -fno-builtin
@@ -40,13 +40,13 @@ count:
 	wc -l *.cpp
 
 efif4:
-	st/cross.sh f4 efi
+	./std/cross.sh f4 efi
 
 efil1:
-	st/cross.sh l1 efi
+	./std/cross.sh l1 efi
 
 efil0:
-	st/cross.sh l0 efi
+	./std/cross.sh l0 efi
 
 efiavr:
-	st/cross.sh efiavr
+	./std/cross.sh efiavr

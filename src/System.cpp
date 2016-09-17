@@ -53,6 +53,7 @@ static void setDefaults() {
 
 static void mem(Buffer &send, bool alloced) {
 	uint16_t total = 0;
+	send.json(F("type"), alloced ? "alloc" : "status");
 	send.json(F("tasks"), add(total, taskmgr.mem(alloced)));
 	send.json(F("broker"), add(total, broker.mem(alloced)));
 
@@ -99,17 +100,16 @@ static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
 		send.json(F("bytes"), total);
 		send.p2();
 	} else if (be.isMatch(send, F("config"))) {
-		send.json(F("cyls"), MaxCylinders);
-		send.json(F("coils"), MaxCoils);
-		send.json(F("teeth"), MaxEncoderTeeth);
+		send.json(F("maxcyls"), MaxCylinders);
+		send.json(F("maxcoils"), MaxCoils);
+		send.json(F("maxteeth"), MaxEncoderTeeth);
 		send.json(F("cyls"), getParamUnsigned(ConstCylinders));
 		send.json(F("coils"), getParamUnsigned(ConstCoils));
 		send.json(F("teeth"), getParamUnsigned(ConstEncoderTeeth));
-
 		send.json(F("pulse"), (uint16_t) sizeof(pulse_t));
-		send.json(F("ustoticks"), (uint16_t) MicrosToTicks(1u));
 		send.p2();
-	}
+	} else
+		send.nl("defaults|mem|config");
 }
 
 static uint32_t brokertask(uint32_t now, void *data) {

@@ -1,7 +1,7 @@
 #ifndef _Display_h_
 #define _Display_h_
 
-#include "Buffer.h"
+#include "Broker.h"
 
 class Display {
 	char display[4][21];
@@ -10,6 +10,8 @@ class Display {
 	int row;
 
 	void showLine(int line, char *buf);
+	void sendBroker(Buffer &send, BrokerEvent &be);
+	static void brokercb(Buffer &send, BrokerEvent &be, void *data);
 
 public:
 
@@ -19,7 +21,7 @@ public:
 
 	void showDisplay(uint32_t now);
 
-	void menuInput(Buffer &send, uint8_t i);
+	void menuInput(uint8_t id);
 };
 
 EXTERN Display display;
