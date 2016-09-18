@@ -134,8 +134,6 @@ void Vehicle::sendStatus(Buffer &send, BrokerEvent &be) const {
 		send.nl("fans");
 }
 
-#include <stdio.h>
-
 static void setPins() {
 	uint8_t bits[bitsize(MaxPins)];
 	bzero(bits, sizeof(bits));
@@ -148,8 +146,6 @@ static void setPins() {
 	bitset(bits, 53);
 	bitset(bits, DATA_PIN);
 	bitset(bits, CLOCK_PIN);
-
-	printf("bits %d %d\n", sizeof(bits), MaxPins);
 
 	for (uint8_t i = 0; i < MaxPins; i++) {
 		PinId id = (PinId) i;
@@ -313,13 +309,13 @@ inline uint16_t clamp(uint16_t v, uint16_t min, uint16_t max) {
 }
 
 uint32_t Vehicle::getOnSeconds() const {
-	const GPIO::PinDef *pd = gpio.getPinDef(IsKeyOn);
-	return gpio.isPinSet(IsKeyOn) ? pd->ms() / 1000 : 0;
+	const GPIO::PinDef *pd = gpio.getPinDef(PinIsKeyOn);
+	return gpio.isPinSet(PinIsKeyOn) ? pd->ms() / 1000 : 0;
 }
 
 uint32_t Vehicle::getOffSeconds() const {
-	const GPIO::PinDef *pd = gpio.getPinDef(IsKeyOn);
-	return !gpio.isPinSet(IsKeyOn) ? pd->ms() / 1000 : 0;
+	const GPIO::PinDef *pd = gpio.getPinDef(PinIsKeyOn);
+	return !gpio.isPinSet(PinIsKeyOn) ? pd->ms() / 1000 : 0;
 }
 
 bool Vehicle::isRunning() {
@@ -350,7 +346,7 @@ void Vehicle::calcFanSpeed(uint32_t now) {
 	uint16_t duty = 0;
 
 	if (mph < 50 && temp >= 165) {
-		uint16_t max = gpio.isPinSet(IsClimateOn) ? 185 : 195;
+		uint16_t max = gpio.isPinSet(PinIsClimateOn) ? 185 : 195;
 		duty = scaleLinear(temp, 165, max, 0, 100, true);
 
 		if (!isRunning()) {
@@ -381,19 +377,19 @@ void updateClusterWhites(int v) {
 void updateCluster(PinId id, int v) {
 #ifdef ARDUINO
 	switch (id) {
-		case IsSignalLeft:
+		case PinIsSignalLeft:
 		leds[PanelLeft] = v ? CRGB::Green : CRGB::Black;
 		break;
-		case IsSignalRight:
+		case PinIsSignalRight:
 		leds[PanelRight] = v ? CRGB::Green : CRGB::Black;
 		break;
-		case IsHiBeamOn:
+		case PinIsHiBeamOn:
 		leds[PanelHiBeam] = v ? CRGB::Blue : CRGB::Black;
 		break;
-		case IsBrakeOn: //IsGenAlert:
+		case PinIsBrakeOn: //IsGenAlert:
 		leds[PanelGen] = v ? CRGB::Red : CRGB::Black;
 		break;
-		case IsParkingOn://IsOilAlert:
+		case PinIsParkingOn://IsOilAlert:
 		leds[PanelOil] = v ? CRGB::Red : CRGB::Black;
 		break;
 	}
@@ -403,24 +399,24 @@ void updateCluster(PinId id, int v) {
 }
 
 static void setBrakeLights() {
-	uint16_t brakes = gpio.isPinSet(IsBrakeOn);
-	uint16_t lt = gpio.isPinSet(IsSignalLeft);
-	uint16_t rt = gpio.isPinSet(IsSignalRight);
+	uint16_t brakes = gpio.isPinSet(PinIsBrakeOn);
+	uint16_t lt = gpio.isPinSet(PinIsSignalLeft);
+	uint16_t rt = gpio.isPinSet(PinIsSignalRight);
 
-	gpio.setPin(RelayBrakeLightLeft, brakes || lt);
-	gpio.setPin(RelayBrakeLightRight, brakes || rt);
+	gpio.setPin(PinRelayBrakeLightLeft, brakes || lt);
+	gpio.setPin(PinRelayBrakeLightRight, brakes || rt);
 }
 
 static void setParking() {
-	uint16_t hi = gpio.isPinSet(IsHiBeamOn);
-	uint16_t lo = gpio.isPinSet(IsLoBeamOn);
+	uint16_t hi = gpio.isPinSet(PinIsHiBeamOn);
+	uint16_t lo = gpio.isPinSet(PinIsLoBeamOn);
 
 	if (hi || lo)
-		gpio.setPin(IsParkingOn, true);
+		gpio.setPin(PinIsParkingOn, true);
 }
 
 static void setTempGauge() {
-	if (gpio.isPinSet(IsKeyOn)) {
+	if (gpio.isPinSet(PinIsKeyOn)) {
 		float temp = getParamFloat(VehicleRadiatorTemp);
 		setParamFloat(VehicleGauge2, scaleLinear(temp, 150, 200, 0, 100, true));
 	} else
@@ -442,22 +438,22 @@ void Vehicle::serviceInput(uint32_t now) {
 		const uint16_t TESTHI = 700;
 
 		switch (pd->getId()) {
-		case AnalogRadiatorTemp:
+		case PinAnalogRadiatorTemp:
 			setParamFloat(VehicleRadiatorTemp, scaleLinear(pd->getLast(), TESTLO, TESTHI, 150, 210, false));
 			setTempGauge();
 			break;
-		case AnalogAMPS1:
+		case PinAnalogAMPS1:
 			setParamFloat(SensorAMPS1, scaleLinear(pd->getLast(), 512, 610, 500, 4000, false));
 			break;
-		case IsMenuButton1:
+		case PinIsMenuButton1:
 			if (pd->getLast())
 				display.menuInput(0);
 			break;
-		case IsMenuButton2:
+		case PinIsMenuButton2:
 			if (!pd->getLast())
 				display.menuInput(1);
 			break;
-		case AnalogFuel:
+		case PinAnalogFuel:
 			setFuelGauge();
 			break;
 		default:
@@ -477,24 +473,24 @@ void Vehicle::serviceOutput(uint32_t now) {
 
 	if (pd && (pd->mode & PinModeOutput)) {
 		switch (pd->getId()) {
-		case RelayFan1:
-		case RelayFan2:
+		case PinRelayFan1:
+		case PinRelayFan2:
 			calcFanSpeed(now);
 			break;
-		case RelayEPAS1:
-		case RelayEPAS2:
+		case PinRelayEPAS1:
+		case PinRelayEPAS2:
 			calcSteeringAssist(now);
 			break;
-		case IsParkingOn:
+		case PinIsParkingOn:
 			setParking();
 			break;
-		case RelayBrakeLightLeft:
+		case PinRelayBrakeLightLeft:
 			if (turning)
 				return;
 			setBrakeLights();
 			bl = pd;
 			break;
-		case RelayBrakeLightRight:
+		case PinRelayBrakeLightRight:
 			if (turning)
 				return;
 			setBrakeLights();
@@ -507,18 +503,18 @@ void Vehicle::serviceOutput(uint32_t now) {
 		uint16_t v = gpio.isPinSet(pd->getId());
 
 		switch (pd->getId()) {
-		case RelayGauge1:
+		case PinRelayGauge1:
 			v = scaleLinear(v, 0, 100, 0, 100, true);
 			break;
-		case RelayFan1:
-		case RelayFan2:
+		case PinRelayFan1:
+		case PinRelayFan2:
 			v = v <= 0 ? 0 : scaleLinear(v, 0, 100, 80, 255, true);
 			break;
-		case CalcEPAS2:
+		case PinRelayEPAS2:
 			v = scaleLinear(v, 0, 100, 0, 100, true);
 			break;
-		case IsSignalLeft:
-		case IsSignalRight:
+		case PinIsSignalLeft:
+		case PinIsSignalRight:
 			turning = v != 0;
 
 			setBrakeLights();
@@ -531,7 +527,7 @@ void Vehicle::serviceOutput(uint32_t now) {
 				else
 					v = pd->getLast();
 
-				if (bl && pd->getId() == IsSignalLeft)
+				if (bl && pd->getId() == PinIsSignalLeft)
 					gpio.setPin(bl->getId(), v);
 				//if (br && pd->getId() == VehicleIsTurningRight)
 				//br->writePin(v);
@@ -539,9 +535,9 @@ void Vehicle::serviceOutput(uint32_t now) {
 
 			updateCluster(pd->getId(), v);
 			break;
-		case RelayBrakeLightLeft:
-		case RelayBrakeLightRight:
-			if (gpio.isPinSet(IsBrakeOn)) {
+		case PinRelayBrakeLightLeft:
+		case PinRelayBrakeLightRight:
+			if (gpio.isPinSet(PinIsBrakeOn)) {
 				if (brakeFlash < 6) {
 					if (pd->ms() >= 50) {
 						v = !pd->getLast();
@@ -570,15 +566,15 @@ void Vehicle::checkVehicle(uint32_t now) {
 		serviceInput(now);
 
 	if (isRunning()) {
-		if (!gpio.isPinSet(IsParkingOn) && getParamUnsigned(TimeRunSeconds) > 3)
-			gpio.setPin(IsParkingOn, true);
-		if (!gpio.isPinSet(IsLoBeamOn) && getParamUnsigned(TimeRunSeconds) > 5)
-			gpio.setPin(IsLoBeamOn, true);
+		if (!gpio.isPinSet(PinIsParkingOn) && getParamUnsigned(TimeRunSeconds) > 3)
+			gpio.setPin(PinIsParkingOn, true);
+		if (!gpio.isPinSet(PinIsLoBeamOn) && getParamUnsigned(TimeRunSeconds) > 5)
+			gpio.setPin(PinIsLoBeamOn, true);
 	} else {
-		if (gpio.isPinSet(IsLoBeamOn) && getParamUnsigned(TimeRunSeconds) > 3)
-			gpio.setPin(IsLoBeamOn, false);
-		if (gpio.isPinSet(IsParkingOn) && getParamUnsigned(TimeRunSeconds) > 5)
-			gpio.setPin(IsParkingOn, false);
+		if (gpio.isPinSet(PinIsLoBeamOn) && getParamUnsigned(TimeRunSeconds) > 3)
+			gpio.setPin(PinIsLoBeamOn, false);
+		if (gpio.isPinSet(PinIsParkingOn) && getParamUnsigned(TimeRunSeconds) > 5)
+			gpio.setPin(PinIsParkingOn, false);
 	}
 
 	for (int i = 0; i < 10; i++)

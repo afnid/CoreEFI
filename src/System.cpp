@@ -1,7 +1,5 @@
 // copyright to me, released under GPL V3
 
-#define EXTERN
-
 #include "Tasks.h"
 #include "Hardware.h"
 #include "GPIO.h"
@@ -18,14 +16,6 @@
 #include "Display.h"
 #include "Vehicle.h"
 #include "Bus.h"
-
-#ifndef NDEBUG
-#define MYNAME(x)	x, F(#x)
-#else
-#define MYNAME(x)	x, 0
-#endif
-
-#include "efi_pins.h"
 
 static uint16_t add(uint16_t &total, uint16_t mem) {
 	total += mem;
@@ -48,7 +38,8 @@ static void setDefaults() {
 	setParamFloat(SensorTPS, 20);
 	setParamFloat(SensorVCC, 14);
 	setParamUnsigned(SensorGEAR, 5);
-	gpio.setPin(IsKeyOn, 1);
+
+	gpio.setPin(PinIsKeyOn, 1);
 }
 
 static void mem(Buffer &send, bool alloced) {
@@ -76,11 +67,11 @@ static void mem(Buffer &send, bool alloced) {
 }
 
 static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
-	if (be.isMatch(send, F("defaults"))) {
+	if (be.isMatch(F("d"))) {
 		setDefaults();
-	} else if (be.isMatch(send, F("mem"))) {
+	} else if (be.isMatch(F("m"))) {
 		mem(send, be.nextInt(0) == 0);
-	} else if (be.isMatch(send, F("sizes"))) {
+	} else if (be.isMatch(send, F("s"))) {
 		uint16_t total = 0;
 
 		send.json(F("clock"), add(total, sizeof(Epoch)));
@@ -99,7 +90,7 @@ static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
 
 		send.json(F("bytes"), total);
 		send.p2();
-	} else if (be.isMatch(send, F("config"))) {
+	} else if (be.isMatch(send, F("c"))) {
 		send.json(F("maxcyls"), MaxCylinders);
 		send.json(F("maxcoils"), MaxCoils);
 		send.json(F("maxteeth"), MaxEncoderTeeth);
@@ -108,8 +99,10 @@ static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
 		send.json(F("teeth"), getParamUnsigned(ConstEncoderTeeth));
 		send.json(F("pulse"), (uint16_t) sizeof(pulse_t));
 		send.p2();
+	} else if (be.isMatch(F("a"))) {
+		hardware.send().setAll(be.nextInt(0));
 	} else
-		send.nl("defaults|mem|config");
+		send.nl("defaults|mem|config|all");
 }
 
 static uint32_t brokertask(uint32_t now, void *data) {
@@ -118,23 +111,20 @@ static uint32_t brokertask(uint32_t now, void *data) {
 }
 
 void initSystem(bool doefi) {
-	hardware.init();
-	gpio.init(pins, MaxPins);
+	codes.init();
+	display.init();
+	canbus.init();
+	vehicle.init();
 
 	Epoch::init();
 	Params::init();
 
-	codes.init();
-	vehicle.init();
-	display.init();
-	canbus.init();
-
 	if (doefi) {
-		encoder.init();
 		decoder.init();
 		BitSchedule::init();
 		BitPlan::init();
 		Strategy::init();
+		encoder.init();
 		Timers::init();
 	}
 

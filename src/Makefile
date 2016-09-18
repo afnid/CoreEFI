@@ -5,7 +5,7 @@ CFLAGS=-g -O2 -Wall -Wpedantic -Wno-variadic-macros -Wdouble-promotion -pg -DDEB
 CFLAGS=-g -O4 -Wall -Wdouble-promotion -pg -DDEBUG
 CFLAGS=-g -O4 -Wall -pg -DDEBUG
 
-CFLAGS = -g -Wall -Wpedantic
+CFLAGS = -g -O2 -Wall -Wpedantic
 CFLAGS += -DDEBUG -DDDEBUG
 CFLAGS += -I. -Istd
 CFLAGS += -fsingle-precision-constant

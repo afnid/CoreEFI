@@ -70,7 +70,7 @@ static inline uint16_t getTimer(uint8_t id) {
 	if (!strategy.times[idx])
 		return 0;
 
-	const GPIO::PinDef *pd = gpio.getPinDef(IsKeyOn);
+	const GPIO::PinDef *pd = gpio.getPinDef(PinIsKeyOn);
 	return tdiff32(pd->changed, strategy.times[idx]);
 }
 
@@ -82,7 +82,7 @@ void Strategy::setTimer(ParamTypeId id, bool enable) {
 	bool isset = strategy.times[idx] != 0;
 
 	if (enable != isset) {
-		const GPIO::PinDef *pd = gpio.getPinDef(IsKeyOn);
+		const GPIO::PinDef *pd = gpio.getPinDef(PinIsKeyOn);
 		uint16_t epoch = !enable ? 0 : pd->changed;
 		strategy.times[idx] = epoch;
 		setParamUnsigned(id, epoch);
@@ -178,7 +178,7 @@ void expireCached(ParamTypeId id) {
 			break;
 	}
 
-	if (gpio.isPinSet(IsCranking)) {
+	if (gpio.isPinSet(PinIsCranking)) {
 		clearCached(FuncCrankFuelPulseWidthMultiplier);
 		clearCached(FuncCrankingFuelPulseWidthVsEct);
 	}
@@ -212,7 +212,7 @@ float getStrategyDouble(ParamTypeId id, ParamData *pd) {
 				break;
 			case FuncCrankFuelPulseWidthMultiplier:
 			case FuncCrankingFuelPulseWidthVsEct:
-				if (!gpio.isPinSet(IsCranking))
+				if (!gpio.isPinSet(PinIsCranking))
 					return 0;
 				break;
 			case FuncOpenLoopFuelMultiplierVsAct:

@@ -70,8 +70,7 @@ static volatile struct {
 
 	uint16_t hist[HistMax];
 
-	int32_t minlate;
-	int32_t maxlate;
+	MetricsMinMax32 late;
 	uint32_t next;
 	int8_t idx;
 	int8_t on;
@@ -174,8 +173,7 @@ static volatile struct {
 			}
 
 			e->late = tdiff32(now, next);
-			minlate = min(minlate, e->late);
-			maxlate = max(maxlate, e->late);
+			late.set(e->late);
 
 			e->act = tdiff32(now, decoder.getTDC());
 			e->drift = e->act - p->getPos();
@@ -188,7 +186,7 @@ static volatile struct {
 			if (e->late) {
 				int16_t idx = abs(e->late);
 
-				if (idx >= (TICKTOUS >> 1)) {
+				if (idx >= (int16_t) (TICKTOUS >> 1)) {
 					idx /= MicrosToTicks(BucketDivisor);
 
 					addHist(CountLates);
@@ -200,7 +198,7 @@ static volatile struct {
 				}
 			}
 
-			PinId id = (PinId)(p->getPin() + 1);
+			PinId id = (PinId) (p->getPin() + 1);
 			bool isSet = gpio.isPinSet(id);
 
 			if (p->isHi() == isSet)
@@ -267,47 +265,50 @@ void BitPlan::refreshEvents() {
 		events.reset();
 }
 
-void sendEventStatus(Buffer &send) {
-	send.p1(F("events"));
-
-	send.json(F("idx"), events.idx);
-	send.json(F("on"), events.on);
-	send.json(F("rpm"), getParamUnsigned(SensorRPM));
-
-	float minlate = TicksToMicrosf(events.minlate);
-	float maxlate = TicksToMicrosf(events.maxlate);
-	send.json(F("-late"), minlate);
-	send.json(F("+late"), maxlate);
-
-	uint16_t us = TicksToMicros(decoder.getTicks() >> 1);
-	send.json(F("-deg"), us == 0 || events.minlate == 0 ? 0 : 360.0f * minlate / us);
-	send.json(F("+deg"), us == 0 || events.maxlate == 0 ? 0 : 360.0f * maxlate / us);
-
+void BitPlan::sendEventStatus(Buffer &send) {
 	int16_t total = events.hist[CountEvents];
 
-	if (total && events.valid) {
-		int16_t lates = events.hist[CountLates];
-		send.json(F("late%"), 100.0f * lates / total);
-		uint8_t bucket = BucketDivisor;
+	if (total) {
+		send.p1(F("events"));
 
-		for (uint8_t i = CountLate0; i <= CountLate4; i++) {
-			lates -= events.hist[i];
+		send.json(F("idx"), events.idx);
+		send.json(F("on"), events.on);
+		send.json(F("rpm"), getParamUnsigned(SensorRPM));
 
-			if (lates)
-				send.json(bucket, 100.0f * lates / total);
+		if (events.late.isValid()) {
+			float minlate = TicksToMicrosf(events.late.getMin());
+			float maxlate = TicksToMicrosf(events.late.getMax());
+			send.jsonf(F("-late"), minlate);
+			send.jsonf(F("+late"), maxlate);
 
-			bucket += BucketDivisor;
+			uint16_t us = TicksToMicros(decoder.getTicks() >> 1);
+			send.jsonf(F("-deg"), us == 0 || events.late.getMin() == 0 ? 0 : 360.0f * minlate / us);
+			send.jsonf(F("+deg"), us == 0 || events.late.getMax() == 0 ? 0 : 360.0f * maxlate / us);
 		}
+
+		if (total && events.valid) {
+			int16_t lates = events.hist[CountLates];
+			send.jsonf(F("late%"), 100.0f * lates / total);
+			uint8_t bucket = BucketDivisor;
+
+			for (uint8_t i = CountLate0; i <= CountLate4; i++) {
+				lates -= events.hist[i];
+
+				if (lates)
+					send.json(bucket, 100.0f * lates / total);
+
+				bucket += BucketDivisor;
+			}
+		}
+
+		MetricsHist::sendHist(send, F("counts"), events.hist, HistMax);
+		events.late.reset();
+
+		send.p2();
 	}
-
-	sendHist(send, events.hist, HistMax);
-	events.minlate = 32768;
-	events.maxlate = -32767;
-
-	send.p2();
 }
 
-void sendEventList(Buffer &send) {
+void BitPlan::sendEventList(Buffer &send) {
 	volatile BitSchedule *current = events.current;
 	uint32_t last = 0;
 
@@ -349,20 +350,22 @@ void sendEventList(Buffer &send) {
 }
 
 static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
-	if (be.isMatch("status"))
-		sendEventStatus(send);
-	else if (be.isMatch("list"))
-		sendEventList(send);
+	if (be.isMatch(F("s")))
+		BitPlan::sendEventStatus(send);
+	else if (be.isMatch(F("l")))
+		BitPlan::sendEventList(send);
 	else
 		send.nl("status|list");
-
 }
 
+#ifdef linux
 static uint32_t taskcb(uint32_t now, void *data) {
 	int32_t ticks = BitPlan::runEvents(now, 0, 5);
 	ticks = tdiff32(ticks, clockTicks());
-	return max(ticks, 1);
+	ticks = max(ticks, 1);
+	return TicksToMicros(ticks);
 }
+#endif
 
 void BitPlan::init() {
 	events.reset();
@@ -375,7 +378,9 @@ void BitPlan::init() {
 
 	refreshEvents();
 
+#ifdef linux
 	taskmgr.addTask(F("Events"), taskcb, 0, 1000);
+#endif
 
 	broker.add(brokercb, 0, F("e"));
 }

@@ -48,12 +48,7 @@
 #include "efi_data.h"
 
 enum {
-	CountRefreshes,
-	CountChanges,
-	CountFuncs,
-	CountTables,
-	CountLookups,
-	HistMax,
+	CountRefreshes, CountChanges, CountFuncs, CountTables, CountLookups, HistMax,
 };
 
 static struct {
@@ -79,7 +74,7 @@ static void mymemcpy_PF(char *dst, char *src, int bytes)
 	//extern void *memcpy_PF (void *dest, uint_farptr_t src, size_t len);
 
 	for (uint8_t id = 0; id < bytes; id++)
-		*dst++ = pgm_read_byte_near(src++);
+	*dst++ = pgm_read_byte_near(src++);
 }
 #endif
 
@@ -90,9 +85,9 @@ static inline LookupHeader *getLookupHeader(const ParamData *pd) {
 	static LookupHeader h;
 
 	if (pd && pd->hdr)
-		mymemcpy_PF((char *)&h, (char *)(lookups + pd->hdr - 1), sizeof(LookupHeader));
+	mymemcpy_PF((char *)&h, (char *)(lookups + pd->hdr - 1), sizeof(LookupHeader));
 	else
-		bzero(&h, sizeof(LookupHeader));
+	bzero(&h, sizeof(LookupHeader));
 #else
 	return lookups + pd->hdr - 1;
 #endif
@@ -118,11 +113,11 @@ const char *getParamName(ParamTypeId id, char *buf, int maxlen) {
 	int n = 0;
 
 	while (++n < maxlen && (ch = pgm_read_byte_near(src++)))
-		*s++ = ch;
+	*s++ = ch;
 
 	*s = 0;
 #else
-	strncpy(buf, getName(id), maxlen);
+	fstrcpy(buf, getName(id));
 	buf[maxlen - 1] = 0;
 #endif
 
@@ -335,7 +330,7 @@ void clearParamCache() {
 		//ParamData *pd = getParamData(id);
 
 		//if (pd->cat == CatFlag || pd->cat == CatCalc || pd->cat == CatTime)
-			bitclr(local.cached, id);
+		bitclr(local.cached, id);
 	}
 }
 
@@ -351,32 +346,22 @@ void setSensorParam(ParamTypeId id, uint16_t adc) {
 
 static void sendParam(Buffer &send, ParamTypeId id, ParamData *pd, bool nl) {
 	if (nl)
-		send.p1(F("u"));
+		send.p1(F("p"));
 
-	if (false && isParamSet(FlagIsMonitoring)) {
-		if (pd->div)
-			send.json(id, _dblDecode(pd, pd->value));
-		else if (pd->neg)
-			send.json(id, int16Decode(pd, pd->value));
-		else
-			send.json(id, _uint16Decode(pd, pd->value));
-	} else {
+	bool monitoring = false && isParamSet(FlagIsMonitoring);
+
+	if (!monitoring)
 		send.json(F("cat"), pd->cat);
 
-		if (pd->div)
-			send.json(id, _dblDecode(pd, pd->value));
-		else if (pd->neg)
-			send.json(id, int16Decode(pd, pd->value));
-		else
-			send.json(id, _uint16Decode(pd, pd->value));
+	if (pd->div)
+		send.json(id, _dblDecode(pd, pd->value));
+	else if (pd->neg)
+		send.json(id, int16Decode(pd, pd->value));
+	else
+		send.json(id, _uint16Decode(pd, pd->value));
 
-		if (pd->div)
-			send.json(getName(id), _dblDecode(pd, pd->value));
-		else if (pd->neg)
-			send.json(getName(id), int16Decode(pd, pd->value));
-		else
-			send.json(getName(id), _uint16Decode(pd, pd->value));
-	}
+	if (!monitoring)
+		send.json(F("n"), getName(id));
 
 	if (nl)
 		send.p2();
@@ -385,23 +370,6 @@ static void sendParam(Buffer &send, ParamTypeId id, ParamData *pd, bool nl) {
 void sendParam(Buffer &send, ParamTypeId id) {
 	ParamData *pd = getParamData(id);
 	sendParam(send, id, pd, false);
-}
-
-static void sendParamChanges(Buffer &send, BrokerEvent &be, void *) {
-	for (uint8_t id = 0; id < MaxParam; id++) {
-		if (isset(local.notify, id)) {
-			ParamData *pd = getParamData(id);
-			sendParam(send, (ParamTypeId)id, pd, true);
-			bitclr(local.notify, id);
-		}
-	}
-}
-
-static void sendParamValues(Buffer &send) {
-	for (uint8_t id = 0; id < MaxParam; id++) {
-		ParamData *pd = getParamData(id);
-		sendParam(send, (ParamTypeId)id, pd, true);
-	}
 }
 
 static void sendParamLookups(Buffer &send) {
@@ -442,8 +410,8 @@ static void sendParamList(Buffer &send) {
 
 		send.json(F("min"), pd->min);
 		send.json(F("max"), pd->max);
-		send.json(F("mind"), dblDecode(pd, pd->min));
-		send.json(F("maxd"), dblDecode(pd, pd->max));
+		send.jsonf(F("mind"), dblDecode(pd, pd->min));
+		send.jsonf(F("maxd"), dblDecode(pd, pd->max));
 		send.p2();
 	}
 }
@@ -455,31 +423,43 @@ static void sendParamStats(Buffer &send) {
 	send.json(F("names"), (uint16_t) sizeof(names));
 	send.json(F("nameidx"), (uint16_t) sizeof(nameidx));
 	send.json(F("data"), (uint16_t) sizeof(data));
-	send.json(F("total"), (uint16_t)(sizeof(params) + sizeof(lookups) + sizeof(names) + sizeof(nameidx) + sizeof(data)));
+	send.json(F("total"), (uint16_t) (sizeof(params) + sizeof(lookups) + sizeof(names) + sizeof(nameidx) + sizeof(data)));
 	send.json(F("ParamData"), (uint16_t) sizeof(ParamData));
-	sendHist(send, local.hist, HistMax);
+	MetricsHist::sendHist(send, F("counts"), local.hist, HistMax);
 	//Metrics::send(local.metrics, MaxParam);
 	send.p2();
 }
 
-static void handleQ(Buffer &send, BrokerEvent &be) {
-	ParamTypeId id = (ParamTypeId)be.nextInt();
-
-	if (id >= 0) {
-		send.p1(F("ack"));
-		send.json(id, getParamFloat(id));
-		send.p2();
+static void sendParamChanges(Buffer &send) {
+	for (uint8_t id = 0; id < MaxParam; id++) {
+		if (isset(local.notify, id)) {
+			ParamData *pd = getParamData(id);
+			sendParam(send, (ParamTypeId) id, pd, true);
+			bitclr(local.notify, id);
+		}
 	}
 }
 
-static void handleS(Buffer &send, BrokerEvent &be) {
-	ParamTypeId id = (ParamTypeId)be.nextInt();
+static void brokercb(Buffer &send, BrokerEvent &be, void *) {
+	if (be.isMatch(F("v"))) {
+		for (uint8_t id = 0; id < MaxParam; id++) {
+			ParamData *pd = getParamData(id);
+			sendParam(send, (ParamTypeId) id, pd, true);
+		}
+	} else if (be.isMatch(F("lo")))
+		sendParamLookups(send);
+	else if (be.isMatch(F("li")))
+		sendParamList(send);
+	else if (be.isMatch(F("st")))
+		sendParamStats(send);
+	else if (be.isMatch(F("c")))
+		sendParamChanges(send);
+	else if (be.isMatch(F("u"))) {
+		ParamTypeId id = (ParamTypeId) be.nextInt();
 
-	if (id >= 0 && be.size()) {
-		const char *arg2 = be.next();
+		if (id >= 0 && id < MaxParam && be.size()) {
+			float val = atof(be.next());
 
-		if (arg2) {
-			float val = atof(arg2);
 			setParamFloat(id, val);
 
 			//send.p1(F("id"));
@@ -488,43 +468,36 @@ static void handleS(Buffer &send, BrokerEvent &be) {
 			//channel.p2();
 			//channel.nl();
 		}
-	}
-}
+	} else if (be.isMatch(F("q"))) {
+		ParamTypeId id = (ParamTypeId) be.nextInt();
 
-static void brokercb(Buffer &send, BrokerEvent &be, void *) {
-	if (be.isMatch("v"))
-		sendParamValues(send);
-	else if (be.isMatch("lookups"))
-		sendParamLookups(send);
-	else if (be.isMatch("list"))
-		sendParamList(send);
-	else if (be.isMatch("stats"))
-		sendParamStats(send);
-	else if (be.isMatch("c"))
-		sendParamChanges(send, be, 0);
-	else if (be.isMatch("set"))
-		handleS(send, be);
-	else if (be.isMatch("q"))
-		handleQ(send, be);
-	else if (be.isMatch("monitor"))
-		setParamUnsigned(FlagIsMonitoring, isParamSet(FlagIsMonitoring) ? 0 : 5000);
+		if (id >= 0 && id < MaxParam) {
+			ParamData *pd = getParamData(id);
+
+			if (pd)
+				sendParam(send, (ParamTypeId) id, pd, true);
+		}
+	} else if (be.isMatch(F("m")))
+		setParamUnsigned(FlagIsMonitoring, be.nextInt(0));
 	else
 		send.nl("v|lookups|list|stats|c|set|q|monitor");
 }
 
-static inline uint32_t taskcb(uint32_t t0, void *data) {
-	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
+#include "GPIO.h"
 
-	if (wait) {
+static inline uint32_t taskcb(uint32_t t0, void *data) {
+	uint32_t waitms = getParamUnsigned(FlagIsMonitoring);
+
+	if (waitms) {
 		Buffer &send = hardware.send();
-		BrokerEvent be(0);
-		sendParamChanges(send, be, 0);
-		wait = max(wait, 500);
-		wait = min(wait, 1000);
-		return wait;
+		sendParamChanges(send);
+		gpio.sendChanges(send);
+		waitms = max(waitms, 10);
+		waitms = min(waitms, 1000);
+		return waitms * 1000UL;
 	}
 
-	return 3000017UL;
+	return 3000 * 100UL;
 }
 
 void Params::init() {
@@ -556,8 +529,8 @@ float lookupParam(ParamTypeId id, ParamData *pd) {
 		ParamData *rp = getParamData(h->rid - 1);
 		addHist(CountTables);
 
-		float x = getParamFloat((ParamTypeId)(h->cid - 1));
-		float y = getParamFloat((ParamTypeId)(h->rid - 1));
+		float x = getParamFloat((ParamTypeId) (h->cid - 1));
+		float y = getParamFloat((ParamTypeId) (h->rid - 1));
 		float c1 = _dblDecode(cp, h->c1);
 		float c2 = _dblDecode(cp, h->c2);
 		float r1 = _dblDecode(rp, h->r1);
@@ -590,7 +563,7 @@ float lookupParam(ParamTypeId id, ParamData *pd) {
 		ParamData *cp = getParamData(h->cid - 1);
 		uint8_t r = h->rows - 1;
 
-		float y = getParamFloat((ParamTypeId)(h->cid - 1));
+		float y = getParamFloat((ParamTypeId) (h->cid - 1));
 		float y1 = getVal(cp, h, h->last, 0);
 
 		while (h->last > 0 && y < y1)
@@ -626,7 +599,7 @@ float lookupParam(ParamTypeId id, ParamData *pd) {
 
 		addHist(CountLookups);
 
-		float y = h->cid ? getParamFloat((ParamTypeId)(h->cid - 1)) : _dblDecode(pd, pd->value);
+		float y = h->cid ? getParamFloat((ParamTypeId) (h->cid - 1)) : _dblDecode(pd, pd->value);
 
 		if (y <= h->c1 || h->c1 == h->c2)
 			return getVal(pd, h, 0, 0);

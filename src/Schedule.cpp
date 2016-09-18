@@ -117,8 +117,8 @@ class Schedule {
 				uint16_t pulse1 = tdc - pulseAdvance;
 				uint16_t spark1 = tdc - sparkAdvance;
 
-				uint8_t pulsepin = Injector1 + cyl;
-				uint8_t sparkpin = Spark1 + cyl;
+				uint8_t pulsepin = PinInjector1 + cyl;
+				uint8_t sparkpin = PinSpark1 + cyl;
 
 				p++->setEvent(n++, cyl, pulsepin, pulse1, 0, true);
 				p++->setEvent(n++, cyl, pulsepin, pulse1, pulseWidth, false);
@@ -187,7 +187,7 @@ public:
 		send.json(F("pulseWidth"), pulseWidth);
 		send.json(F("sparkDuration"), sparkDuration);
 		Metric::send(send, metrics, MetricMax);
-		sendHist(send, hist, HistMax);
+		MetricsHist::sendHist(send, F("counts"), hist, HistMax);
 
 		//send.p1(F("index"));
 		//for (uint8_t i = 0; i < EVENTS; i++)
@@ -198,21 +198,23 @@ public:
 } schedule;
 
 static inline uint32_t runStatus(uint32_t t0, void *data) {
-	uint32_t wait = getParamUnsigned(FlagIsMonitoring);
+	uint32_t waitms = getParamUnsigned(FlagIsMonitoring);
 
 	toggleled(0);
 
-	if (!wait) {
-		//BitSchedule::sendEventStatus(0);
-		return MicrosToTicks(3000017UL);
+	Buffer &send = hardware.send();
+
+	if (!waitms) {
+		BitPlan::sendEventStatus(send);
+		return 3000 * 1000UL;
 	}
 
-	decoder.sendList(hardware.send());
-	//BitSchedule::sendEventList(0);
+	decoder.sendList(send);
+	BitPlan::sendEventList(send);
 
-	wait = max(wait, 500);
+	waitms = max(waitms, 500);
 
-	return wait * 3000;
+	return waitms * 1000UL;
 }
 
 static inline uint32_t runRefresh(uint32_t now, void *data) {

@@ -11,7 +11,7 @@ void Decoder::sendStatus(Buffer &send) volatile {
 	send.json(F("total"), getTicks());
 	send.json(F("rpm"), getRPM());
 	send.json(F("invalid"), !isValid());
-	sendHist(send, hist, HistMax);
+	MetricsHist::sendHist(send, F("counts"), hist, HistMax);
 	send.p2();
 
 	old = 0;
@@ -30,12 +30,14 @@ void Decoder::sendList(Buffer &send) volatile {
 }
 
 static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
-	Decoder *d = (Decoder *)data;
+	Decoder *d = (Decoder *) data;
 
-	if (be.isMatch("list"))
+	if (be.isMatch(F("l")))
 		d->sendList(send);
-	else if (be.isMatch("status"))
+	else if (be.isMatch(F("s")))
 		d->sendStatus(send);
+	else
+		send.nl("list|status");
 }
 
 void Decoder::init() volatile {
@@ -56,7 +58,7 @@ void Decoder::init() volatile {
 
 	refresh(0);
 
-	broker.add(brokercb, (void *)this, F("d"));
+	broker.add(brokercb, (void *) this, F("d"));
 }
 
 uint16_t Decoder::mem(bool alloced) volatile {

@@ -5,14 +5,6 @@
 
 #include "Buffer.h"
 
-#ifndef ARDUINO
-
-typedef char flash_t;
-
-#endif
-
-
-
 #include <stdarg.h>
 
 enum {
@@ -55,30 +47,6 @@ void _log(uint8_t level, const flash_t *file, int line, const flash_t *fmt, ...)
 
 #define logSevere(fmt, ...) LOG_CALL(LOG_SEVERE, fmt, ## __VA_ARGS__)
 #define tlogSevere(fmt, ...) TLOG_CALL(LOG_SEVERE, fmt, ## __VA_ARGS__)
-
-
-
-#if 0
-#if 0
-
-#include <Print.h>
-
-#define flash_t __FlashStringHelper
-#define _printOverload(fmt, type) int print(type v) { return out->print(v); }
-#define sendNameVal(t) void send(const __FlashStringHelper *label, t v, bool verbose = true) { if (verbose || v) { name(label); out->print(v); }}
-#define sendIdVal(t) void send(uint8_t id, t v, bool verbose = true) { if (verbose || v) { name(id); out->print(v); }}
-
-#else
-
-#define _printOverloadf(f, t) int print(t v) { return printf(f, (double)v); }
-#define _printOverload(f, t) int print(t v) { return printf(f, v); }
-#define sendNameVal(t) void send(const flash_t *label, t v, bool verbose = true) { if (verbose || v) { name(label); print(v); }}
-#define sendIdVal(t) void send(uint8_t id, t v, bool verbose = true) { if (verbose || v) { name(id); print(v); }}
-
-#endif
-#endif
-
-
 
 class Streamx {
 	uint8_t level;

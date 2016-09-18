@@ -910,33 +910,33 @@ public:
 		send.p1(F("timer"));
 		send.json(F("id"), getId());
 		send.json(F("idx"), idx);
-		send.json(F("slop"), TicksToMicrosf(slop));
+		send.jsonf(F("slop"), TicksToMicrosf(slop));
 
 		if (minawake != InvalidVal) {
 			send.json(F("-cycles"), minawake);
 			send.json(F("+cycles"), maxawake);
-			send.json(F("-awake"), TicksToMicrosf(minawake));
-			send.json(F("+awake"), TicksToMicrosf(maxawake));
+			send.jsonf(F("-awake"), TicksToMicrosf(minawake));
+			send.jsonf(F("+awake"), TicksToMicrosf(maxawake));
 		}
 
 		if (minlate != InvalidVal) {
-			send.json(F("-late"), TicksToMicrosf(minlate));
-			send.json(F("+late"), TicksToMicrosf(maxlate));
+			send.jsonf(F("-late"), TicksToMicrosf(minlate));
+			send.jsonf(F("+late"), TicksToMicrosf(maxlate));
 		}
 
 		uint16_t count = hist[CountSleeps];
 		uint16_t lates = hist[CountLate];
 
 		if (lates && lates < count)
-			send.json(F("late"), 100.0f * lates / count);
+			send.jsonf(F("late"), 100.0f * lates / count);
 
 		send.json(F("bits"), bits);
 		send.json(F("jumping"), jump > 0);
 
-		send.json(F("sleep"), TicksToMicrosf(tdiff32(next, last)));
-		send.json(F("asleep"), TicksToMicrosf(asleep));
+		send.jsonf(F("sleep"), TicksToMicrosf(tdiff32(next, last)));
+		send.jsonf(F("asleep"), TicksToMicrosf(asleep));
 
-		sendHist(send, hist, HistMax);
+		MetricsHist::sendHist(send, F("counts"), hist, HistMax);
 		send.p2();
 
 		reset();

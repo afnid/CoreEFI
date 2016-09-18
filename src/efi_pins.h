@@ -1,80 +1,82 @@
 // Generated code, don't edit
 
+#define RETARTED(x)	(x)
+
 static GPIO::PinDef pins[MaxPins] = {
-	{ 0, MYNAME(Injector1), PinModeOutput, 0, 0 }, // 0
-	{ 0, MYNAME(Injector2), PinModeOutput, 0, 0 }, // 1
-	{ 0, MYNAME(Injector3), PinModeOutput, 0, 0 }, // 2
-	{ 0, MYNAME(Injector4), PinModeOutput, 0, 0 }, // 3
-	{ 0, MYNAME(Injector5), PinModeOutput, 0, 0 }, // 4
-	{ 0, MYNAME(Injector6), PinModeOutput, 0, 0 }, // 5
-	{ 0, MYNAME(Injector7), PinModeOutput, 0, 0 }, // 6
-	{ 0, MYNAME(Injector8), PinModeOutput, 0, 0 }, // 7
-	{ 0, MYNAME(Spark1), PinModeOutput, 0, 0 }, // 8
-	{ 0, MYNAME(Spark2), PinModeOutput, 0, 0 }, // 9
-	{ 0, MYNAME(Spark3), PinModeOutput, 0, 0 }, // 10
-	{ 0, MYNAME(Spark4), PinModeOutput, 0, 0 }, // 11
-	{ 0, MYNAME(Spark5), PinModeOutput, 0, 0 }, // 12
-	{ 0, MYNAME(Spark6), PinModeOutput, 0, 0 }, // 13
-	{ 0, MYNAME(Spark7), PinModeOutput, 0, 0 }, // 14
-	{ 0, MYNAME(Spark8), PinModeOutput, 0, 0 }, // 15
-	{ 12, MYNAME(Led1), PinModeOutput, 0, 0 }, // 16
-	{ 13, MYNAME(Led2), PinModeOutput, 0, 0 }, // 17
-	{ 14, MYNAME(Led3), PinModeOutput, 0, 0 }, // 18
-	{ 15, MYNAME(Led4), PinModeOutput, 0, 0 }, // 19
-	{ 41, MYNAME(IsBrakeOn), PinModeInput, 0, 0 }, // 20
-	{ 47, MYNAME(IsSignalLeft), PinModeInput, 0, 0 }, // 21
-	{ 49, MYNAME(IsSignalRight), PinModeInput, 0, 0 }, // 22
-	{ 32, MYNAME(IsParkingOn), PinModeInput, 0, 0 }, // 23
-	{ 40, MYNAME(IsLoBeamOn), PinModeInput, 0, 0 }, // 24
-	{ 0, MYNAME(IsHiBeamOn), PinModeInput, 0, 0 }, // 25
-	{ 44, MYNAME(IsKeyAcc), PinModeInput, 0, 0 }, // 26
-	{ 46, MYNAME(IsKeyOn), PinModeInput, 0, 0 }, // 27
-	{ 48, MYNAME(IsCranking), PinModeInput, 0, 0 }, // 28
-	{ 43, MYNAME(IsClimateOn), PinModeInput, 0, 0 }, // 29
-	{ 45, MYNAME(IsHornOn), PinModeInput, 0, 0 }, // 30
-	{ 37, MYNAME(IsTransNeutral), PinModeInput, 0, 0 }, // 31
-	{ 39, MYNAME(IsTransReverse), PinModeInput, 0, 0 }, // 32
-	{ 0, MYNAME(IsHazardsOn), PinModeInput, 0, 0 }, // 33
-	{ 0, MYNAME(IsInteriorOn), PinModeInput, 0, 0 }, // 34
-	{ 0, MYNAME(IsClusterBright), PinModeInput, 0, 0 }, // 35
-	{ 0, MYNAME(IsFanSwitch1), PinModeInput, 0, 0 }, // 36
-	{ 0, MYNAME(IsFanSwitch2), PinModeInput, 0, 0 }, // 37
-	{ 0, MYNAME(IsMenuButton1), PinModeInput, 0, 0 }, // 38
-	{ 9, MYNAME(IsMenuButton2), PinModeInput, 0, 0 }, // 39
-	{ 0, MYNAME(RelayWipers), PinModeOutput, 0, 0 }, // 40
-	{ 0, MYNAME(RelayClimate), PinModeOutput, 0, 0 }, // 41
-	{ 0, MYNAME(RelayStarter), PinModeOutput, 0, 0 }, // 42
-	{ 0, MYNAME(RelayHorn), PinModeOutput, 0, 0 }, // 43
-	{ 0, MYNAME(RelayHiBeam), PinModeOutput, 0, 0 }, // 44
-	{ 31, MYNAME(RelayLoBeam), PinModeOutput, 0, 0 }, // 45
-	{ 27, MYNAME(RelaySignalLeft), PinModeOutput, 0, 0 }, // 46
-	{ 25, MYNAME(RelaySignalRight), PinModeOutput, 0, 0 }, // 47
-	{ 23, MYNAME(RelayParkingLeft), PinModeOutput, 0, 0 }, // 48
-	{ 0, MYNAME(RelayParkingRight), PinModeOutput, 0, 0 }, // 49
-	{ 29, MYNAME(RelayReverseLights), PinModeOutput, 0, 0 }, // 50
-	{ 33, MYNAME(RelayBrakeLightLeft), PinModeOutput, 0, 0 }, // 51
-	{ 35, MYNAME(RelayBrakeLightRight), PinModeOutput, 0, 0 }, // 52
-	{ 0, MYNAME(RelayBrakeSignalLeft), PinModeOutput, 0, 0 }, // 53
-	{ 0, MYNAME(RelayBrakeSignalRight), PinModeOutput, 0, 0 }, // 54
-	{ 0, MYNAME(RelayFan1), PinModeOutput|PinModePWM, 0, 0 }, // 55
-	{ 0, MYNAME(RelayFan2), PinModeOutput|PinModePWM, 0, 0 }, // 56
-	{ 0, MYNAME(RelayEPAS1), PinModeOutput|PinModePWM, 0, 0 }, // 57
-	{ 0, MYNAME(RelayEPAS2), PinModeOutput|PinModePWM, 0, 0 }, // 58
-	{ 0, MYNAME(RelayGauge1), PinModeOutput|PinModePWM, 0, 0 }, // 59
-	{ 0, MYNAME(RelayGauge2), PinModeOutput|PinModePWM, 0, 0 }, // 60
-	{ 0, MYNAME(AnalogRadiatorTemp), PinModeAnalog, 0, 0 }, // 61
-	{ 0, MYNAME(AnalogFuel), PinModeAnalog, 0, 0 }, // 62
-	{ 0, MYNAME(AnalogAMPS1), PinModeAnalog, 0, 0 }, // 63
-	{ 0, MYNAME(AnalogHEGO1), PinModeAnalog, 0, 0 }, // 64
-	{ 0, MYNAME(AnalogHEGO2), PinModeAnalog, 0, 0 }, // 65
-	{ 0, MYNAME(AnalogBAR), PinModeAnalog, 0, 0 }, // 66
-	{ 0, MYNAME(AnalogEGR), PinModeAnalog, 0, 0 }, // 67
-	{ 0, MYNAME(AnalogVCC), PinModeAnalog, 0, 0 }, // 68
-	{ 0, MYNAME(AnalogDEC), PinModeAnalog, 0, 0 }, // 69
-	{ 0, MYNAME(AnalogTPS), PinModeAnalog, 0, 0 }, // 70
-	{ 0, MYNAME(AnalogVSS), PinModeInput|PinModeEdge, 0, 0 }, // 71
-	{ 0, MYNAME(AnalogECT), PinModeAnalog, 0, 0 }, // 72
-	{ 0, MYNAME(AnalogMAF), PinModeAnalog, 0, 0 }, // 73
-	{ 0, MYNAME(AnalogACT), PinModeAnalog, 0, 0 }, // 74
+	{ 0, PinInjector1, RETARTED("Injector1"), PinModeOutput, 0, 0 }, // 0
+	{ 0, PinInjector2, RETARTED("Injector2"), PinModeOutput, 0, 0 }, // 1
+	{ 0, PinInjector3, RETARTED("Injector3"), PinModeOutput, 0, 0 }, // 2
+	{ 0, PinInjector4, RETARTED("Injector4"), PinModeOutput, 0, 0 }, // 3
+	{ 0, PinInjector5, RETARTED("Injector5"), PinModeOutput, 0, 0 }, // 4
+	{ 0, PinInjector6, RETARTED("Injector6"), PinModeOutput, 0, 0 }, // 5
+	{ 0, PinInjector7, RETARTED("Injector7"), PinModeOutput, 0, 0 }, // 6
+	{ 0, PinInjector8, RETARTED("Injector8"), PinModeOutput, 0, 0 }, // 7
+	{ 0, PinSpark1, RETARTED("Spark1"), PinModeOutput, 0, 0 }, // 8
+	{ 0, PinSpark2, RETARTED("Spark2"), PinModeOutput, 0, 0 }, // 9
+	{ 0, PinSpark3, RETARTED("Spark3"), PinModeOutput, 0, 0 }, // 10
+	{ 0, PinSpark4, RETARTED("Spark4"), PinModeOutput, 0, 0 }, // 11
+	{ 0, PinSpark5, RETARTED("Spark5"), PinModeOutput, 0, 0 }, // 12
+	{ 0, PinSpark6, RETARTED("Spark6"), PinModeOutput, 0, 0 }, // 13
+	{ 0, PinSpark7, RETARTED("Spark7"), PinModeOutput, 0, 0 }, // 14
+	{ 0, PinSpark8, RETARTED("Spark8"), PinModeOutput, 0, 0 }, // 15
+	{ 12, PinLed1, RETARTED("Led1"), PinModeOutput, 0, 0 }, // 16
+	{ 13, PinLed2, RETARTED("Led2"), PinModeOutput, 0, 0 }, // 17
+	{ 14, PinLed3, RETARTED("Led3"), PinModeOutput, 0, 0 }, // 18
+	{ 15, PinLed4, RETARTED("Led4"), PinModeOutput, 0, 0 }, // 19
+	{ 41, PinIsBrakeOn, RETARTED("IsBrakeOn"), PinModeInput, 0, 0 }, // 20
+	{ 47, PinIsSignalLeft, RETARTED("IsSignalLeft"), PinModeInput, 0, 0 }, // 21
+	{ 49, PinIsSignalRight, RETARTED("IsSignalRight"), PinModeInput, 0, 0 }, // 22
+	{ 32, PinIsParkingOn, RETARTED("IsParkingOn"), PinModeInput, 0, 0 }, // 23
+	{ 40, PinIsLoBeamOn, RETARTED("IsLoBeamOn"), PinModeInput, 0, 0 }, // 24
+	{ 0, PinIsHiBeamOn, RETARTED("IsHiBeamOn"), PinModeInput, 0, 0 }, // 25
+	{ 44, PinIsKeyAcc, RETARTED("IsKeyAcc"), PinModeInput, 0, 0 }, // 26
+	{ 46, PinIsKeyOn, RETARTED("IsKeyOn"), PinModeInput, 0, 0 }, // 27
+	{ 48, PinIsCranking, RETARTED("IsCranking"), PinModeInput, 0, 0 }, // 28
+	{ 43, PinIsClimateOn, RETARTED("IsClimateOn"), PinModeInput, 0, 0 }, // 29
+	{ 45, PinIsHornOn, RETARTED("IsHornOn"), PinModeInput, 0, 0 }, // 30
+	{ 37, PinIsTransNeutral, RETARTED("IsTransNeutral"), PinModeInput, 0, 0 }, // 31
+	{ 39, PinIsTransReverse, RETARTED("IsTransReverse"), PinModeInput, 0, 0 }, // 32
+	{ 0, PinIsHazardsOn, RETARTED("IsHazardsOn"), PinModeInput, 0, 0 }, // 33
+	{ 0, PinIsInteriorOn, RETARTED("IsInteriorOn"), PinModeInput, 0, 0 }, // 34
+	{ 0, PinIsClusterBright, RETARTED("IsClusterBright"), PinModeInput, 0, 0 }, // 35
+	{ 0, PinIsFanSwitch1, RETARTED("IsFanSwitch1"), PinModeInput, 0, 0 }, // 36
+	{ 0, PinIsFanSwitch2, RETARTED("IsFanSwitch2"), PinModeInput, 0, 0 }, // 37
+	{ 0, PinIsMenuButton1, RETARTED("IsMenuButton1"), PinModeInput, 0, 0 }, // 38
+	{ 9, PinIsMenuButton2, RETARTED("IsMenuButton2"), PinModeInput, 0, 0 }, // 39
+	{ 0, PinRelayWipers, RETARTED("RelayWipers"), PinModeOutput, 0, 0 }, // 40
+	{ 0, PinRelayClimate, RETARTED("RelayClimate"), PinModeOutput, 0, 0 }, // 41
+	{ 0, PinRelayStarter, RETARTED("RelayStarter"), PinModeOutput, 0, 0 }, // 42
+	{ 0, PinRelayHorn, RETARTED("RelayHorn"), PinModeOutput, 0, 0 }, // 43
+	{ 0, PinRelayHiBeam, RETARTED("RelayHiBeam"), PinModeOutput, 0, 0 }, // 44
+	{ 31, PinRelayLoBeam, RETARTED("RelayLoBeam"), PinModeOutput, 0, 0 }, // 45
+	{ 27, PinRelaySignalLeft, RETARTED("RelaySignalLeft"), PinModeOutput, 0, 0 }, // 46
+	{ 25, PinRelaySignalRight, RETARTED("RelaySignalRight"), PinModeOutput, 0, 0 }, // 47
+	{ 23, PinRelayParkingLeft, RETARTED("RelayParkingLeft"), PinModeOutput, 0, 0 }, // 48
+	{ 0, PinRelayParkingRight, RETARTED("RelayParkingRight"), PinModeOutput, 0, 0 }, // 49
+	{ 29, PinRelayReverseLights, RETARTED("RelayReverseLights"), PinModeOutput, 0, 0 }, // 50
+	{ 33, PinRelayBrakeLightLeft, RETARTED("RelayBrakeLightLeft"), PinModeOutput, 0, 0 }, // 51
+	{ 35, PinRelayBrakeLightRight, RETARTED("RelayBrakeLightRight"), PinModeOutput, 0, 0 }, // 52
+	{ 0, PinRelayBrakeSignalLeft, RETARTED("RelayBrakeSignalLeft"), PinModeOutput, 0, 0 }, // 53
+	{ 0, PinRelayBrakeSignalRight, RETARTED("RelayBrakeSignalRight"), PinModeOutput, 0, 0 }, // 54
+	{ 0, PinRelayFan1, RETARTED("RelayFan1"), PinModeOutput|PinModePWM, 0, 0 }, // 55
+	{ 0, PinRelayFan2, RETARTED("RelayFan2"), PinModeOutput|PinModePWM, 0, 0 }, // 56
+	{ 0, PinRelayEPAS1, RETARTED("RelayEPAS1"), PinModeOutput|PinModePWM, 0, 0 }, // 57
+	{ 0, PinRelayEPAS2, RETARTED("RelayEPAS2"), PinModeOutput|PinModePWM, 0, 0 }, // 58
+	{ 0, PinRelayGauge1, RETARTED("RelayGauge1"), PinModeOutput|PinModePWM, 0, 0 }, // 59
+	{ 0, PinRelayGauge2, RETARTED("RelayGauge2"), PinModeOutput|PinModePWM, 0, 0 }, // 60
+	{ 0, PinAnalogRadiatorTemp, RETARTED("AnalogRadiatorTemp"), PinModeAnalog, 0, 0 }, // 61
+	{ 0, PinAnalogFuel, RETARTED("AnalogFuel"), PinModeAnalog, 0, 0 }, // 62
+	{ 0, PinAnalogAMPS1, RETARTED("AnalogAMPS1"), PinModeAnalog, 0, 0 }, // 63
+	{ 0, PinAnalogHEGO1, RETARTED("AnalogHEGO1"), PinModeAnalog, 0, 0 }, // 64
+	{ 0, PinAnalogHEGO2, RETARTED("AnalogHEGO2"), PinModeAnalog, 0, 0 }, // 65
+	{ 0, PinAnalogBAR, RETARTED("AnalogBAR"), PinModeAnalog, 0, 0 }, // 66
+	{ 0, PinAnalogEGR, RETARTED("AnalogEGR"), PinModeAnalog, 0, 0 }, // 67
+	{ 0, PinAnalogVCC, RETARTED("AnalogVCC"), PinModeAnalog, 0, 0 }, // 68
+	{ 0, PinAnalogTPS, RETARTED("AnalogTPS"), PinModeAnalog, 0, 0 }, // 69
+	{ 0, PinAnalogECT, RETARTED("AnalogECT"), PinModeAnalog, 0, 0 }, // 70
+	{ 0, PinAnalogMAF, RETARTED("AnalogMAF"), PinModeAnalog, 0, 0 }, // 71
+	{ 0, PinAnalogACT, RETARTED("AnalogACT"), PinModeAnalog, 0, 0 }, // 72
+	{ 0, PinAnalogDEC, RETARTED("AnalogDEC"), PinModeAnalog, 0, 0 }, // 73
+	{ 0, PinPulsedVSS, RETARTED("PulsedVSS"), PinModeInput|PinModeEdge, 0, 0 }, // 74
 };
 

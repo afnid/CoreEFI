@@ -1,3 +1,5 @@
+#define EXTERN
+
 #include "Tasks.h"
 #include "System.h"
 #include "Schedule.h"
@@ -5,7 +7,30 @@
 #include "Stream.h"
 #include "Hardware.h"
 
-DEBUGINIT();
+#include "Tasks.h"
+#include "Hardware.h"
+#include "GPIO.h"
+
+#include "Schedule.h"
+#include "Strategy.h"
+#include "Codes.h"
+#include "Encoder.h"
+#include "Timers.h"
+
+#include "Epoch.h"
+#include "Stream.h"
+
+#include "Display.h"
+#include "Vehicle.h"
+#include "Bus.h"
+
+#ifndef NDEBUG
+#define MYNAME(x)	x, F(#x)
+#else
+#define MYNAME(x)	x, 0
+#endif
+
+#include "efi_pins.h"
 
 #ifdef ARDUINO
 void Hardware::flush() {
@@ -13,19 +38,23 @@ void Hardware::flush() {
 	Buffer &recv = hardware.recv();
 
 	while (Serial.available())
-	recv.putb(Serial.read());
+	recv.myputch(Serial.read());
 
-	char *buf[32];
+	char buf[32];
 	size_t n = 0;
 
 	if ((n = send.read(buf, sizeof(buf))) > 0)
-	send.write(buf, n);
+	Serial.write(buf, n);
+}
+
+void GPIO::init(PinDef *pd) const {
 }
 #endif
 
 #ifdef STM32
 
 #include "st_main.h"
+#include "st_gpio.h"
 
 void toggleled(uint8_t id) {
 #ifdef __STM32F4_DISCOVERY_H
@@ -40,14 +69,80 @@ void toggleled(uint8_t id) {
 #endif
 }
 
-int main(int argc, char **argv) {
+#define IRQNONE	((IRQn_Type)0)
+
+static IRQn_Type getIRQ(PinId pt) {
+	switch(pt) {
+#ifdef STM32L1
+		//return EXTI9_5_IRQn;
+		//return EXTI4_IRQn;
+		//case IN_BUTTON:
+		//return EXTI15_10_IRQn;
+#endif
+		default:
+		return IRQNONE;
+	}
+}
+
+void GPIO::init(PinDef *pd) const {
+	STGPIO::getPortName(pd->ext, pd->info);
+
+	GPIO_InitTypeDef gpio = {0};
+	gpio.Pull = GPIO_NOPULL;
+	gpio.Speed = GPIO_SPEED_FREQ_MEDIUM;
+
+	if (pd->mode & PinModeOutput) {
+		gpio.Mode = GPIO_MODE_OUTPUT_PP;
+		STGPIO::init(pd->ext, &gpio);
+	} else if (pd->mode & PinModeInput) {
+		IRQn_Type irq = getIRQ(pd->getId());
+
+		if (irq == IRQNONE) {
+			gpio.Mode = GPIO_MODE_INPUT;
+			STGPIO::init(pd->ext, &gpio);
+		} else {
+		}
+	}
+}
+
+void Hardware::flush() {
+	for (uint8_t i = 0; i < nchannels(); i++) {
+		if (i < ARRSIZE(uarts)) {
+			if (uarts[i].isValid()) {
+				uarts[i].send(send(i));
+				uarts[i].recv(recv(i));
+			} else
+				ch[i].send.clear();
+		}
+	}
+}
+
+int main(void) {
+	hardware.init();
+
+	gpio.init(pins, MaxPins);
+
+	//stled.setPin(OUT_LED2);
+
+	//if (!uarts[n].init(n, 3, IN_SHELL_RX, OUT_SHELL_TX))
+	//myerror();
+
 	global.init();
+	//initPins();
+	//stled.toggle();
+	//stadc.init();
+	//stadc.start();
+	//stled.setLoHi(100, 500);
 
 	initSystem(false);
 
-	TaskMgr::runTasks();
-}
+	while (true) {
+		if (stbutton.isDown()) {
+		}
 
+		taskmgr.check();
+	}
+}
 #else
 
 void toggleled(uint8_t id) {
@@ -73,6 +168,9 @@ void Hardware::flush() {
 		n = fwrite(buf, 1, n, stdout);
 		fflush(stdout);
 	}
+}
+
+void GPIO::init(PinDef *pd) const {
 }
 
 static void stabilize(uint16_t ms) {
@@ -107,47 +205,36 @@ static void runDecoderTest() {
 }
 
 static void runTimeTest() {
-	assert(tdiff32(1, (1L << 32) - 1) == 2);
-	assert(tdiff32(10, (1L << 32) - 10) == 20);
-	assert(tdiff32(10, 2) == 8);
-	assert(tdiff32(2, 10) == -8);
-
-	//assert(uelapsed32(1, (1L << 32) - 1) == 2);
-	//assert(uelapsed32(10, (1L << 32) - 10) == 20);
-	//assert(uelapsed16(10, (1L << 16) - 10) == 20);
-	//assert(uelapsed32(10, 2) == 8);
-	//assert(uelapsed16(10, 2) == 8);
-	//assert(uelapsed32(2, (1L << 32) - 6) == 8);
-	//assert(uelapsed16(2, (1 << 16) - 3) == 5);
-
-	printf("%10u %10u\n", TicksToMicros(clockTicks()), clockTicks());
-	delayTicks(MicrosToTicks(500 * 1000));
 }
 
 int main(int argc, char **argv) {
-	bool doperfect = true;
+	bool doperfect = false;
 	bool efi = true;
 	int opt;
 
-	while ((opt = getopt(argc, argv, "dep")) >= 0) {
+	while ((opt = getopt(argc, argv, "edpt")) >= 0) {
 		switch (opt) {
-		case 'p':
-			doperfect = !doperfect;
+		case 'e':
+			efi = !efi;
 			break;
 		case 'd':
 			runDecoderTest();
 			break;
+		case 'p':
+			doperfect = !doperfect;
+			break;
 		case 't':
 			runTimeTest();
 			break;
-		case 'e':
-			efi = !efi;
-			break;
 		default:
-			fprintf(stderr, "Usage %s [-p port|-b baud|-s script|-c command -q -v]\n", argv[0]);
+			fprintf(stderr, "Usage %s -[edpt]\n", argv[0]);
 			exit(1);
 		}
 	}
+
+	hardware.init();
+
+	gpio.init(pins, MaxPins);
 
 	initSystem(efi);
 

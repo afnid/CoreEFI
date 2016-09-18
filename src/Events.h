@@ -5,7 +5,7 @@
 
 #define PATH __FILE__
 
-#include "utils.h"
+#include "Buffer.h"
 
 class BitPlan {
 protected:
@@ -136,6 +136,9 @@ public:
 	static void refreshEvents();
 	static uint32_t runEvents(uint32_t now, uint8_t maxdelay, uint16_t jitter);
 	static void checkEvents();
+
+	static void sendEventList(Buffer &send);
+	static void sendEventStatus(Buffer &send);
 };
 
 #undef PATH
