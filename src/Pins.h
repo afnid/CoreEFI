@@ -79,6 +79,16 @@ typedef enum {
 	PinAnalogACT, // 72
 	PinAnalogDEC, // 73
 	PinPulsedVSS, // 74
+	PinSPI_MOSI, // 75
+	PinSPI_MISO, // 76
+	PinSPI_SCK, // 77
+	PinSPI_SS, // 78
+	PinLightStripData, // 79
+	PinLightStripClock, // 80
+	PinCanBusInt, // 81
+	PinCanBusCS, // 82
+	PinShellRX, // 83
+	PinShellTX, // 84
 	MaxPins
 } PinId;
 

@@ -1,11 +1,18 @@
 #define EXTERN
 
+#ifdef STM32
+#include "st_main.h"
+#include "st_uart.h"
+#include "st_adc.h"
+#include "st_gpio.h"
+#endif
+
+#include "Hardware.h"
 #include "Tasks.h"
 #include "System.h"
 #include "Schedule.h"
 #include "Events.h"
 #include "Stream.h"
-#include "Hardware.h"
 
 #include "Tasks.h"
 #include "Hardware.h"
@@ -25,12 +32,21 @@
 #include "Bus.h"
 
 #ifndef NDEBUG
-#define MYNAME(x)	x, F(#x)
+#define MYNAME(x)	F(#x)
 #else
-#define MYNAME(x)	x, 0
+#define MYNAME(x)	0
 #endif
 
 #include "efi_pins.h"
+
+static void initPins(ZoneId zone) {
+	for (uint8_t i = 0; i < MaxPins; i++) {
+		GPIO::PinDef *pd = pins + i;
+		pd->ext = getPinExt(zone, (PinId)i);
+	}
+
+	gpio.init(pins, MaxPins);
+}
 
 #ifdef ARDUINO
 void Hardware::flush() {
@@ -52,9 +68,6 @@ void GPIO::init(PinDef *pd) const {
 #endif
 
 #ifdef STM32
-
-#include "st_main.h"
-#include "st_gpio.h"
 
 void toggleled(uint8_t id) {
 #ifdef __STM32F4_DISCOVERY_H
@@ -118,17 +131,17 @@ void Hardware::flush() {
 }
 
 int main(void) {
-	hardware.init();
+	stmicro.init();
 
-	gpio.init(pins, MaxPins);
+	initPins(ZoneFront);
 
 	//stled.setPin(OUT_LED2);
 
-	//if (!uarts[n].init(n, 3, IN_SHELL_RX, OUT_SHELL_TX))
-	//myerror();
+	int n = 0;
 
-	global.init();
-	//initPins();
+	if (!uarts[n].init(n, 3, PinShellRX, PinShellTX))
+		myerror();
+
 	//stled.toggle();
 	//stadc.init();
 	//stadc.start();
@@ -232,7 +245,7 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	gpio.init(pins, MaxPins);
+	initPins(ZoneFront);
 
 	initSystem(efi);
 

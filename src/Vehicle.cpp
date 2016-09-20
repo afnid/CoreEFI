@@ -9,10 +9,6 @@
 #include "FastLED.h"
 #endif
 
-#ifndef CONFIG
-#define CONFIG 10
-#endif
-
 #define DATA_PIN 12
 #define CLOCK_PIN 13
 
@@ -24,166 +20,17 @@ enum {
 CRGB leds[NUM_LEDS];
 #endif
 
-static const PinId config[1] = {
-#if CONFIG == 1
-
-		VehicleRadiatorTemp
-		VehicleIsTurningLeft
-		VehicleIsTurningRight
-		VehicleIsLoBeamOn
-		VehicleIsHiBeamOn
-		VehicleIsParkingOn
-		VehicleIsHornOn
-		VehicleIsAirOn
-		CalcFan1
-		CalcFan2
-
-#elif CONFIG == 2
-
-		CalcFan1
-		CalcFan2
-
-		CalcEPAS1
-		CalcEPAS2
-
-		VehicleGauge1
-		VehicleGauge2
-
-		VehicleIsTurningLeft, 27
-		VehicleIsTurningRight, 25
-		VehicleIsParkingOn, 23
-		VehicleIsTransReverse, 29
-
-		VehicleIsLoBeamOn, 31
-		VehicleIsHiBeamOn
-
-		VehicleIsBrakeLeft, 33
-		VehicleIsBrakeRight, 35
-
-		SensorIsKeyAcc
-		SensorIsKeyOn
-		SensorIsCranking
-
-		VehicleIsAirOn
-		VehicleIsHornOn
-
-		VehicleIsGenAlert
-		VehicleIsOilAlert
-
-		SensorIsKeyAcc, 44
-		SensorIsKeyOn, 46
-		SensorIsCranking, 48
-
-		VehicleIsParkingOn, 32
-		VehicleIsLoBeamOn, 40
-		VehicleIsHiBeamOn
-		VehicleIsClusterBright
-
-		VehicleIsBrakeOn, 41
-		VehicleIsAirOn, 43
-		VehicleIsTransNeutral, 37
-		VehicleIsTransReverse, 39
-
-		VehicleIsHornOn, 45
-		VehicleIsTurningLeft, 47
-		VehicleIsTurningRight, 49
-
-		VehicleIsFanSwitch1
-		VehicleIsFanSwitch2
-		VehicleIsHazardsOn
-		VehicleIsInteriorOn
-
-		VehicleIsMenuButton1, 8
-		VehicleIsMenuButton2, 9
-
-		VehicleRadiatorTemp
-		SensorAMPS1
-		SensorHEGO1
-		SensorHEGO2
-		SensorBAR
-		SensorEGR
-		SensorVCC
-		SensorDEC
-		SensorTPS
-		SensorVSS
-		SensorECT
-		SensorMAF
-		SensorACT
-		VehicleFuelSender
-
-#elif CONFIG == 3
-
-		VehicleFuelSender
-		VehicleIsTurningLeft
-		VehicleIsTurningRight
-		VehicleIsParkingOn
-		VehicleIsTransReverse
-		SensorIsKeyOn
-		CalcFuelPump
-
-#endif
-	};
-
 void Vehicle::sendStatus(Buffer &send, BrokerEvent &be) const {
-	if (be.isMatch(send, F("fans"))) {
-		send.p1(F("vehicle"));
-		send.json(F("fan1duty"), fan1.duty);
-		send.json(F("fan2duty"), fan2.duty);
+	if (be.isMatch(send, F("f"))) {
+		fan1.json(F("fan1"), send);
+		fan2.json(F("fan2"), send);
 		send.p2();
+	} else if (be.isMatch(send, F("s"))) {
+		odb1.json(F("odb1"), send);
+		epas.json(F("epas"), send);
+		json(send);
 	} else
-		send.nl("fans");
-}
-
-static void setPins() {
-	uint8_t bits[bitsize(MaxPins)];
-	bzero(bits, sizeof(bits));
-
-	bitset(bits, 20);
-	bitset(bits, 21);
-	bitset(bits, 50);
-	bitset(bits, 51);
-	bitset(bits, 52);
-	bitset(bits, 53);
-	bitset(bits, DATA_PIN);
-	bitset(bits, CLOCK_PIN);
-
-	for (uint8_t i = 0; i < MaxPins; i++) {
-		PinId id = (PinId) i;
-		const GPIO::PinDef *pd = gpio.getPinDef(id);
-
-		if (pd->ext)
-			bitset(bits, pd->ext);
-	}
-
-	int input = 24;
-	int output = 2;
-	int analog = 5;
-
-	for (uint8_t i = 0; i < MaxPins; i++) {
-		PinId id = (PinId) i;
-		GPIO::PinDef *pd = (GPIO::PinDef *) gpio.getPinDef(id);
-
-		if (!pd->ext) {
-			if (pd->mode & PinModeAnalog) {
-				pd->ext = analog++ % 16;
-			} else if (pd->mode & PinModeInput) {
-				while (isset(bits, input))
-					input++;
-
-				pd->ext = min(53, input);
-			} else if (pd->mode & PinModeOutput) {
-				while (isset(bits, output))
-					output++;
-
-				pd->ext = min(53, output);
-			}
-
-			bitset(bits, pd->ext);
-
-			if (input >= 49)
-				input = 8;
-		}
-	}
+		send.nl("fans|status");
 }
 
 static float scaleLinear(uint16_t v, uint16_t v1, uint16_t v2, float o1, float o2, bool clamp) {
@@ -196,11 +43,27 @@ static float scaleLinear(uint16_t v, uint16_t v1, uint16_t v2, float o1, float o
 	return o1 + (o2 - o1) * pct;
 }
 
+void Vehicle::json(Buffer &send) const {
+	send.p1(F("vehicle"));
+	send.json(F("flash"), brakeFlash);
+	send.json(F("turn"), turning);
+	send.p2();
+}
+
 void Coded::init() {
 	id = MaxPins;
 	state = 0;
 	value = 0;
-	state = 0;
+	edge_lo = 0;
+	edge_hi = 0;
+}
+
+void Coded::json(const flash_t *name, Buffer &send) const {
+	send.p1(name);
+	send.json(F("id"), (uint8_t)id);
+	send.json(F("value"), value);
+	send.json(F("state"), state);
+	send.p2(false);
 }
 
 void Coded::service(uint32_t now) {
@@ -235,6 +98,13 @@ void Coded::service(uint32_t now) {
 Pulsed::Pulsed() {
 	duty = 0;
 	calced = 0;
+}
+
+void Pulsed::json(const flash_t *name, Buffer &send) const {
+	send.p1(name);
+	send.json("duty", duty);
+	send.json("calced", tdiff32(millis(), calced));
+	send.p2(false);
 }
 
 int Pulsed::ramp(uint32_t now, uint16_t duty, uint16_t delay) {
@@ -328,16 +198,16 @@ void Vehicle::calcSteeringAssist(uint32_t now) {
 
 	uint16_t duty = 0;
 
-	if (epas2.duty && getParamUnsigned(TimeRunSeconds) > 5) {
+	if (epas.duty && getParamUnsigned(TimeRunSeconds) > 5) {
 		uint16_t mph = getParamFloat(SensorVSS);
 
 		if (mph <= 10)
 			duty = clamp(duty, 0, 100 - mph * 10);
 	}
 
-	epas2.ramp(now, duty, 100);
+	epas.ramp(now, duty, 100);
 
-	setParamUnsigned(CalcEPAS2, epas2.duty);
+	setParamUnsigned(CalcEPAS2, epas.duty);
 }
 
 void Vehicle::calcFanSpeed(uint32_t now) {
@@ -585,7 +455,7 @@ void Vehicle::checkVehicle(uint32_t now) {
 	 */
 }
 
-static uint32_t taskcb(uint32_t now, void *data) {
+uint32_t Vehicle::taskcb(uint32_t now, void *data) {
 	((Vehicle *) data)->checkVehicle(now);
 	return 0;
 }
@@ -602,12 +472,10 @@ void Vehicle::init() {
 	LEDS.setBrightness(84);
 #endif
 
-	setPins();
-
 	taskmgr.addTask(F("Vehicle"), taskcb, this, 20);
 	broker.add(brokercb, this, F("c"));
 }
 
 uint16_t Vehicle::mem(bool alloced) {
-	return alloced ? 0 : sizeof(config);
+	return alloced ? 0 : 0;
 }
