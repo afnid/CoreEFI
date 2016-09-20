@@ -17,7 +17,7 @@ MCP_CAN CAN(SPI_CS_PIN);
 #endif
 
 static uint32_t checkBus(uint32_t now, void *data) {
-	CanBus *bus = (CanBus *)data;
+	CanBus *bus = (CanBus *) data;
 	uint8_t buf[8];
 	uint32_t id;
 	uint8_t len;
@@ -27,7 +27,7 @@ static uint32_t checkBus(uint32_t now, void *data) {
 		Serial.print(id, HEX);
 
 		for (int i = 0; i < len; i++)
-			Serial.print(buf[i], HEX);
+		Serial.print(buf[i], HEX);
 
 		Serial.println();
 #endif
@@ -63,4 +63,12 @@ bool CanBus::recv(uint32_t *id, uint8_t *buf, uint8_t *len) {
 #else
 	return false;
 #endif
+}
+
+void CanBus::sendParam(ParamTypeId id, uint16_t raw) {
+	send(100 + id, (uint8_t *) &raw, sizeof(raw));
+}
+
+void CanBus::sendParam(PinId id, uint16_t v) {
+	send(id, (uint8_t *) &v, sizeof(v));
 }

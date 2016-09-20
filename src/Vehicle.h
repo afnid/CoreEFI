@@ -15,6 +15,7 @@ public:
 
 	void init();
 	void service(uint32_t now);
+	void json(const flash_t *name, Buffer &send) const;
 };
 
 class Pulsed {
@@ -26,6 +27,7 @@ public:
 
 	Pulsed();
 	int ramp(uint32_t now, uint16_t duty, uint16_t delay);
+	void json(const flash_t *name, Buffer &send) const;
 };
 
 class Vehicle {
@@ -40,10 +42,14 @@ class Vehicle {
 	Pulsed fan1;
 	Pulsed fan2;
 
-	Pulsed epas2;
+	Pulsed epas;
+
+	void json(Buffer &send) const;
 
 	static void brokercb(Buffer &send, BrokerEvent &be, void *data);
+	static uint32_t taskcb(uint32_t now, void *data);
 
+	void checkVehicle(uint32_t now);
 	bool isRunning();
 	void fans_pwm(uint32_t now);
 	int getSteeringAssistDuty(uint32_t now);
@@ -63,8 +69,6 @@ public:
 	void init();
 
 	uint16_t mem(bool alloced);
-
-	void checkVehicle(uint32_t now);
 };
 
 EXTERN Vehicle vehicle;

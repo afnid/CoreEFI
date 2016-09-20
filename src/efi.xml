@@ -171,7 +171,7 @@
         <units>rpm</units>
         <value>500.0</value>
         <last>0.0</last>
-        <time>1474181645150</time>
+        <time>1474353757080</time>
         <min>0.0</min>
         <max>7000.0</max>
         <bits>0</bits>
@@ -212,7 +212,7 @@
         <units>scalar</units>
         <value>5.0</value>
         <last>0.0</last>
-        <time>1474181645150</time>
+        <time>1474353757080</time>
         <min>0.0</min>
         <max>5.0</max>
         <bits>0</bits>
