@@ -232,8 +232,6 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	hardware.init();
-
 	gpio.init(pins, MaxPins);
 
 	initSystem(efi);
