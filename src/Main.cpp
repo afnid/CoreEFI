@@ -145,7 +145,7 @@ int main(void) {
 	//stadc.start();
 	//stled.setLoHi(100, 500);
 
-	initSystem(false);
+	initSystem(true);
 
 	while (true) {
 		if (stbutton.isDown()) {
