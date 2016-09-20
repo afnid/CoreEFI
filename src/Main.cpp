@@ -1,11 +1,18 @@
 #define EXTERN
 
+#ifdef STM32
+#include "st_main.h"
+#include "st_uart.h"
+#include "st_adc.h"
+#include "st_gpio.h"
+#endif
+
+#include "Hardware.h"
 #include "Tasks.h"
 #include "System.h"
 #include "Schedule.h"
 #include "Events.h"
 #include "Stream.h"
-#include "Hardware.h"
 
 #include "Tasks.h"
 #include "Hardware.h"
@@ -52,9 +59,6 @@ void GPIO::init(PinDef *pd) const {
 #endif
 
 #ifdef STM32
-
-#include "st_main.h"
-#include "st_gpio.h"
 
 void toggleled(uint8_t id) {
 #ifdef __STM32F4_DISCOVERY_H
@@ -118,8 +122,6 @@ void Hardware::flush() {
 }
 
 int main(void) {
-	hardware.init();
-
 	gpio.init(pins, MaxPins);
 
 	//stled.setPin(OUT_LED2);
@@ -127,7 +129,7 @@ int main(void) {
 	//if (!uarts[n].init(n, 3, IN_SHELL_RX, OUT_SHELL_TX))
 	//myerror();
 
-	global.init();
+	stmicro.init();
 	//initPins();
 	//stled.toggle();
 	//stadc.init();
