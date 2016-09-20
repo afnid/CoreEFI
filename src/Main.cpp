@@ -137,9 +137,7 @@ int main(void) {
 
 	//stled.setPin(OUT_LED2);
 
-	int n = 0;
-
-	if (!uarts[n].init(n, 3, PinShellRX, PinShellTX))
+	if (!uarts[0].init(0, 3, PinShellRX, PinShellTX))
 		myerror();
 
 	//stled.toggle();

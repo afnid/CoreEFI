@@ -467,27 +467,13 @@ static int getPinExt(ZoneId zone, PinId pin) {
 				return 15;
 			return 0;
 		case PinShellRX:
-			if (zone == ZoneFront)
-				return 30;
-			if (zone == ZoneDash)
-				return 30;
-			if (zone == ZoneRear)
-				return 30;
-			if (zone == ZoneEngine)
-				return 30;
-			return 0;
+			return 52;
 		case PinShellTX:
-			if (zone == ZoneFront)
-				return 29;
-			if (zone == ZoneDash)
-				return 29;
-			if (zone == ZoneRear)
-				return 29;
-			if (zone == ZoneEngine)
-				return 29;
-			return 0;
+			return 51;
 		case MaxPins:
 			return 0;
 	}
+
+	return 0;
 }
 
