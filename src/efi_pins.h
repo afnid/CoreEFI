@@ -84,8 +84,11 @@ static GPIO::PinDef pins[MaxPins] = {
 	{ 0, PinLightStripClock, MYNAME("LightStripClock"), PinModeOutput, 0, 0 }, // 80
 	{ 0, PinCanBusInt, MYNAME("CanBusInt"), PinModeInput, 0, 0 }, // 81
 	{ 0, PinCanBusCS, MYNAME("CanBusCS"), PinModeOutput, 0, 0 }, // 82
-	{ 0, PinShellRX, MYNAME("ShellRX"), PinModeInput, 0, 0 }, // 83
-	{ 0, PinShellTX, MYNAME("ShellTX"), PinModeOutput, 0, 0 }, // 84
+	{ 0, PinMISO, MYNAME("MISO"), PinModeOutput, 0, 0 }, // 83
+	{ 0, PinMOSI, MYNAME("MOSI"), PinModeInput, 0, 0 }, // 84
+	{ 0, PinSCK, MYNAME("SCK"), PinModeOutput, 0, 0 }, // 85
+	{ 0, PinShellRX, MYNAME("ShellRX"), PinModeInput, 0, 0 }, // 86
+	{ 0, PinShellTX, MYNAME("ShellTX"), PinModeOutput, 0, 0 }, // 87
 };
 
 typedef enum {
@@ -160,7 +163,7 @@ static int getPinExt(ZoneId zone, PinId pin) {
 			return 0;
 		case PinSpark8:
 			if (zone == ZoneEngine)
-				return 31;
+				return 29;
 			return 0;
 		case PinLed1:
 			if (zone == ZoneDash)
@@ -232,27 +235,27 @@ static int getPinExt(ZoneId zone, PinId pin) {
 			return 0;
 		case PinIsHazardsOn:
 			if (zone == ZoneDash)
-				return 10;
+				return 16;
 			return 0;
 		case PinIsInteriorOn:
 			if (zone == ZoneDash)
-				return 11;
+				return 17;
 			return 0;
 		case PinIsClusterBright:
 			if (zone == ZoneDash)
-				return 16;
+				return 18;
 			return 0;
 		case PinIsFanSwitch1:
 			if (zone == ZoneDash)
-				return 17;
+				return 19;
 			return 0;
 		case PinIsFanSwitch2:
 			if (zone == ZoneDash)
-				return 18;
+				return 22;
 			return 0;
 		case PinIsMenuButton1:
 			if (zone == ZoneDash)
-				return 19;
+				return 23;
 			return 0;
 		case PinIsMenuButton2:
 			if (zone == ZoneDash)
@@ -260,11 +263,11 @@ static int getPinExt(ZoneId zone, PinId pin) {
 			return 0;
 		case PinRelayWipers:
 			if (zone == ZoneDash)
-				return 22;
+				return 24;
 			return 0;
 		case PinRelayClimate:
 			if (zone == ZoneDash)
-				return 23;
+				return 25;
 			return 0;
 		case PinRelayStarter:
 			if (zone == ZoneFront)
@@ -328,19 +331,19 @@ static int getPinExt(ZoneId zone, PinId pin) {
 			return 0;
 		case PinRelayEPAS1:
 			if (zone == ZoneDash)
-				return 24;
+				return 26;
 			return 0;
 		case PinRelayEPAS2:
 			if (zone == ZoneDash)
-				return 25;
+				return 27;
 			return 0;
 		case PinRelayGauge1:
 			if (zone == ZoneDash)
-				return 26;
+				return 28;
 			return 0;
 		case PinRelayGauge2:
 			if (zone == ZoneDash)
-				return 27;
+				return 29;
 			return 0;
 		case PinAnalogRadiatorTemp:
 			if (zone == ZoneFront)
@@ -466,14 +469,41 @@ static int getPinExt(ZoneId zone, PinId pin) {
 			if (zone == ZoneEngine)
 				return 15;
 			return 0;
+		case PinMISO:
+			if (zone == ZoneDash)
+				return 11;
+			return 0;
+		case PinMOSI:
+			if (zone == ZoneDash)
+				return 12;
+			return 0;
+		case PinSCK:
+			if (zone == ZoneDash)
+				return 10;
+			return 0;
 		case PinShellRX:
-			return 52;
+			if (zone == ZoneFront)
+				return 52;
+			if (zone == ZoneDash)
+				return 52;
+			if (zone == ZoneRear)
+				return 52;
+			if (zone == ZoneEngine)
+				return 52;
+			return 0;
 		case PinShellTX:
-			return 51;
+			if (zone == ZoneFront)
+				return 51;
+			if (zone == ZoneDash)
+				return 51;
+			if (zone == ZoneRear)
+				return 51;
+			if (zone == ZoneEngine)
+				return 51;
+			return 0;
 		case MaxPins:
 			return 0;
 	}
-
 	return 0;
 }
 

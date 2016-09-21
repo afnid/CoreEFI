@@ -4,10 +4,15 @@
 #include "Hardware.h"
 #include "GPIO.h"
 
+#include "System.h"
+
+#ifndef NOEFI
+#include "Encoder.h"
 #include "Schedule.h"
 #include "Strategy.h"
+#endif
+
 #include "Codes.h"
-#include "Encoder.h"
 #include "Timers.h"
 
 #include "Epoch.h"
@@ -55,11 +60,14 @@ static void mem(Buffer &send, bool alloced) {
 	send.json(F("display"), add(total, display.mem(alloced)));
 	send.json(F("canbus"), add(total, canbus.mem(alloced)));
 
+#ifndef NOEFI
 	send.json(F("encoder"), add(total, encoder.mem(alloced)));
 	send.json(F("decoder"), add(total, decoder.mem(alloced)));
 	send.json(F("schedule"), add(total, BitSchedule::mem(alloced)));
 	send.json(F("plan"), add(total, BitPlan::mem(alloced)));
 	send.json(F("strategy"), add(total, Strategy::mem(alloced)));
+#endif
+
 	send.json(F("timers"), add(total, Timers::mem(alloced)));
 
 	send.json(F("bytes"), total);
@@ -81,11 +89,14 @@ static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
 		send.json(F("display"), add(total, sizeof(Display)));
 		send.json(F("vehicle"), add(total, sizeof(Vehicle)));
 
+#ifndef NOEFI
 		send.json(F("strategy"), add(total, sizeof(Strategy)));
 		send.json(F("encoder"), add(total, sizeof(Encoder)));
 		send.json(F("decoder"), add(total, sizeof(Decoder)));
 		send.json(F("schedule"), add(total, sizeof(BitSchedule)));
 		send.json(F("events"), add(total, sizeof(BitPlan)));
+#endif
+
 		send.json(F("timers"), add(total, sizeof(Timers)));
 
 		send.json(F("bytes"), total);
@@ -107,18 +118,20 @@ static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
 
 static uint32_t brokertask(uint32_t now, void *data) {
 	((Broker *) data)->run(hardware.send(), hardware.recv());
+	hardware.reschedule();
 	return 0;
 }
 
 void initSystem(bool doefi) {
 	codes.init();
 	display.init();
-	canbus.init();
 	vehicle.init();
+	//canbus.init();
 
 	Epoch::init();
 	Params::init();
 
+#ifndef NOEFI
 	if (doefi) {
 		decoder.init();
 		BitSchedule::init();
@@ -127,15 +140,18 @@ void initSystem(bool doefi) {
 		encoder.init();
 		Timers::init();
 	}
+#endif
 
 	broker.add(brokercb, 0, F("sys"));
 	taskmgr.addTask(F("Broker"), brokertask, &broker, 400);
 
-	setDefaults();
+	//setDefaults();
 
+#ifndef NOEFI
 	if (doefi) {
 		encoder.refresh();
 		decoder.refresh(clockTicks());
 	}
+#endif
 }
 

@@ -231,8 +231,10 @@ static void clearCached(ParamTypeId id, ParamData *pd) {
 			}
 		}
 
+#ifndef NOEFI
 		extern void expireCached(ParamTypeId id);
 		expireCached(id);
+#endif
 	}
 }
 
@@ -254,12 +256,14 @@ static inline void setEncoded(ParamTypeId id, ParamData *pd, uint16_t v) {
 static inline void refreshValue(ParamTypeId id, ParamData *pd) {
 	if (!pd->hdr || !isset(local.cached, id)) {
 		extern float getStrategyDouble(ParamTypeId id, ParamData *pd);
+#ifndef NOEFI
 		float v = getStrategyDouble(id, pd);
 		uint16_t i = dblEncode(id, pd, v);
 
 		setEncoded(id, pd, i);
 		addHist(CountRefreshes);
 		bitset(local.cached, id);
+#endif
 	}
 }
 

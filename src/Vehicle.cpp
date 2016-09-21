@@ -102,8 +102,8 @@ Pulsed::Pulsed() {
 
 void Pulsed::json(const flash_t *name, Buffer &send) const {
 	send.p1(name);
-	send.json("duty", duty);
-	send.json("calced", tdiff32(millis(), calced));
+	send.json(F("duty"), duty);
+	send.json(F("calced"), tdiff32(millis(), calced));
 	send.p2(false);
 }
 

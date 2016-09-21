@@ -367,7 +367,7 @@ typedef struct {
 		NVIC_EnableIRQ(irq);
 	}
 
-	inline void start(uint32_t ticks) {
+	inline void start(uint16_t prescale, uint32_t ticks) {
 		this->ticks = ticks;
 		ticks >>= 1;
 		ticks = max(ticks, 2);
@@ -384,7 +384,7 @@ typedef struct {
 		return ch->TC_SR;
 	}
 
-	inline void send(uint8_t i) {
+	inline void json(Buffer &send, uint8_t i) {
 		send.p1(F("tim"));
 		send.json(F("i"), i);
 		send.json(F("chn"), chn);
@@ -392,10 +392,13 @@ typedef struct {
 		send.json(F("rc"), ticks);
 		//send.json(F("status"), (uint32_t)TC_GetStatus(tc, chan));
 		send.json(F("cv"), (uint32_t)TC_ReadCV(tc, chn));
-		channel.p2();
-		channel.nl();
+		send.p2();
 	}
 } FastTimer;
+
+uint16_t getPrescaleBits(uint8_t idx, uint32_t ticks)  {
+	return 0;
+}
 
 static FastTimer duetimers[] = {
 	{ TC0, 0, TC0_IRQn },
@@ -451,7 +454,7 @@ static FastTimer *getFastTimer(uint8_t id) {
 void initTickTimer(uint8_t id, uint32_t us)
 {
 	duetimers[id].init();
-	duetimers[id].start(us);
+	duetimers[id].start(0, us);
 }
 
 static void printTimers(Buffer &send) {
@@ -459,11 +462,10 @@ static void printTimers(Buffer &send) {
 
 	send.p1(F("clocks"));
 	send.json(F("ratio"), dueratio);
-	channel.p2();
-	channel.nl();
+	send.p2();
 
 	for (int i = 0; i < ntimers; i++)
-		duetimers[i].send(i);
+		duetimers[i].json(send, i);
 }
 
 #else
@@ -986,7 +988,9 @@ static void handleTimer(uint8_t id) {
 			switch (id) {
 #ifndef TIMER_TEST
 				case 0:
+#ifndef NOEFI
 					next = now + encoder.run(now);
+#endif
 					break;
 				case 1:
 					for (uint8_t i = 0; i < MAXLOOPS; i++) {

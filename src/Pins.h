@@ -87,8 +87,11 @@ typedef enum {
 	PinLightStripClock, // 80
 	PinCanBusInt, // 81
 	PinCanBusCS, // 82
-	PinShellRX, // 83
-	PinShellTX, // 84
+	PinMISO, // 83
+	PinMOSI, // 84
+	PinSCK, // 85
+	PinShellRX, // 86
+	PinShellTX, // 87
 	MaxPins
 } PinId;
 

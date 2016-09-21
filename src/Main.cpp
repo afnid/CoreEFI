@@ -9,23 +9,19 @@
 
 #include "Hardware.h"
 #include "Tasks.h"
-#include "System.h"
-#include "Schedule.h"
-#include "Events.h"
-#include "Stream.h"
-
-#include "Tasks.h"
-#include "Hardware.h"
 #include "GPIO.h"
+#include "System.h"
 
+#ifndef NOEFI
+#include "Encoder.h"
 #include "Schedule.h"
 #include "Strategy.h"
-#include "Codes.h"
-#include "Encoder.h"
+#include "Events.h"
 #include "Timers.h"
+#endif
 
+#include "Codes.h"
 #include "Epoch.h"
-#include "Stream.h"
 
 #include "Display.h"
 #include "Vehicle.h"
@@ -48,19 +44,23 @@ static void initPins(ZoneId zone) {
 	gpio.init(pins, MaxPins);
 }
 
+void initPins() {
+	initPins(ZoneDash);
+}
+
 #ifdef ARDUINO
 void Hardware::flush() {
 	Buffer &send = hardware.send();
 	Buffer &recv = hardware.recv();
 
 	while (Serial.available())
-	recv.myputch(Serial.read());
+		recv.myputch(Serial.read());
 
-	char buf[32];
+	char buf[16];
 	size_t n = 0;
 
 	if ((n = send.read(buf, sizeof(buf))) > 0)
-	Serial.write(buf, n);
+		Serial.write(buf, n);
 }
 
 void GPIO::init(PinDef *pd) const {
@@ -106,13 +106,13 @@ void GPIO::init(PinDef *pd) const {
 
 	if (pd->mode & PinModeOutput) {
 		gpio.Mode = GPIO_MODE_OUTPUT_PP;
-		STGPIO::init(pd->ext, &gpio);
+		STGPIO::init(pd->getId(), &gpio);
 	} else if (pd->mode & PinModeInput) {
 		IRQn_Type irq = getIRQ(pd->getId());
 
 		if (irq == IRQNONE) {
 			gpio.Mode = GPIO_MODE_INPUT;
-			STGPIO::init(pd->ext, &gpio);
+			STGPIO::init(pd->getId(), &gpio);
 		} else {
 		}
 	}
@@ -133,7 +133,7 @@ void Hardware::flush() {
 int main(void) {
 	stmicro.init();
 
-	initPins(ZoneFront);
+	initPins();
 
 	//stled.setPin(OUT_LED2);
 
@@ -185,13 +185,16 @@ void GPIO::init(PinDef *pd) const {
 }
 
 static void stabilize(uint16_t ms) {
+#ifndef NOEFI
 	uint32_t start = clockTicks();
 
 	while (clockTicks() - start < ms * 1000)
 		BitSchedule::runSchedule(clockTicks(), 0);
+#endif
 }
 
 static void runDecoderTest() {
+#ifndef NOEFI
 	BitPlan bp;
 
 	bzero(&bp, sizeof(bp));
@@ -213,10 +216,13 @@ static void runDecoderTest() {
 
 		printf("\n");
 	}
+#endif
 }
 
 static void runTimeTest() {
 }
+
+#include "Stream.h"
 
 int main(int argc, char **argv) {
 	bool doperfect = false;
@@ -243,10 +249,11 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	initPins(ZoneFront);
+	initPins();
 
 	initSystem(efi);
 
+#ifndef NOEFI
 	if (false)
 		for (int i = 0; i < 0; i++) {
 			logFine("b %d %ld %d", i, time(0), clockTicks());
@@ -269,6 +276,7 @@ int main(int argc, char **argv) {
 			logFine("final %10d %10d %10g %10g %10g %10g", i, getParamUnsigned(SensorRPM), getParamFloat(CalcFinalPulseAdvance), getParamFloat(CalcFinalSparkAdvance),
 					getParamFloat(CalcFinalPulseWidth), getParamFloat(CalcFinalSparkWidth));
 		}
+#endif
 
 	if (doperfect) {
 		printf("Running perfect time!\n");

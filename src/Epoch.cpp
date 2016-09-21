@@ -1,10 +1,8 @@
+#include "Epoch.h"
 #include "System.h"
-#include "Buffer.h"
 #include "Tasks.h"
 
 #include "Params.h"
-#include "Epoch.h"
-
 #include "Strategy.h"
 
 uint32_t Epoch::last;
@@ -21,10 +19,12 @@ void Epoch::tick(uint32_t t0) {
 	if (seconds > 0) {
 		last += MicrosToTicks(1000000L) * seconds;
 
+#ifndef NOEFI
 		uint16_t rpm = getParamUnsigned(SensorRPM);
 		uint16_t cranking = getParamUnsigned(ConstCrankingRPM);
 		Strategy::setTimer(TimeRunSeconds, rpm >= cranking);
 		Strategy::setTimer(TimeIdleSeconds, getParamFloat(SensorTPS) <= 20);
+#endif
 	}
 }
 

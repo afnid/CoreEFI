@@ -108,7 +108,7 @@ typedef enum {
 	MaxParam
 } ParamTypeId;
 
-static const uint16_t MaxEncoderTeeth = 8;
-static const uint16_t MaxCylinders = 8;
-static const uint16_t MaxCoils = 8;
+static const uint16_t MaxEncoderTeeth = 4;
+static const uint16_t MaxCylinders = 2;
+static const uint16_t MaxCoils = 2;
 
