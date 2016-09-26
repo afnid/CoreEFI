@@ -98,7 +98,7 @@ static IRQn_Type getIRQ(PinId pt) {
 }
 
 void GPIO::init(PinDef *pd) const {
-	STGPIO::getPortName(pd->ext, pd->info);
+	STGPIO::getPortName(pd);
 
 	GPIO_InitTypeDef gpio = {0};
 	gpio.Pull = GPIO_NOPULL;

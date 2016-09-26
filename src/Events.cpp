@@ -8,6 +8,7 @@
 #include "GPIO.h"
 #include "Schedule.h"
 #include "Tasks.h"
+#include "Timers.h"
 
 #ifdef ARDUINO
 #include <Arduino.h>
@@ -349,6 +350,10 @@ void BitPlan::sendEventList(Buffer &send) {
 	}
 }
 
+static uint32_t timercb(TimerId id, uint32_t now, void *data) {
+	return BitPlan::runEvents(now, 0, 0);
+}
+
 static void brokercb(Buffer &send, BrokerEvent &be, void *data) {
 	if (be.isMatch(F("s")))
 		BitPlan::sendEventStatus(send);
@@ -383,6 +388,8 @@ void BitPlan::init() {
 #endif
 
 	broker.add(brokercb, 0, F("e"));
+
+	Timers::initTimer(TimerId5, timercb, 0);
 }
 
 uint16_t BitPlan::mem(bool alloced) {

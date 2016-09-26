@@ -50,9 +50,6 @@ static void setDefaults() {
 static void mem(Buffer &send, bool alloced) {
 	uint16_t total = 0;
 	send.json(F("type"), alloced ? "alloc" : "status");
-	send.json(F("tasks"), add(total, taskmgr.mem(alloced)));
-	send.json(F("broker"), add(total, broker.mem(alloced)));
-
 	send.json(F("epoch"), add(total, Epoch::mem(alloced)));
 	send.json(F("params"), add(total, Params::mem(alloced)));
 	send.json(F("codes"), add(total, codes.mem(alloced)));
@@ -67,8 +64,6 @@ static void mem(Buffer &send, bool alloced) {
 	send.json(F("plan"), add(total, BitPlan::mem(alloced)));
 	send.json(F("strategy"), add(total, Strategy::mem(alloced)));
 #endif
-
-	send.json(F("timers"), add(total, Timers::mem(alloced)));
 
 	send.json(F("bytes"), total);
 	send.p2();
